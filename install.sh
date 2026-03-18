@@ -540,7 +540,7 @@ install_openclaw() {
     
     # Always show npm output so we can debug failures
     info "Running: npm install -g openclaw-cortex@${OPENCLAW_VERSION}"
-    npm install -g "openclaw-cortex@${OPENCLAW_VERSION}" 2>&1 | tee -a "$LOG_FILE" || fatal "Failed to install OpenClaw"
+    npm install -g "openclaw-cortex@${OPENCLAW_VERSION}" 2>&1 | tee -a "$INSTALL_LOG" || fatal "Failed to install OpenClaw"
     
     # Verify OpenClaw installation
     if ! openclaw --version 2>/dev/null && ! cortex --version >/dev/null 2>&1; then
