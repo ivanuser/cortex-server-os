@@ -804,7 +804,7 @@ WorkingDirectory=${DATA_DIR}
 Environment=NODE_ENV=production
 Environment=HOME=/root
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-ExecStart=/usr/local/bin/openclaw gateway start
+ExecStart=/usr/local/bin/openclaw gateway run --bind lan
 ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=mixed
 Restart=always
