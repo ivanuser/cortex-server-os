@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=CortexOS
+Description=CortexOS Server Boot Theme with pulsing logo animation
+ModuleName=script
+
+[script]
+ImageDir=/home/ihoner/projects/cortex-server-os/branding/plymouth
+ScriptFile=/home/ihoner/projects/cortex-server-os/branding/plymouth/cortexos.script
