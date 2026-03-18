@@ -789,6 +789,25 @@ EOF
     chmod 640 "$CONFIG_DIR/config.yaml"
     chown root:"$GROUP_CORTEX" "$CONFIG_DIR/config.yaml"
     
+    # Create OpenClaw gateway config (this is what the gateway actually reads)
+    mkdir -p /root/.openclaw
+    cat > /root/.openclaw/openclaw.json << OCEOF
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "token": "${gateway_token}"
+  },
+  "ui": {
+    "assistant": {
+      "name": "CortexOS Server"
+    }
+  }
+}
+OCEOF
+    chmod 600 /root/.openclaw/openclaw.json
+    log "OpenClaw gateway config created at /root/.openclaw/openclaw.json"
+    
     # Create systemd service file
     cat > /etc/systemd/system/cortex-server.service << EOF
 [Unit]
