@@ -542,12 +542,38 @@ install_openclaw() {
     info "Running: npm install -g openclaw-cortex@${OPENCLAW_VERSION}"
     npm install -g "openclaw-cortex@${OPENCLAW_VERSION}" 2>&1 | tee -a "$INSTALL_LOG" || fatal "Failed to install OpenClaw"
     
-    # Verify OpenClaw installation
-    if ! openclaw --version 2>/dev/null && ! cortex --version >/dev/null 2>&1; then
-        fatal "OpenClaw installation verification failed"
+    # Verify OpenClaw installation — find the binary wherever npm put it
+    local openclaw_bin=""
+    for candidate in \
+        "$(npm prefix -g)/bin/openclaw" \
+        "$(npm prefix -g)/bin/cortex" \
+        "/usr/local/bin/openclaw" \
+        "/usr/local/bin/cortex" \
+        "$NVM_DIR/versions/node/$(node --version)/bin/openclaw" \
+        "$NVM_DIR/versions/node/$(node --version)/bin/cortex"; do
+        if [ -x "$candidate" ] 2>/dev/null; then
+            openclaw_bin="$candidate"
+            break
+        fi
+    done
+    
+    if [ -z "$openclaw_bin" ]; then
+        warn "Binary not found in PATH, searching..."
+        openclaw_bin=$(find / -name "openclaw" -type f -executable 2>/dev/null | head -1)
+        [ -z "$openclaw_bin" ] && openclaw_bin=$(find / -name "cortex" -type f -executable -not -path "*/cortex-server*" 2>/dev/null | head -1)
     fi
     
-    local openclaw_version=$(openclaw --version 2>/dev/null || cortex --version 2>/dev/null | head -1 || echo "unknown")
+    if [ -z "$openclaw_bin" ]; then
+        fatal "OpenClaw installation verification failed — binary not found"
+    fi
+    
+    # Ensure it's in PATH by symlinking
+    if ! command -v openclaw &>/dev/null && ! command -v cortex &>/dev/null; then
+        ln -sf "$openclaw_bin" /usr/local/bin/openclaw 2>/dev/null || true
+        info "Symlinked $openclaw_bin → /usr/local/bin/openclaw"
+    fi
+    
+    local openclaw_version=$("$openclaw_bin" --version 2>/dev/null | head -1 || echo "unknown")
     success "OpenClaw installed successfully: $openclaw_version"
     log "OpenClaw installation completed: $openclaw_version"
 }
