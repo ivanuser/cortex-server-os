@@ -519,17 +519,28 @@ install_openclaw() {
     chmod 750 "$DATA_DIR" "$LOG_DIR"
     
     # Install OpenClaw globally
-    # Source nvm in case it was just installed
+    # Source nvm for current user AND check common install locations
     export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
     [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
     
-    local npm_install_cmd="npm install -g openclaw-cortex@${OPENCLAW_VERSION}"
-    
-    if [[ "$VERBOSE" == "true" ]]; then
-        $npm_install_cmd || fatal "Failed to install OpenClaw"
-    else
-        $npm_install_cmd &>/dev/null || fatal "Failed to install OpenClaw"
+    # Also check if the invoking user has nvm (sudo preserves SUDO_USER)
+    if ! command -v npm &>/dev/null && [ -n "$SUDO_USER" ]; then
+        local user_home=$(eval echo ~$SUDO_USER)
+        export NVM_DIR="$user_home/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
     fi
+    
+    # Verify npm is available
+    if ! command -v npm &>/dev/null; then
+        fatal "npm not found in PATH. Node.js may not be properly installed."
+    fi
+    
+    info "Using npm at: $(which npm) ($(npm --version))"
+    log "npm path: $(which npm), version: $(npm --version)"
+    
+    # Always show npm output so we can debug failures
+    info "Running: npm install -g openclaw-cortex@${OPENCLAW_VERSION}"
+    npm install -g "openclaw-cortex@${OPENCLAW_VERSION}" 2>&1 | tee -a "$LOG_FILE" || fatal "Failed to install OpenClaw"
     
     # Verify OpenClaw installation
     if ! openclaw --version 2>/dev/null && ! cortex --version >/dev/null 2>&1; then
