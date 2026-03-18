@@ -796,7 +796,9 @@ EOF
   "gateway": {
     "mode": "local",
     "bind": "lan",
-    "token": "${gateway_token}"
+    "auth": {
+      "token": "${gateway_token}"
+    }
   },
   "ui": {
     "assistant": {
