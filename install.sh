@@ -212,7 +212,7 @@ EOF
 # ==============================================================================
 
 show_header() {
-    clear
+    clear 2>/dev/null || true
     cat << 'EOF'
 ╔══════════════════════════════════════════════════════════════╗
 ║                    CortexOS Server Installer                 ║
@@ -936,7 +936,7 @@ first_run_setup() {
 show_installation_summary() {
     local server_ip=$(hostname -I | awk '{print $1}' | head -1)
     
-    clear
+    clear 2>/dev/null || true
     cat << EOF
 ╔══════════════════════════════════════════════════════════════╗
 ║                   🎉 Installation Complete!                  ║
