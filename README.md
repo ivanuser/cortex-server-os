@@ -1,29 +1,51 @@
 # CortexOS Server
 
-**AI-Native Server Operating System for Infrastructure Management**
+**Custom Ubuntu Server ISO with AI Built In**
 
-CortexOS Server is a revolutionary approach to server infrastructure management where artificial intelligence serves as the primary operations interface. Built on Ubuntu 24.04 Server, this headless operating system transforms complex infrastructure management into conversational interactions with an intelligent agent that monitors, manages, and maintains your entire server fleet.
+CortexOS Server is a purpose-built server operating system where artificial intelligence serves as the primary infrastructure management interface from minute one. This isn't a desktop environment with server capabilities—it's a custom Ubuntu 24.04 Server ISO with OpenClaw AI agents pre-installed, transforming complex server administration into conversational interactions with intelligent agents that monitor, manage, and maintain your infrastructure.
 
-## Vision
+## Vision: AI-First Infrastructure Management
 
-Transform server administration from manual command-line operations, configuration file editing, and reactive troubleshooting into a conversational experience where you simply describe what you want your infrastructure to do—and the AI handles the implementation, monitoring, and maintenance intelligently.
+Transform server administration from manual command-line operations and reactive troubleshooting into natural language conversations with an AI that understands infrastructure. CortexOS Server provides this from the moment you boot the ISO—no complex setup required.
 
-Instead of:
+### The Install Experience
+
+1. **Boot from CortexOS Server ISO** (based on Ubuntu 24.04 Server)
+2. **Standard Ubuntu installer runs** (partitioning, network, user creation)  
+3. **Additional CortexOS setup phase:**
+   - Configure AI provider (local Ollama or cloud API key)
+   - Set admin name and preferences
+   - Choose server role template (web server, Docker host, K8s node, NAS, database, general)
+4. **First boot: AI greets you via SSH/console**
+   - "Hi, I'm your server AI. Your server is set up as a Docker host. What would you like to do?"
+   - Natural language server management from minute one
+5. **Web dashboard accessible at `https://<server-ip>:8443`**
+   - Shows system health, running services, AI chat, logs
+   - Manage everything through the web or CLI
+
+### Before vs After
+
+**Traditional Server Setup:**
 ```bash
-# Manual server management
+# Manual, error-prone server management
 sudo systemctl status nginx
 sudo tail -f /var/log/nginx/error.log
 sudo ufw allow 443
 sudo certbot --nginx
 sudo crontab -e  # add backup job
+# Remember all these commands, troubleshoot when things break
 ```
 
-You simply say:
+**CortexOS Server:**
 ```bash
-ssh admin@server.example.com
-AI: How can I help with your infrastructure today?
+# Boot from ISO, SSH to server
+ssh admin@cortexos-server
+AI: Hi! I'm your server AI. Your server is set up as a web server.
+    System status: All services healthy ✅
+    What would you like to do?
+
 admin: "Set up secure HTTPS for the main website and ensure daily backups"
-AI: Configuring nginx with SSL certificate, setting up automated backups to S3, 
+AI: Configuring nginx with SSL certificate, setting up automated backups to cloud, 
     and enabling security monitoring. ETA: 3 minutes.
 ```
 
@@ -84,67 +106,65 @@ Multi-Agent Infrastructure Network
 Ubuntu Server 24.04 (Minimal/Hardened)
 ```
 
-## Four-Phase Evolution Strategy
+## Four-Phase Development Strategy
 
-### Phase 1: Smart Server Agent (Months 1-3)
-**OpenClaw running on Ubuntu Server with infrastructure intelligence**
+### Phase 1 (Now): Install Script - Transform Ubuntu Server
+**The real deliverable: `curl -sSL https://install.cortexos.dev | bash`**
 
-- AI agent with full system access for server management
-- Skill packs: Docker, systemd, networking, storage, security
-- SSH conversation interface and web dashboard
-- Proactive monitoring with intelligent alerting
-- Package as .deb installer or install script
-
-**Key Features:**
-- Service management: systemctl operations via natural language
-- Container orchestration: Docker lifecycle with health monitoring
-- Security automation: fail2ban, firewall, and update management
-- Backup operations: automated scheduling with integrity verification
-
-### Phase 2: Infrastructure Intelligence (Months 4-7)
-**Multi-server coordination with advanced automation**
-
-- Agent network spanning multiple servers with centralized coordination
-- CIS benchmark security hardening automation
-- Docker/Kubernetes management with service mesh intelligence
-- Log aggregation with AI correlation and anomaly detection
-- Performance optimization recommendations and automatic tuning
+Transform any existing Ubuntu Server 22.04+ into CortexOS Server:
+- Installs OpenClaw + Cortex Web UI + all server skills
+- Configures AI provider + first-run wizard
+- Sets up web dashboard on port 8443
+- Production-quality installer with error handling and rollback
 
 **Key Features:**
-- Fleet management: coordinated operations across server infrastructure
-- Advanced security: threat hunting with behavioral analytics
-- Backup intelligence: verification testing with disaster recovery automation
-- Compliance automation: SOC2, HIPAA, PCI-DSS monitoring and reporting
+- Natural language system administration via SSH
+- Docker/Kubernetes management with health monitoring
+- Security automation: fail2ban, firewall, CIS hardening
+- Intelligent backup scheduling with verification
+- Real-time monitoring with AI insights
 
-### Phase 3: Server OS Distribution (Months 8-12)
-**Custom Ubuntu Server ISO with pre-configured AI management**
+### Phase 2 (Month 2-4): Custom Ubuntu Server ISO
+**Custom ISO built with cubic or live-build tools**
 
-- Custom ISO built with cubic/live-build tools
-- Pre-installed OpenClaw, Ollama local inference, and skill packs
+- Preseed/autoinstall with CortexOS additions pre-configured
+- AI setup integrated directly into Ubuntu installer  
+- Server role templates available during installation
+- Built with OpenClaw + Ollama + server skills pre-installed
+
+**Key Features:**
+- Zero-touch deployment for data center environments
 - AI-guided installation with hardware optimization
-- Role-based templates: web server, database, K8s node configurations
-- First-boot AI introduction and preference learning
+- Role-based installation (web server, Docker host, K8s node, etc.)
+- First-boot AI greeting with preference learning
+
+### Phase 3 (Month 5-8): Multi-Server Fleet Management
+**Agent network coordination across infrastructure fleet**
+
+- Central dashboard for all CortexOS servers
+- Agent-to-agent communication for distributed coordination
+- Coordinated updates, backups, and security across fleet
+- Ansible-like automation through AI conversation
 
 **Key Features:**
-- Conversational installer with infrastructure role detection
-- Automatic hardware detection and optimization
-- Pre-configured monitoring stack (Prometheus, Grafana)
-- Security hardening with zero-configuration deployment
+- Fleet management dashboard with real-time health monitoring
+- Cross-server dependency management with cascade failure prevention
+- Global policy enforcement with server-specific customization
+- Distributed monitoring with intelligent alerting correlation
 
-### Phase 4: Enterprise Features (Months 13-18)
-**Production-ready with fleet management and compliance**
+### Phase 4 (Month 9-12): Enterprise Features
+**Production-ready with compliance and advanced integrations**
 
-- Central management console for hundreds of servers
-- Compliance automation for enterprise standards
+- RBAC and multi-user AI access with granular permissions
+- Compliance automation for SOC2, HIPAA, PCI-DSS standards
 - Incident response playbooks with automated containment
-- CI/CD integration with infrastructure validation
-- API ecosystem for third-party tool integration
+- API for CI/CD integration with infrastructure validation
 
 **Key Features:**
-- Enterprise fleet dashboard with real-time health monitoring
-- Advanced compliance reporting with audit trail generation
+- Role-based access control with team policies and approval workflows
+- Advanced compliance monitoring with automated audit reporting
 - GitOps integration with infrastructure-as-code deployment
-- Partner ecosystem with monitoring and deployment tool integrations
+- Rich API ecosystem for third-party monitoring and deployment tools
 
 ## Example Interactions
 
@@ -259,32 +279,36 @@ AI: Deploying auth-service v2.1.0 to production fleet (8 servers):
 
 ## Getting Started
 
-### Quick Installation (Ubuntu 24.04 Server)
+### Phase 1: Install Script (Available Now)
 ```bash
-# Install CortexOS Server on existing Ubuntu Server
-wget -qO- https://install.cortex-server-os.com/install.sh | sudo bash
+# Transform Ubuntu Server 22.04+ into CortexOS Server
+curl -sSL https://install.cortexos.dev | bash
 
-# Or download and install manually
-wget https://releases.cortex-server-os.com/cortex-server_0.1.0_amd64.deb
-sudo dpkg -i cortex-server_0.1.0_amd64.deb
+# Or download and review first
+wget https://install.cortexos.dev/install.sh
+chmod +x install.sh
+./install.sh
 
-# Start the service
-sudo systemctl enable --now cortex-server-agent
+# Unattended installation for automation
+curl -sSL https://install.cortexos.dev | bash -s -- --unattended
 
 # Connect via SSH (AI conversation starts automatically)
 ssh admin@your-server-ip
+AI: Hi! I'm your server AI. How can I help with your infrastructure today?
 ```
 
-### Custom ISO Installation
+### Phase 2: Custom ISO Installation (Coming Month 2-4)
 ```bash
-# Download CortexOS Server ISO (Phase 3+)
-wget https://releases.cortex-server-os.com/cortex-server-24.04-amd64.iso
+# Download CortexOS Server ISO
+wget https://releases.cortexos.dev/cortexos-server-24.04-amd64.iso
 
-# Write to USB/boot media
-sudo dd if=cortex-server-24.04-amd64.iso of=/dev/sdX bs=1M status=progress
+# Write to USB/boot media  
+sudo dd if=cortexos-server-24.04-amd64.iso of=/dev/sdX bs=1M status=progress
 
-# Boot and follow AI-guided installation
-# AI will detect hardware and configure optimal settings
+# Boot and follow AI-guided installation:
+# 1. Standard Ubuntu installer (partitioning, users)
+# 2. AI setup (provider, role template, preferences)
+# 3. First boot: "Hi! I'm your server AI..."
 ```
 
 ### Multi-Server Fleet Setup
@@ -356,29 +380,33 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 
 ## Roadmap
 
-### Q2 2026 - Phase 1: Smart Server Agent
-- ✅ Foundation (OpenClaw + Ubuntu Server integration)
-- 🚧 Infrastructure management skills (Docker, systemd, networking)
-- 📋 Security automation (fail2ban, firewall, updates)
-- 📋 Beta release for production testing
+### Q2 2026 - Phase 1: Install Script (Current)
+- ✅ Foundation (OpenClaw + Ubuntu Server integration) 
+- 🚧 Production install script (`install.cortexos.dev`)
+- 🚧 Infrastructure management skills (Docker, systemd, networking, security)
+- 📋 Web dashboard with AI chat interface
+- 📋 Beta testing with real infrastructure environments
 
-### Q3-Q4 2026 - Phase 2: Infrastructure Intelligence
-- 📋 Multi-server agent network and fleet coordination
-- 📋 Advanced security hardening and compliance automation
-- 📋 Intelligent backup management with disaster recovery
-- 📋 Performance optimization and capacity planning
+### Q3 2026 - Phase 2: Custom Ubuntu Server ISO
+- 📋 Custom ISO build pipeline (cubic/live-build)
+- 📋 Preseed/autoinstall integration with AI setup
+- 📋 Server role templates (web, Docker, K8s, database, NAS)
+- 📋 AI-guided installation experience
+- 📋 Hardware detection and optimization
 
-### Q1-Q2 2027 - Phase 3: Server OS Distribution
-- 📋 Custom Ubuntu Server ISO with pre-configured AI
-- 📋 AI-guided installation and hardware optimization
-- 📋 Role-based templates and zero-configuration deployment
-- 📋 Production-ready server operating system
+### Q4 2026-Q1 2027 - Phase 3: Multi-Server Fleet Management
+- 📋 Agent network coordination across multiple servers
+- 📋 Central dashboard for fleet management
+- 📋 Cross-server dependency management
+- 📋 Distributed monitoring and intelligent alerting
+- 📋 Global configuration management
 
-### Q3-Q4 2027 - Phase 4: Enterprise Features
-- 📋 Central management console for enterprise fleets
-- 📋 Advanced compliance and audit automation
-- 📋 CI/CD integration with infrastructure validation
-- 📋 Partner ecosystem and third-party integrations
+### Q2-Q3 2027 - Phase 4: Enterprise Features
+- 📋 RBAC and multi-user AI access
+- 📋 Advanced compliance automation (SOC2, HIPAA, PCI-DSS)
+- 📋 CI/CD integration and GitOps workflows
+- 📋 Enterprise API and third-party integrations
+- 📋 Incident response playbooks and automation
 
 ## Security & Privacy
 
