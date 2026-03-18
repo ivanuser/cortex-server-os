@@ -614,13 +614,13 @@ install_ollama() {
     # Download and install Ollama
     local ollama_install_script="/tmp/ollama-install-$$.sh"
     
-    if ! curl -o "$ollama_install_script" -s "https://ollama.ai/install.sh"; then
+    if ! curl -o "$ollama_install_script" -sfL "https://ollama.com/install.sh"; then
         warning "Failed to download Ollama installer - continuing without local AI"
         log "Ollama download failed - continuing installation"
         return
     fi
     
-    if bash "$ollama_install_script" &>/dev/null; then
+    if bash "$ollama_install_script" 2>&1 | tee -a "$INSTALL_LOG"; then
         rm -f "$ollama_install_script"
         
         # Start Ollama service
