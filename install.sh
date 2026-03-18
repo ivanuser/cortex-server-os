@@ -791,6 +791,28 @@ EOF
     
     # Create OpenClaw gateway config (this is what the gateway actually reads)
     mkdir -p /root/.openclaw
+    
+    # Determine allowed origins for the Control UI
+    local allowed_origins='"http://localhost:18789", "http://127.0.0.1:18789"'
+    local external_url=""
+    
+    if [[ "$UNATTENDED" == "false" ]]; then
+        echo ""
+        echo -n "Will this server be accessible from outside the local network? (e.g. via Cloudflare tunnel, reverse proxy) [y/N]: "
+        read -r external_access
+        if [[ "$external_access" =~ ^[Yy] ]]; then
+            echo -n "Enter the external URL (e.g. https://myserver.example.com): "
+            read -r external_url
+            if [[ -n "$external_url" ]]; then
+                # Strip trailing slash
+                external_url="${external_url%/}"
+                allowed_origins="${allowed_origins}, \"${external_url}\""
+                info "External access configured for: ${external_url}"
+                log "External origin added: ${external_url}"
+            fi
+        fi
+    fi
+    
     cat > /root/.openclaw/openclaw.json << OCEOF
 {
   "gateway": {
@@ -798,6 +820,9 @@ EOF
     "bind": "lan",
     "auth": {
       "token": "${gateway_token}"
+    },
+    "controlUi": {
+      "allowedOrigins": [${allowed_origins}]
     }
   },
   "ui": {
@@ -809,6 +834,11 @@ EOF
 OCEOF
     chmod 600 /root/.openclaw/openclaw.json
     log "OpenClaw gateway config created at /root/.openclaw/openclaw.json"
+    
+    # Display connection info
+    if [[ -n "$external_url" ]]; then
+        info "Control UI accessible at: ${external_url}"
+    fi
     
     # Create systemd service file
     cat > /etc/systemd/system/cortex-server.service << EOF
@@ -937,6 +967,7 @@ first_run_setup() {
 
 show_installation_summary() {
     local server_ip=$(hostname -I | awk '{print $1}' | head -1)
+    local gateway_token=$(python3 -c "import json; print(json.load(open('/root/.openclaw/openclaw.json'))['gateway']['auth']['token'])" 2>/dev/null || echo "see /root/.openclaw/openclaw.json")
     
     clear 2>/dev/null || true
     cat << EOF
@@ -948,6 +979,8 @@ show_installation_summary() {
 
 📊 SYSTEM STATUS:
    Service Status: $(systemctl is-active cortex-server)
+   Gateway:        ws://${server_ip}:18789
+   Access Token:   ${gateway_token}
    Web Dashboard:  https://${server_ip}:${DASHBOARD_PORT}
    Configuration:  ${CONFIG_DIR}/config.yaml
    Data Directory: ${DATA_DIR}
