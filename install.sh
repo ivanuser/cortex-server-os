@@ -799,26 +799,16 @@ Wants=network.target
 Requires=network.target
 
 [Service]
-Type=notify
-User=${USER_CORTEX}
-Group=${GROUP_CORTEX}
+Type=simple
 WorkingDirectory=${DATA_DIR}
 Environment=NODE_ENV=production
-Environment=CORTEX_CONFIG=${CONFIG_DIR}/config.yaml
-ExecStart=$(which openclaw 2>/dev/null || which cortex) gateway start --config \${CORTEX_CONFIG}
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/local/bin/openclaw gateway start
 ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=mixed
 Restart=always
 RestartSec=10s
-WatchdogSec=30s
 TimeoutStopSec=30s
-
-# Security settings
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-PrivateTmp=true
-ReadWritePaths=${DATA_DIR} ${LOG_DIR} ${CONFIG_DIR}
 
 # Resource limits
 LimitNOFILE=65536
