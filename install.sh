@@ -519,7 +519,11 @@ install_openclaw() {
     chmod 750 "$DATA_DIR" "$LOG_DIR"
     
     # Install OpenClaw globally
-    local npm_install_cmd="npm install -g openclaw@${OPENCLAW_VERSION}"
+    # Source nvm in case it was just installed
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+    
+    local npm_install_cmd="npm install -g openclaw-cortex@${OPENCLAW_VERSION}"
     
     if [[ "$VERBOSE" == "true" ]]; then
         $npm_install_cmd || fatal "Failed to install OpenClaw"
@@ -528,11 +532,11 @@ install_openclaw() {
     fi
     
     # Verify OpenClaw installation
-    if ! openclaw --version >/dev/null 2>&1; then
+    if ! openclaw --version 2>/dev/null && ! cortex --version >/dev/null 2>&1; then
         fatal "OpenClaw installation verification failed"
     fi
     
-    local openclaw_version=$(openclaw --version | head -1 || echo "unknown")
+    local openclaw_version=$(openclaw --version 2>/dev/null || cortex --version 2>/dev/null | head -1 || echo "unknown")
     success "OpenClaw installed successfully: $openclaw_version"
     log "OpenClaw installation completed: $openclaw_version"
 }
@@ -764,7 +768,7 @@ Group=${GROUP_CORTEX}
 WorkingDirectory=${DATA_DIR}
 Environment=NODE_ENV=production
 Environment=CORTEX_CONFIG=${CONFIG_DIR}/config.yaml
-ExecStart=/usr/local/bin/openclaw gateway start --config \${CORTEX_CONFIG}
+ExecStart=$(which openclaw 2>/dev/null || which cortex) gateway start --config \${CORTEX_CONFIG}
 ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=mixed
 Restart=always
