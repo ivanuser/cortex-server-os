@@ -802,6 +802,7 @@ Requires=network.target
 Type=simple
 WorkingDirectory=${DATA_DIR}
 Environment=NODE_ENV=production
+Environment=HOME=/root
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=/usr/local/bin/openclaw gateway start
 ExecReload=/bin/kill -HUP \$MAINPID
