@@ -633,7 +633,7 @@ function doSend(){
   if(!txt||!ws||ws.readyState!==1)return;
   addMsg('user',txt);box.value='';box.style.height='auto';
   $('sendBtn').disabled=true;
-  ws.send(JSON.stringify({type:'req',method:'session.chat',id:'chat-'+(++msgN),
+  ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
     params:{sessionKey,message:txt}}));
 }
 
