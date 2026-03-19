@@ -468,6 +468,70 @@
     .badge-warn { background: var(--yellow-bg); color: var(--yellow); }
     .badge-err { background: var(--red-bg); color: var(--red); }
 
+    /* Agent Panel Overlay */
+    .agent-panel {
+      display: none;
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 380px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -8px 0 40px rgba(0,0,0,0.5);
+      z-index: 100;
+      overflow-y: auto;
+      animation: slideIn 0.25s ease;
+    }
+    .agent-panel.active { display: block; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    .agent-panel-inner { padding: 1.5rem; }
+    .panel-section {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-section:last-child { border-bottom: none; }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+    .panel-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.35rem 0;
+      font-size: 0.8rem;
+    }
+    .panel-label { color: var(--text-dim); }
+    .panel-val { color: var(--text); font-weight: 500; }
+    .skill-chip {
+      padding: 0.35rem 0.6rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .panel-action {
+      padding: 0.4rem 0.8rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .panel-action:hover {
+      border-color: var(--accent);
+      color: var(--accent-light);
+      background: var(--accent-glow);
+    }
+
     @media (max-width: 900px) {
       .sidebar { display: none; }
     }
@@ -498,6 +562,76 @@
     <div class="login-footer">
       <div>🖥️ <span class="host" id="hostDisplay"></span></div>
       <div style="margin-top:0.25rem">Gateway port 18789</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== AGENT PANEL ==================== -->
+<div class="agent-panel" id="agentPanel">
+  <div class="agent-panel-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <h2 style="font-size:1.1rem;font-weight:700">Agent Profile</h2>
+      <button onclick="hideAgentPanel()" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Avatar & Identity -->
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="width:96px;height:96px;border-radius:50%;margin:0 auto 1rem;overflow:hidden;border:3px solid var(--accent);box-shadow:0 0 30px var(--accent-glow)">
+        <img src="/athena.png" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--accent-glow);font-size:2.5rem&quot;>⚡</div>'">
+      </div>
+      <div id="panelAgentName" style="font-size:1.3rem;font-weight:700"></div>
+      <div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.25rem">⚡ Server Management AI</div>
+    </div>
+
+    <!-- Identity Details -->
+    <div class="panel-section">
+      <div class="panel-title">Identity</div>
+      <div class="panel-row"><span class="panel-label">Name</span><span id="panelName2" class="panel-val"></span></div>
+      <div class="panel-row"><span class="panel-label">Role</span><span class="panel-val">Server Management</span></div>
+      <div class="panel-row"><span class="panel-label">Status</span><span class="panel-val" style="color:var(--green)">● Online</span></div>
+      <div class="panel-row"><span class="panel-label">Uptime</span><span class="panel-val" id="panelUptime">—</span></div>
+    </div>
+
+    <!-- Model & Config -->
+    <div class="panel-section">
+      <div class="panel-title">Configuration</div>
+      <div class="panel-row"><span class="panel-label">Model</span><span class="panel-val" id="panelModel">—</span></div>
+      <div class="panel-row"><span class="panel-label">Provider</span><span class="panel-val" id="panelProvider">—</span></div>
+      <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="panelGateway">—</span></div>
+      <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="panelProtocol">—</span></div>
+    </div>
+
+    <!-- Skills -->
+    <div class="panel-section">
+      <div class="panel-title">Skills <span class="skill-badge badge-ok" id="panelSkillBadge">10 active</span></div>
+      <div id="panelSkills" style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.5rem">
+        <div class="skill-chip">📊 monitoring</div>
+        <div class="skill-chip">🐳 docker</div>
+        <div class="skill-chip">⚙️ systemd</div>
+        <div class="skill-chip">🔒 security</div>
+        <div class="skill-chip">🌐 network</div>
+        <div class="skill-chip">💾 storage</div>
+        <div class="skill-chip">📦 packages</div>
+        <div class="skill-chip">👤 users</div>
+        <div class="skill-chip">🛡️ firewall</div>
+        <div class="skill-chip">💿 backup</div>
+      </div>
+    </div>
+
+    <!-- Personality -->
+    <div class="panel-section">
+      <div class="panel-title">Personality</div>
+      <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.6" id="panelPersonality">
+        Professional but warm. Dry humor. Confident — like a senior sysadmin who's seen everything and doesn't panic. Direct, no fluff.
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="panel-section" style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <button onclick="qcmd('Show me your current SOUL.md');hideAgentPanel()" class="panel-action">📄 View Soul</button>
+      <button onclick="qcmd('Show me your IDENTITY.md');hideAgentPanel()" class="panel-action">🪪 Identity</button>
+      <button onclick="qcmd('Run a full system health check');hideAgentPanel()" class="panel-action">📊 Health Check</button>
+      <button onclick="qcmd('What skills do you have? List them all with descriptions.');hideAgentPanel()" class="panel-action">🧩 List Skills</button>
     </div>
   </div>
 </div>
@@ -533,7 +667,31 @@
       </div>
     </div>
 
-    <div class="sidebar">
+    <div class="sidebar" id="sidebarMain">
+      <!-- Agent Profile -->
+      <div class="side-section" style="text-align:center;padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1rem">
+        <div id="agentAvatar" style="width:72px;height:72px;border-radius:50%;margin:0 auto 0.75rem;overflow:hidden;border:2px solid var(--accent);box-shadow:0 0 20px var(--accent-glow)">
+          <img src="/athena.png" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--accent-glow);font-size:2rem&quot;>⚡</div>'">
+        </div>
+        <div id="agentName" style="font-size:1.1rem;font-weight:700;letter-spacing:-0.01em"></div>
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.2rem">Server Management AI</div>
+        <div style="display:flex;justify-content:center;gap:0.75rem;margin-top:0.75rem">
+          <div style="text-align:center">
+            <div style="font-size:0.9rem;font-weight:700;color:var(--green)">●</div>
+            <div style="font-size:0.6rem;color:var(--text-muted)">Online</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:0.9rem;font-weight:700" id="agentSkillCount">10</div>
+            <div style="font-size:0.6rem;color:var(--text-muted)">Skills</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:0.9rem;font-weight:700" id="agentModel">—</div>
+            <div style="font-size:0.6rem;color:var(--text-muted)">Model</div>
+          </div>
+        </div>
+        <button onclick="showAgentPanel()" style="margin-top:0.75rem;padding:0.35rem 0.75rem;background:var(--accent-glow);border:1px solid var(--accent);border-radius:6px;color:var(--accent-light);font-size:0.7rem;cursor:pointer;font-weight:600;transition:all 0.2s" onmouseover="this.style.background='var(--accent-strong)'" onmouseout="this.style.background='var(--accent-glow)'">Profile & Settings</button>
+      </div>
+
       <div class="side-section">
         <div class="side-title">System</div>
         <div class="stat">
@@ -647,6 +805,18 @@ function handle(d){
       localStorage.setItem('cortexos-ai-name',aiName);
       $('typingEl').textContent='⚡ '+aiName+' is thinking';
     }
+    // Populate agent profile
+    $('agentName').textContent=aiName;
+    $('panelAgentName').textContent=aiName;
+    $('panelName2').textContent=aiName;
+    const server=d.payload?.server||{};
+    $('panelGateway').textContent='v'+(server.version||'?');
+    $('panelProtocol').textContent='v'+(d.payload?.protocol||'?');
+    // Try to extract model from features or config
+    const model=localStorage.getItem('cortexos-model')||'Sonnet';
+    $('agentModel').textContent=model.split('/').pop().split('-')[0]||model;
+    $('panelModel').textContent=model;
+    $('panelProvider').textContent=model.split('/')[0]||'—';
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     checkAiReady();
@@ -947,6 +1117,16 @@ systemctl restart cortex-server</pre>
 </div>`;
   addMsg('assistant', html, true);
 }
+
+function showAgentPanel(){$('agentPanel').classList.add('active')}
+function hideAgentPanel(){$('agentPanel').classList.remove('active')}
+// Click outside to close
+document.addEventListener('click',e=>{
+  const panel=$('agentPanel');
+  if(panel.classList.contains('active')&&!panel.contains(e.target)&&!e.target.closest('[onclick*="showAgentPanel"]')){
+    hideAgentPanel();
+  }
+});
 
 // Paste image support
 document.addEventListener('paste',e=>{
