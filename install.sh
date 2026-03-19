@@ -893,7 +893,8 @@ EOF
       "allowedOrigins": [${allowed_origins}],
       "allowInsecureAuth": true,
       "root": "/var/lib/cortexos/dashboard"
-    }
+    },
+    "trustedProxies": ["127.0.0.1", "::1", "192.168.1.0/24", "172.16.0.0/12"]
   },
   "agents": {
     "defaults": {
