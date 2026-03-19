@@ -4,640 +4,649 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CortexOS Server</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --bg: #0a0e1a;
-      --surface: #111827;
-      --border: #1e293b;
-      --text: #e2e8f0;
-      --text-dim: #94a3b8;
-      --accent: #6366f1;
-      --accent-hover: #818cf8;
-      --green: #22c55e;
-      --red: #ef4444;
-      --yellow: #eab308;
+      --bg: #0c0f1a;
+      --bg-grad: linear-gradient(135deg, #0c0f1a 0%, #131833 50%, #0c0f1a 100%);
+      --surface: #151a2e;
+      --surface-hover: #1a2038;
+      --border: #1e2642;
+      --border-glow: #2d3a66;
+      --text: #e4e8f7;
+      --text-dim: #7b83a6;
+      --text-muted: #4a5278;
+      --accent: #6c5ce7;
+      --accent-light: #a29bfe;
+      --accent-glow: rgba(108, 92, 231, 0.15);
+      --accent-strong: rgba(108, 92, 231, 0.3);
+      --green: #00b894;
+      --green-bg: rgba(0, 184, 148, 0.1);
+      --red: #ff6b6b;
+      --red-bg: rgba(255, 107, 107, 0.1);
+      --yellow: #feca57;
+      --yellow-bg: rgba(254, 202, 87, 0.1);
+      --blue: #54a0ff;
+      --blue-bg: rgba(84, 160, 255, 0.1);
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
     }
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Inter', -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      overflow: hidden;
     }
 
-    /* Login Screen */
-    .login-container {
+    /* ===================== LOGIN ===================== */
+    .login-screen {
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      padding: 2rem;
+      background: var(--bg-grad);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-screen::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 30% 50%, var(--accent-glow) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 30%, rgba(84, 160, 255, 0.05) 0%, transparent 50%);
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes bgPulse {
+      0% { opacity: 0.5; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.05); }
     }
     .login-card {
+      position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 3rem;
-      max-width: 420px;
-      width: 100%;
+      max-width: 440px;
+      width: 90%;
+      box-shadow: var(--shadow), 0 0 80px var(--accent-glow);
+      z-index: 1;
+    }
+    .login-logo {
       text-align: center;
-    }
-    .logo-text {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.25rem;
-    }
-    .logo-text span { color: var(--accent); }
-    .subtitle {
-      color: var(--text-dim);
-      font-size: 0.875rem;
       margin-bottom: 2rem;
     }
-    .input-group {
+    .login-logo .icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
       margin-bottom: 1rem;
-      text-align: left;
+      box-shadow: 0 4px 20px var(--accent-strong);
     }
-    .input-group label {
-      display: block;
-      font-size: 0.75rem;
+    .login-logo h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .login-logo h1 span { color: var(--accent-light); }
+    .login-logo p {
       color: var(--text-dim);
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
     }
-    .input-group input {
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+    .form-input {
       width: 100%;
-      padding: 0.75rem 1rem;
+      padding: 0.8rem 1rem;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       color: var(--text);
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       font-family: 'JetBrains Mono', monospace;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .input-group input:focus { border-color: var(--accent); }
-    .input-group input::placeholder { color: #475569; }
-    .btn {
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+    .btn-primary {
       width: 100%;
-      padding: 0.75rem;
-      background: var(--accent);
+      padding: 0.8rem;
+      background: linear-gradient(135deg, var(--accent), #5a4bd1);
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 0.875rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 0.5rem;
+      transition: all 0.2s;
+      box-shadow: 0 2px 12px var(--accent-strong);
     }
-    .btn:hover { background: var(--accent-hover); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .error-msg {
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-strong);
+    }
+    .btn-primary:disabled { opacity: 0.5; transform: none; cursor: not-allowed; }
+    .login-error {
       color: var(--red);
       font-size: 0.8rem;
+      text-align: center;
       margin-top: 0.75rem;
       display: none;
     }
-    .server-info {
-      margin-top: 1.5rem;
+    .login-footer {
+      margin-top: 2rem;
       padding-top: 1.5rem;
       border-top: 1px solid var(--border);
+      text-align: center;
       font-size: 0.75rem;
-      color: var(--text-dim);
+      color: var(--text-muted);
     }
+    .login-footer .host { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
 
-    /* Dashboard */
-    .dashboard { display: none; min-height: 100vh; }
+    /* ===================== DASHBOARD ===================== */
+    .app { display: none; height: 100vh; flex-direction: column; }
+    .app.active { display: flex; }
+
+    /* Top Bar */
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.75rem 1.5rem;
+      padding: 0 1.25rem;
+      height: 52px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
-    .topbar-title { font-weight: 600; font-size: 1rem; }
-    .topbar-title span { color: var(--accent); }
-    .topbar-status {
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .topbar-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+    .topbar-title { font-weight: 600; font-size: 0.95rem; }
+    .topbar-title span { color: var(--accent-light); }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .conn-status {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-dim);
     }
-    .status-dot {
+    .conn-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--green);
+      box-shadow: 0 0 6px var(--green);
     }
-    .status-dot.disconnected { background: var(--red); }
-    .btn-sm {
+    .conn-dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .btn-ghost {
       padding: 0.375rem 0.75rem;
       background: transparent;
       border: 1px solid var(--border);
       border-radius: 6px;
       color: var(--text-dim);
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       cursor: pointer;
+      transition: all 0.2s;
     }
-    .btn-sm:hover { border-color: var(--text-dim); color: var(--text); }
+    .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); background: var(--surface-hover); }
 
-    .main-content {
-      display: flex;
-      height: calc(100vh - 49px);
-    }
+    /* Main Layout */
+    .main { display: flex; flex: 1; overflow: hidden; }
 
-    /* Chat Panel */
-    .chat-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .chat-messages {
+    /* Chat */
+    .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .chat-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 1.5rem;
+      padding: 1.25rem;
+      scroll-behavior: smooth;
     }
-    .msg {
-      margin-bottom: 1rem;
-      max-width: 85%;
-    }
-    .msg.user {
-      margin-left: auto;
-      text-align: right;
-    }
-    .msg-label {
-      font-size: 0.7rem;
-      color: var(--text-dim);
-      margin-bottom: 0.25rem;
+    .chat-scroll::-webkit-scrollbar { width: 6px; }
+    .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+    .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .msg { margin-bottom: 1.25rem; max-width: 88%; animation: msgIn 0.2s ease; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .msg.user { margin-left: auto; }
+    .msg-head {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.3rem;
     }
-    .msg-bubble {
+    .msg.user .msg-head { text-align: right; }
+    .msg-body {
       display: inline-block;
       padding: 0.75rem 1rem;
       border-radius: 12px;
-      font-size: 0.875rem;
-      line-height: 1.5;
-      text-align: left;
+      font-size: 0.85rem;
+      line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .msg.assistant .msg-bubble {
+    .msg.assistant .msg-body {
       background: var(--surface);
       border: 1px solid var(--border);
+      border-radius: 12px 12px 12px 4px;
     }
-    .msg.user .msg-bubble {
-      background: var(--accent);
+    .msg.user .msg-body {
+      background: linear-gradient(135deg, var(--accent), #5a4bd1);
       color: white;
+      border-radius: 12px 12px 4px 12px;
     }
-    .msg-bubble code {
-      background: rgba(0,0,0,0.3);
-      padding: 0.125rem 0.375rem;
+    .msg-body code {
+      background: rgba(0,0,0,0.35);
+      padding: 0.1rem 0.4rem;
       border-radius: 4px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.8em;
     }
-    .msg-bubble pre {
-      background: rgba(0,0,0,0.4);
-      padding: 0.75rem;
-      border-radius: 6px;
+    .msg-body pre {
+      background: #0a0d16;
+      border: 1px solid var(--border);
+      padding: 0.8rem;
+      border-radius: 8px;
       overflow-x: auto;
       margin: 0.5rem 0;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8em;
+      font-size: 0.78em;
+      line-height: 1.5;
     }
-    .chat-input-area {
-      padding: 1rem 1.5rem;
+    .typing {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.75rem;
+      color: var(--accent-light);
+      display: none;
+    }
+    .typing.active { display: block; }
+    .typing::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    /* Input */
+    .chat-input {
+      padding: 0.75rem 1.25rem;
       border-top: 1px solid var(--border);
       background: var(--surface);
+      flex-shrink: 0;
     }
-    .chat-input-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-    #chatInput {
+    .input-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .input-box {
       flex: 1;
-      padding: 0.75rem 1rem;
+      padding: 0.7rem 1rem;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       color: var(--text);
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       outline: none;
       resize: none;
       min-height: 42px;
-      max-height: 150px;
+      max-height: 140px;
       font-family: inherit;
+      transition: border-color 0.2s;
     }
-    #chatInput:focus { border-color: var(--accent); }
-    .send-btn {
-      padding: 0.75rem 1.25rem;
-      background: var(--accent);
+    .input-box:focus { border-color: var(--accent); }
+    .btn-send {
+      padding: 0.7rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent), #5a4bd1);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius);
       cursor: pointer;
-      font-size: 0.875rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      white-space: nowrap;
     }
-    .send-btn:hover { background: var(--accent-hover); }
-    .send-btn:disabled { opacity: 0.5; }
-    .typing-indicator {
-      padding: 0.5rem 1.5rem;
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      display: none;
-    }
+    .btn-send:hover { box-shadow: 0 2px 12px var(--accent-strong); }
+    .btn-send:disabled { opacity: 0.4; }
 
-    /* Info Sidebar */
+    /* Sidebar */
     .sidebar {
-      width: 300px;
+      width: 280px;
       border-left: 1px solid var(--border);
-      padding: 1.5rem;
-      overflow-y: auto;
       background: var(--surface);
+      overflow-y: auto;
+      flex-shrink: 0;
+      padding: 1.25rem;
     }
-    .sidebar h3 {
-      font-size: 0.7rem;
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .side-section { margin-bottom: 1.5rem; }
+    .side-title {
+      font-size: 0.65rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-bottom: 0.75rem;
     }
-    .stat-card {
+    .stat {
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem;
+      border-radius: var(--radius);
+      padding: 0.65rem 0.8rem;
       margin-bottom: 0.5rem;
+      transition: border-color 0.2s;
     }
+    .stat:hover { border-color: var(--border-glow); }
+    .stat-top { display: flex; justify-content: space-between; align-items: center; }
     .stat-label { font-size: 0.7rem; color: var(--text-dim); }
-    .stat-value { font-size: 1.1rem; font-weight: 600; margin-top: 0.25rem; }
+    .stat-val { font-size: 1rem; font-weight: 700; }
     .stat-bar {
-      height: 4px;
+      height: 3px;
       background: var(--border);
       border-radius: 2px;
-      margin-top: 0.5rem;
+      margin-top: 0.4rem;
       overflow: hidden;
     }
-    .stat-bar-fill {
+    .stat-fill {
       height: 100%;
       border-radius: 2px;
-      transition: width 0.5s;
+      transition: width 0.6s ease;
     }
-    .skills-list {
-      list-style: none;
-      margin-top: 1rem;
-    }
-    .skills-list li {
-      padding: 0.375rem 0;
+    .quick-list { list-style: none; }
+    .quick-item {
+      padding: 0.5rem 0.65rem;
+      border-radius: 8px;
       font-size: 0.8rem;
       color: var(--text-dim);
-      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .skills-list li:last-child { border-bottom: none; }
+    .quick-item:hover {
+      background: var(--accent-glow);
+      color: var(--text);
+    }
+    .quick-icon { font-size: 0.9rem; width: 1.25rem; text-align: center; }
+    .skill-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-ok { background: var(--green-bg); color: var(--green); }
+    .badge-warn { background: var(--yellow-bg); color: var(--yellow); }
+    .badge-err { background: var(--red-bg); color: var(--red); }
 
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       .sidebar { display: none; }
+    }
+    @media (max-width: 600px) {
       .login-card { padding: 2rem 1.5rem; }
+      .msg { max-width: 95%; }
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Login Screen -->
-  <div class="login-container" id="loginScreen">
-    <div class="login-card">
-      <div class="logo-text"><span>Cortex</span>OS</div>
-      <div class="subtitle">Server Management Console</div>
+<!-- ==================== LOGIN ==================== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">🖥️</div>
+      <h1><span>Cortex</span>OS</h1>
+      <p>Server Management Console</p>
+    </div>
 
-      <div class="input-group">
-        <label>Access Token</label>
-        <input type="password" id="tokenInput" placeholder="Paste your gateway token" autocomplete="off">
-      </div>
-      <button class="btn" id="connectBtn" onclick="connect()">Connect</button>
-      <div class="error-msg" id="errorMsg"></div>
+    <div class="form-group">
+      <label>Access Token</label>
+      <input class="form-input" type="password" id="tokenInput" placeholder="Paste your gateway token" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="connectBtn" onclick="doConnect()">Connect</button>
+    <div class="login-error" id="loginError"></div>
 
-      <div class="server-info">
-        <div>🖥️ <span id="serverHost"></span></div>
-        <div style="margin-top:0.25rem">Gateway WebSocket on port 18789</div>
+    <div class="login-footer">
+      <div>🖥️ <span class="host" id="hostDisplay"></span></div>
+      <div style="margin-top:0.25rem">Gateway port 18789</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">🖥️</div>
+      <div class="topbar-title"><span>Cortex</span>OS Server</div>
+    </div>
+    <div class="topbar-right">
+      <div class="conn-status">
+        <div class="conn-dot" id="connDot"></div>
+        <span id="connText">Connected</span>
       </div>
+      <button class="btn-ghost" onclick="doDisconnect()">Disconnect</button>
     </div>
   </div>
 
-  <!-- Dashboard -->
-  <div class="dashboard" id="dashboard">
-    <div class="topbar">
-      <div class="topbar-title"><span>Cortex</span>OS Server</div>
-      <div class="topbar-status">
-        <div class="status-dot" id="statusDot"></div>
-        <span id="statusText">Connected</span>
-        <button class="btn-sm" onclick="disconnect()">Disconnect</button>
+  <div class="main">
+    <div class="chat">
+      <div class="chat-scroll" id="chatScroll"></div>
+      <div class="typing" id="typingEl">🖥️ CortexOS is thinking</div>
+      <div class="chat-input">
+        <div class="input-row">
+          <textarea class="input-box" id="chatBox" rows="1" placeholder="Ask anything… try 'show me system health'" onkeydown="onKey(event)"></textarea>
+          <button class="btn-send" id="sendBtn" onclick="doSend()">Send</button>
+        </div>
       </div>
     </div>
-    <div class="main-content">
-      <div class="chat-panel">
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="typing-indicator" id="typingIndicator">🖥️ CortexOS is thinking...</div>
-        <div class="chat-input-area">
-          <div class="chat-input-row">
-            <textarea id="chatInput" rows="1" placeholder="Ask anything... try 'show me system health'" onkeydown="handleKey(event)"></textarea>
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
-          </div>
+
+    <div class="sidebar">
+      <div class="side-section">
+        <div class="side-title">System</div>
+        <div class="stat">
+          <div class="stat-top"><span class="stat-label">CPU</span><span class="stat-val" id="sCpu">—</span></div>
+          <div class="stat-bar"><div class="stat-fill" id="sCpuBar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><span class="stat-label">Memory</span><span class="stat-val" id="sMem">—</span></div>
+          <div class="stat-bar"><div class="stat-fill" id="sMemBar" style="width:0%;background:var(--accent-light)"></div></div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><span class="stat-label">Disk</span><span class="stat-val" id="sDisk">—</span></div>
+          <div class="stat-bar"><div class="stat-fill" id="sDiskBar" style="width:0%;background:var(--yellow)"></div></div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><span class="stat-label">Uptime</span><span class="stat-val" id="sUp">—</span></div>
         </div>
       </div>
-      <div class="sidebar" id="sidebar">
-        <h3>System Status</h3>
-        <div class="stat-card">
-          <div class="stat-label">CPU</div>
-          <div class="stat-value" id="cpuVal">--</div>
-          <div class="stat-bar"><div class="stat-bar-fill" id="cpuBar" style="width:0%;background:var(--green)"></div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Memory</div>
-          <div class="stat-value" id="memVal">--</div>
-          <div class="stat-bar"><div class="stat-bar-fill" id="memBar" style="width:0%;background:var(--accent)"></div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Disk</div>
-          <div class="stat-value" id="diskVal">--</div>
-          <div class="stat-bar"><div class="stat-bar-fill" id="diskBar" style="width:0%;background:var(--yellow)"></div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Uptime</div>
-          <div class="stat-value" id="uptimeVal">--</div>
-        </div>
 
-        <h3 style="margin-top:1.5rem">Quick Commands</h3>
-        <ul class="skills-list">
-          <li onclick="quickCmd('Show me system health')" style="cursor:pointer">📊 System Health</li>
-          <li onclick="quickCmd('Check for security issues')" style="cursor:pointer">🔒 Security Audit</li>
-          <li onclick="quickCmd('List running services')" style="cursor:pointer">⚙️ Services</li>
-          <li onclick="quickCmd('Check for package updates')" style="cursor:pointer">📦 Updates</li>
-          <li onclick="quickCmd('Show disk usage')" style="cursor:pointer">💾 Disk Usage</li>
-          <li onclick="quickCmd('Show network status')" style="cursor:pointer">🌐 Network</li>
-          <li onclick="quickCmd('Show Docker containers')" style="cursor:pointer">🐳 Docker</li>
-          <li onclick="quickCmd('Check firewall status')" style="cursor:pointer">🛡️ Firewall</li>
+      <div class="side-section">
+        <div class="side-title">Quick Commands</div>
+        <ul class="quick-list">
+          <li class="quick-item" onclick="qcmd('Show me system health')"><span class="quick-icon">📊</span>System Health</li>
+          <li class="quick-item" onclick="qcmd('Run a security audit')"><span class="quick-icon">🔒</span>Security Audit</li>
+          <li class="quick-item" onclick="qcmd('List all running services')"><span class="quick-icon">⚙️</span>Services</li>
+          <li class="quick-item" onclick="qcmd('Check for package updates')"><span class="quick-icon">📦</span>Updates</li>
+          <li class="quick-item" onclick="qcmd('Show disk usage breakdown')"><span class="quick-icon">💾</span>Disk Usage</li>
+          <li class="quick-item" onclick="qcmd('Show network interfaces and connections')"><span class="quick-icon">🌐</span>Network</li>
+          <li class="quick-item" onclick="qcmd('Show Docker containers')"><span class="quick-icon">🐳</span>Docker</li>
+          <li class="quick-item" onclick="qcmd('Check firewall status and rules')"><span class="quick-icon">🛡️</span>Firewall</li>
+          <li class="quick-item" onclick="qcmd('List recent failed login attempts')"><span class="quick-icon">🚨</span>Auth Logs</li>
+          <li class="quick-item" onclick="qcmd('Show backup status')"><span class="quick-icon">💿</span>Backups</li>
+        </ul>
+      </div>
+
+      <div class="side-section">
+        <div class="side-title">Skills <span class="skill-badge badge-ok">10 active</span></div>
+        <ul class="quick-list" style="font-size:0.72rem;color:var(--text-muted)">
+          <li style="padding:0.2rem 0">monitoring · docker · systemd</li>
+          <li style="padding:0.2rem 0">security · network · storage</li>
+          <li style="padding:0.2rem 0">packages · users · firewall · backup</li>
         </ul>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    let ws = null;
-    let sessionKey = null;
-    let msgIdCounter = 0;
-    let currentRunId = null;
-    let streamingContent = '';
+<script>
+let ws=null, sessionKey=null, msgN=0, streaming='';
+const $=id=>document.getElementById(id);
 
-    document.getElementById('serverHost').textContent = location.hostname;
+$('hostDisplay').textContent=location.hostname;
+const saved=localStorage.getItem('cortexos-token');
+if(saved)$('tokenInput').value=saved;
+$('tokenInput').addEventListener('keydown',e=>{if(e.key==='Enter')doConnect()});
 
-    // Auto-fill token from localStorage
-    const savedToken = localStorage.getItem('cortexos-token');
-    if (savedToken) {
-      document.getElementById('tokenInput').value = savedToken;
+function wsUrl(){
+  return (location.protocol==='https:'?'wss:':'ws:')+'//'+location.host;
+}
+
+function doConnect(){
+  const tok=$('tokenInput').value.trim();
+  if(!tok){showErr('Enter your access token');return}
+  $('connectBtn').disabled=true;
+  $('connectBtn').textContent='Connecting…';
+  try{
+    ws=new WebSocket(wsUrl());
+    ws.onopen=()=>{
+      ws.send(JSON.stringify({jsonrpc:'2.0',method:'connect',id:'connect',params:{
+        clientId:'cortexos-dashboard',clientVersion:'0.1.0',role:'operator',
+        auth:{token:tok}
+      }}));
+    };
+    ws.onmessage=e=>{try{handle(JSON.parse(e.data))}catch{}};
+    ws.onclose=()=>{$('connDot').classList.add('off');$('connText').textContent='Disconnected'};
+    ws.onerror=()=>{showErr('Connection failed');resetLogin()};
+  }catch(e){showErr(e.message);resetLogin()}
+}
+
+function handle(d){
+  if(d.id==='connect'){
+    if(d.error){showErr(d.error.message||'Auth failed');resetLogin();return}
+    localStorage.setItem('cortexos-token',$('tokenInput').value.trim());
+    sessionKey=d.result?.sessionKey;
+    $('loginScreen').style.display='none';
+    $('app').classList.add('active');
+    addMsg('assistant','Connected to CortexOS Server. What would you like to do?\n\nTry the quick commands in the sidebar, or just ask me anything about this server.');
+    return;
+  }
+  if(d.method==='session.streamEvent'||d.type==='event'){
+    const p=d.params||d.payload||d, st=p.state, m=p.message;
+    if(st==='streaming'&&m?.content){
+      $('typingEl').classList.add('active');
+      const t=extractTxt(m.content);
+      if(t){streaming=t;updateStream(streaming)}
+    }else if(st==='finished'){
+      $('typingEl').classList.remove('active');
+      if(m?.content){const t=extractTxt(m.content);if(t){removeStream();addMsg('assistant',t)}}
+      streaming='';$('sendBtn').disabled=false;
+    }else if(st==='error'){
+      $('typingEl').classList.remove('active');
+      addMsg('assistant','❌ '+(m?.content||'Error'));$('sendBtn').disabled=false;
     }
+  }
+  if(d.result&&d.id?.startsWith('chat-')&&d.result.runId){}
+}
 
-    // Enter key on token input
-    document.getElementById('tokenInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') connect();
-    });
+function extractTxt(c){
+  if(typeof c==='string')return c;
+  if(Array.isArray(c))return c.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+  return '';
+}
 
-    function getWsUrl() {
-      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${proto}//${location.host}`;
-    }
+function doSend(){
+  const box=$('chatBox'),txt=box.value.trim();
+  if(!txt||!ws||ws.readyState!==1)return;
+  addMsg('user',txt);box.value='';box.style.height='auto';
+  $('sendBtn').disabled=true;
+  ws.send(JSON.stringify({jsonrpc:'2.0',method:'session.chat',id:'chat-'+(++msgN),
+    params:{sessionKey,message:txt}}));
+}
 
-    function connect() {
-      const token = document.getElementById('tokenInput').value.trim();
-      if (!token) {
-        showError('Please enter your access token');
-        return;
-      }
+function qcmd(t){$('chatBox').value=t;doSend()}
 
-      document.getElementById('connectBtn').disabled = true;
-      document.getElementById('connectBtn').textContent = 'Connecting...';
+function addMsg(role,text){
+  const el=document.createElement('div');
+  el.className='msg '+role;
+  el.innerHTML=`<div class="msg-head">${role==='user'?'You':'🖥️ CortexOS'}</div><div class="msg-body">${fmtText(text)}</div>`;
+  $('chatScroll').appendChild(el);
+  $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
+}
 
-      try {
-        ws = new WebSocket(getWsUrl());
+function fmtText(t){
+  // Basic markdown: code blocks, inline code, bold
+  let s=escHtml(t);
+  s=s.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre>$2</pre>');
+  s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  return s;
+}
 
-        ws.onopen = () => {
-          // Send connect frame with token auth
-          ws.send(JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'connect',
-            id: 'connect',
-            params: {
-              clientId: 'cortexos-dashboard',
-              clientVersion: '0.1.0',
-              role: 'operator',
-              auth: { token }
-            }
-          }));
-        };
+function escHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            handleMessage(data);
-          } catch {}
-        };
+function updateStream(t){
+  let el=$('stream-msg');
+  if(!el){el=document.createElement('div');el.id='stream-msg';el.className='msg assistant';
+    el.innerHTML='<div class="msg-head">🖥️ CortexOS</div><div class="msg-body"></div>';
+    $('chatScroll').appendChild(el)}
+  el.querySelector('.msg-body').innerHTML=fmtText(t);
+  $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
+}
+function removeStream(){const el=$('stream-msg');if(el)el.remove()}
 
-        ws.onclose = () => {
-          document.getElementById('statusDot').classList.add('disconnected');
-          document.getElementById('statusText').textContent = 'Disconnected';
-        };
+function onKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSend()}
+  setTimeout(()=>{const t=e.target;t.style.height='auto';t.style.height=Math.min(t.scrollHeight,140)+'px'},0);
+}
 
-        ws.onerror = () => {
-          showError('Connection failed. Check the gateway is running.');
-          resetLogin();
-        };
-      } catch (e) {
-        showError('Failed to connect: ' + e.message);
-        resetLogin();
-      }
-    }
+function showErr(m){const el=$('loginError');el.textContent=m;el.style.display='block'}
+function resetLogin(){$('connectBtn').disabled=false;$('connectBtn').textContent='Connect'}
+function doDisconnect(){
+  if(ws)ws.close();localStorage.removeItem('cortexos-token');
+  $('app').classList.remove('active');$('loginScreen').style.display='';
+  $('chatScroll').innerHTML='';resetLogin();
+}
 
-    function handleMessage(data) {
-      // Connect response
-      if (data.id === 'connect') {
-        if (data.error) {
-          showError(data.error.message || 'Authentication failed');
-          resetLogin();
-          return;
-        }
-        // Success — save token, show dashboard
-        localStorage.setItem('cortexos-token', document.getElementById('tokenInput').value.trim());
-        sessionKey = data.result?.sessionKey;
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        addMessage('assistant', '🖥️ Connected to CortexOS Server. What would you like to do?');
-        return;
-      }
-
-      // Chat events
-      if (data.method === 'session.streamEvent' || data.type === 'event') {
-        const payload = data.params || data.payload || data;
-        const state = payload.state;
-        const msg = payload.message;
-
-        if (state === 'streaming' && msg?.content) {
-          document.getElementById('typingIndicator').style.display = 'block';
-          // Accumulate streaming content
-          const text = extractText(msg.content);
-          if (text) {
-            streamingContent = text;
-            updateStreamingMessage(streamingContent);
-          }
-        } else if (state === 'finished') {
-          document.getElementById('typingIndicator').style.display = 'none';
-          if (msg?.content) {
-            const text = extractText(msg.content);
-            if (text) {
-              // Remove streaming message and add final
-              removeStreamingMessage();
-              addMessage('assistant', text);
-            }
-          }
-          streamingContent = '';
-          currentRunId = null;
-          document.getElementById('sendBtn').disabled = false;
-        } else if (state === 'error') {
-          document.getElementById('typingIndicator').style.display = 'none';
-          addMessage('assistant', '❌ Error: ' + (msg?.content || 'Unknown error'));
-          document.getElementById('sendBtn').disabled = false;
-        }
-      }
-
-      // RPC responses
-      if (data.result && data.id && data.id.startsWith('chat-')) {
-        // Chat send response — run started
-        if (data.result.runId) {
-          currentRunId = data.result.runId;
-        }
-      }
-    }
-
-    function extractText(content) {
-      if (typeof content === 'string') return content;
-      if (Array.isArray(content)) {
-        return content
-          .filter(b => b.type === 'text')
-          .map(b => b.text)
-          .join('\n');
-      }
-      return '';
-    }
-
-    function sendMessage() {
-      const input = document.getElementById('chatInput');
-      const text = input.value.trim();
-      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-
-      addMessage('user', text);
-      input.value = '';
-      input.style.height = 'auto';
-      document.getElementById('sendBtn').disabled = true;
-
-      const msgId = `chat-${++msgIdCounter}`;
-      ws.send(JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'session.chat',
-        id: msgId,
-        params: {
-          sessionKey: sessionKey,
-          message: text
-        }
-      }));
-    }
-
-    function quickCmd(text) {
-      document.getElementById('chatInput').value = text;
-      sendMessage();
-    }
-
-    function addMessage(role, text) {
-      const container = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = `msg ${role}`;
-      div.innerHTML = `
-        <div class="msg-label">${role === 'user' ? 'You' : '🖥️ CortexOS'}</div>
-        <div class="msg-bubble">${escapeHtml(text)}</div>
-      `;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function updateStreamingMessage(text) {
-      let el = document.getElementById('streaming-msg');
-      if (!el) {
-        const container = document.getElementById('chatMessages');
-        el = document.createElement('div');
-        el.id = 'streaming-msg';
-        el.className = 'msg assistant';
-        el.innerHTML = `
-          <div class="msg-label">🖥️ CortexOS</div>
-          <div class="msg-bubble"></div>
-        `;
-        container.appendChild(el);
-      }
-      el.querySelector('.msg-bubble').textContent = text;
-      const container = document.getElementById('chatMessages');
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function removeStreamingMessage() {
-      const el = document.getElementById('streaming-msg');
-      if (el) el.remove();
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function handleKey(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-      // Auto-resize
-      const ta = e.target;
-      setTimeout(() => {
-        ta.style.height = 'auto';
-        ta.style.height = Math.min(ta.scrollHeight, 150) + 'px';
-      }, 0);
-    }
-
-    function showError(msg) {
-      const el = document.getElementById('errorMsg');
-      el.textContent = msg;
-      el.style.display = 'block';
-    }
-
-    function resetLogin() {
-      document.getElementById('connectBtn').disabled = false;
-      document.getElementById('connectBtn').textContent = 'Connect';
-    }
-
-    function disconnect() {
-      if (ws) ws.close();
-      localStorage.removeItem('cortexos-token');
-      document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('loginScreen').style.display = '';
-      document.getElementById('chatMessages').innerHTML = '';
-      resetLogin();
-    }
-
-    // Auto-connect if token saved
-    if (savedToken) {
-      setTimeout(connect, 500);
-    }
-  </script>
+if(saved)setTimeout(doConnect,400);
+</script>
 </body>
 </html>
