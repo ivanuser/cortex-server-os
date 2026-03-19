@@ -812,6 +812,42 @@ EOF
         fi
     fi
     
+    # Ask for AI provider API key
+    local api_key=""
+    local api_provider="anthropic"
+    
+    if [[ "$UNATTENDED" == "false" ]]; then
+        echo ""
+        echo "CortexOS needs an AI provider API key to power the server management agent."
+        echo ""
+        echo "Supported providers:"
+        echo "  1) Anthropic (Claude) — recommended"
+        echo "  2) OpenAI (GPT)"
+        echo "  3) Google (Gemini)"
+        echo "  4) Skip — configure later via the web dashboard"
+        echo ""
+        echo -n "Choose provider [1]: "
+        read -r provider_choice
+        case "$provider_choice" in
+            2) api_provider="openai" ;;
+            3) api_provider="google" ;;
+            4) api_provider="skip" ;;
+            *) api_provider="anthropic" ;;
+        esac
+        
+        if [[ "$api_provider" != "skip" ]]; then
+            echo -n "Enter your ${api_provider} API key: "
+            read -rs api_key
+            echo ""
+            if [[ -n "$api_key" ]]; then
+                info "API key configured for ${api_provider}"
+                log "AI provider configured: ${api_provider}"
+            fi
+        else
+            info "Skipping API key — configure via web dashboard after install"
+        fi
+    fi
+    
     cat > /root/.openclaw/openclaw.json << OCEOF
 {
   "gateway": {
@@ -835,6 +871,24 @@ EOF
 OCEOF
     chmod 600 /root/.openclaw/openclaw.json
     log "OpenClaw gateway config created at /root/.openclaw/openclaw.json"
+    
+    # Write API key auth profile if provided
+    if [[ -n "$api_key" && "$api_provider" != "skip" ]]; then
+        mkdir -p /root/.openclaw/agents/main/agent
+        cat > /root/.openclaw/agents/main/agent/auth-profiles.json << AUTHEOF
+{
+  "version": 1,
+  "profiles": {
+    "${api_provider}:default": {
+      "provider": "${api_provider}",
+      "apiKey": "${api_key}"
+    }
+  }
+}
+AUTHEOF
+        chmod 600 /root/.openclaw/agents/main/agent/auth-profiles.json
+        log "API key configured for provider: ${api_provider}"
+    fi
     
     # Display connection info
     if [[ -n "$external_url" ]]; then
