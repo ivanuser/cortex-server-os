@@ -821,7 +821,9 @@ EOF
       "token": "${gateway_token}"
     },
     "controlUi": {
-      "allowedOrigins": [${allowed_origins}]
+      "allowedOrigins": [${allowed_origins}],
+      "allowInsecureAuth": true,
+      "root": "/var/lib/cortexos/dashboard"
     }
   },
   "ui": {
