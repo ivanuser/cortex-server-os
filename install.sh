@@ -684,37 +684,36 @@ install_skills() {
         "backup-manager"
     )
     
-    # TODO: In production, these would be downloaded from releases or git repos
-    # For now, create placeholder skill directories
+    # Install skills from repo if available, otherwise download from GitHub
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local repo_skills_dir="$script_dir/skills"
+    
     for skill in "${skills[@]}"; do
         local skill_dir="$skills_dir/$skill"
         mkdir -p "$skill_dir"
         
-        # Create basic skill metadata
-        cat > "$skill_dir/SKILL.md" << EOF
-# $skill
-
-Server management skill for CortexOS Server.
-
-## Description
-
-Provides AI-driven $skill capabilities for infrastructure management.
-
-## Capabilities
-
-- Automated $skill operations
-- Natural language interface
-- Error handling and recovery
-- Audit logging and compliance
-
-## Usage
-
-This skill is automatically loaded by the CortexOS Server agent.
-EOF
+        if [ -f "$repo_skills_dir/$skill/SKILL.md" ]; then
+            # Copy from local repo
+            cp "$repo_skills_dir/$skill/SKILL.md" "$skill_dir/SKILL.md"
+        else
+            # Download from GitHub
+            local url="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/skills/$skill/SKILL.md"
+            curl -sfL "$url" -o "$skill_dir/SKILL.md" 2>/dev/null || {
+                # Fallback: create minimal placeholder
+                echo "# $skill" > "$skill_dir/SKILL.md"
+                echo "" >> "$skill_dir/SKILL.md"
+                echo "Server management skill. See cortex-server-os repo for full documentation." >> "$skill_dir/SKILL.md"
+            }
+        fi
         
         chown -R "$USER_CORTEX:$GROUP_CORTEX" "$skill_dir"
         success "  ✅ ${skill}"
     done
+    
+    # Symlink skills into gateway's skill directory so the AI can find them
+    mkdir -p /root/.openclaw
+    ln -sfn "$skills_dir" /root/.openclaw/skills
+    log "Skills symlinked to /root/.openclaw/skills"
     
     log "Server management skills installed: ${#skills[@]} skills"
 }
