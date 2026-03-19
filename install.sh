@@ -953,6 +953,43 @@ first_run_setup() {
         warning "Service may not be fully ready - check status with: systemctl status cortex-server"
     fi
     
+    # Install MOTD (login banner)
+    cat > /etc/motd << 'MOTDEOF'
+
+   ██████╗ ██████╗ ██████╗ ████████╗███████╗██╗  ██╗ ██████╗ ███████╗
+  ██╔════╝██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝╚██╗██╔╝██╔═══██╗██╔════╝
+  ██║     ██║   ██║██████╔╝   ██║   █████╗   ╚███╔╝ ██║   ██║███████╗
+  ██║     ██║   ██║██╔══██╗   ██║   ██╔══╝   ██╔██╗ ██║   ██║╚════██║
+  ╚██████╗╚██████╔╝██║  ██║   ██║   ███████╗██╔╝ ██╗╚██████╔╝███████║
+   ╚═════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+                        S E R V E R
+
+  🤖 AI-Powered Infrastructure Management
+  
+  Quick commands:
+    openclaw chat         Talk to your AI sysadmin
+    systemctl status cortex-server   Service status
+    journalctl -u cortex-server -f   Live logs
+
+MOTDEOF
+    # Disable default Ubuntu MOTD scripts that clutter the login
+    chmod -x /etc/update-motd.d/* 2>/dev/null || true
+    log "MOTD banner installed"
+    
+    # Install CortexOS workspace files (SOUL, BOOTSTRAP, IDENTITY, etc.)
+    local workspace_dir="/root/.openclaw/workspace"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local repo_workspace="$script_dir/workspace"
+    
+    if [ -d "$repo_workspace" ]; then
+        for wfile in SOUL.md BOOTSTRAP.md IDENTITY.md USER.md TOOLS.md AGENTS.md HEARTBEAT.md; do
+            if [ -f "$repo_workspace/$wfile" ]; then
+                cp "$repo_workspace/$wfile" "$workspace_dir/$wfile" 2>/dev/null || true
+            fi
+        done
+        log "CortexOS workspace files installed"
+    fi
+    
     # Create first-run flag
     touch "$DATA_DIR/.first-run"
     chown "$USER_CORTEX:$GROUP_CORTEX" "$DATA_DIR/.first-run"
