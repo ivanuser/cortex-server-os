@@ -538,6 +538,11 @@ install_openclaw() {
     info "Using npm at: $(which npm) ($(npm --version))"
     log "npm path: $(which npm), version: $(npm --version)"
     
+    # Clean stale module directory if exists (prevents ENOTEMPTY on reinstall)
+    local npm_prefix="$(npm prefix -g)"
+    rm -rf "${npm_prefix}/lib/node_modules/.openclaw-cortex-"* 2>/dev/null || true
+    rm -rf "${npm_prefix}/lib/node_modules/openclaw-cortex" 2>/dev/null || true
+    
     # Always show npm output so we can debug failures
     info "Running: npm install -g openclaw-cortex@${OPENCLAW_VERSION}"
     npm install -g "openclaw-cortex@${OPENCLAW_VERSION}" 2>&1 | tee -a "$INSTALL_LOG" || fatal "Failed to install OpenClaw"
