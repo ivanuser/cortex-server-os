@@ -238,26 +238,25 @@
     .chat-scroll::-webkit-scrollbar { width: 6px; }
     .chat-scroll::-webkit-scrollbar-track { background: transparent; }
     .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    .msg { margin-bottom: 1.25rem; max-width: 88%; animation: msgIn 0.2s ease; }
+    .msg { margin-bottom: 1.5rem; animation: msgIn 0.2s ease; }
     @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .msg.user { margin-left: auto; }
+    .msg.user { display: flex; flex-direction: column; align-items: flex-end; }
     .msg-head {
       font-size: 0.65rem;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.4rem;
     }
-    .msg.user .msg-head { text-align: right; }
     .msg-body {
-      display: inline-block;
-      padding: 0.75rem 1rem;
+      display: block;
+      padding: 1rem 1.25rem;
       border-radius: 12px;
       font-size: 0.85rem;
-      line-height: 1.6;
-      white-space: pre-wrap;
+      line-height: 1.7;
       word-break: break-word;
+      max-width: 90%;
     }
     .msg.assistant .msg-body {
       background: var(--surface);
@@ -268,10 +267,19 @@
       background: linear-gradient(135deg, var(--accent), #5a4bd1);
       color: white;
       border-radius: 12px 12px 4px 12px;
+      max-width: 75%;
     }
+    .msg-body p { margin: 0.5rem 0; }
+    .msg-body p:first-child { margin-top: 0; }
+    .msg-body p:last-child { margin-bottom: 0; }
+    .msg-body ul, .msg-body ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+    .msg-body li { margin: 0.25rem 0; }
+    .msg-body h3, .msg-body h4 { margin: 0.75rem 0 0.25rem; font-size: 0.9rem; color: var(--accent-light); }
+    .msg-body hr { border: none; border-top: 1px solid var(--border); margin: 0.75rem 0; }
+    .msg-body strong { color: var(--text); font-weight: 600; }
     .msg-body code {
       background: rgba(0,0,0,0.35);
-      padding: 0.1rem 0.4rem;
+      padding: 0.15rem 0.45rem;
       border-radius: 4px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.8em;
@@ -279,14 +287,15 @@
     .msg-body pre {
       background: #0a0d16;
       border: 1px solid var(--border);
-      padding: 0.8rem;
+      padding: 0.8rem 1rem;
       border-radius: 8px;
       overflow-x: auto;
-      margin: 0.5rem 0;
+      margin: 0.6rem 0;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.78em;
       line-height: 1.5;
     }
+    .msg-body pre code { background: none; padding: 0; }
     .typing {
       padding: 0.5rem 1.25rem;
       font-size: 0.75rem;
@@ -699,11 +708,37 @@ function addMsg(role,text,rawHtml){
 }
 
 function fmtText(t){
-  // Basic markdown: code blocks, inline code, bold
   let s=escHtml(t);
-  s=s.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre>$2</pre>');
+  // Code blocks (must be before inline code)
+  s=s.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>');
+  // Inline code
   s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  // Headers
+  s=s.replace(/^#### (.+)$/gm,'<h4>$1</h4>');
+  s=s.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  // Bold
   s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  // Italic
+  s=s.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  // Horizontal rules
+  s=s.replace(/^---$/gm,'<hr>');
+  // Unordered lists
+  s=s.replace(/^- (.+)$/gm,'<li>$1</li>');
+  s=s.replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>');
+  // Numbered lists
+  s=s.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+  // Paragraphs (double newlines)
+  s=s.replace(/\n\n/g,'</p><p>');
+  s='<p>'+s+'</p>';
+  // Clean up empty paragraphs
+  s=s.replace(/<p>\s*<\/p>/g,'');
+  s=s.replace(/<p>(<h[34]>)/g,'$1');
+  s=s.replace(/(<\/h[34]>)<\/p>/g,'$1');
+  s=s.replace(/<p>(<ul>)/g,'$1');
+  s=s.replace(/(<\/ul>)<\/p>/g,'$1');
+  s=s.replace(/<p>(<hr>)<\/p>/g,'$1');
+  s=s.replace(/<p>(<pre>)/g,'$1');
+  s=s.replace(/(<\/pre>)<\/p>/g,'$1');
   return s;
 }
 
