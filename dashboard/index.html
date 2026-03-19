@@ -941,6 +941,20 @@ systemctl restart cortex-server</pre>
   addMsg('assistant', html, true);
 }
 
+// Paste image support
+document.addEventListener('paste',e=>{
+  const items=e.clipboardData?.items;
+  if(!items)return;
+  for(const item of items){
+    if(item.type.startsWith('image/')){
+      e.preventDefault();
+      const f=item.getAsFile();
+      if(f)handleFiles([f]);
+      return;
+    }
+  }
+});
+
 // Drag & drop support
 const chatArea=$('chatScroll');
 ['dragenter','dragover'].forEach(ev=>{
