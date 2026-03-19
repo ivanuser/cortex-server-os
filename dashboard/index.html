@@ -583,17 +583,17 @@ function handle(d){
   if(d.type==='res'&&d.id==='connect'){
     if(!d.ok){showErr(d.error?.message||'Auth failed');resetLogin();return}
     localStorage.setItem('cortexos-token',pendingToken);
-    sessionKey=d.payload?.sessionKey||d.result?.sessionKey;
+    // Webchat uses implicit session key
+    sessionKey='agent:main:webchat';
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
-    // Check if AI is configured by sending a test message
     checkAiReady();
     return;
   }
   // Also handle hello-ok (direct auth)
   if(d.type==='hello-ok'){
     localStorage.setItem('cortexos-token',pendingToken);
-    sessionKey=d.sessionKey;
+    sessionKey='agent:main:webchat';
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     checkAiReady();
@@ -660,8 +660,9 @@ function doSend(){
   if(!txt||!ws||ws.readyState!==1)return;
   addMsg('user',txt);box.value='';box.style.height='auto';
   $('sendBtn').disabled=true;
+  const idk=crypto.randomUUID();
   ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
-    params:{sessionKey,message:txt}}));
+    params:{sessionKey:sessionKey||'agent:main:webchat',message:txt,idempotencyKey:idk}}));
 }
 
 function qcmd(t){$('chatBox').value=t;doSend()}
@@ -709,10 +710,10 @@ function doDisconnect(){
 }
 
 function checkAiReady(){
-  // Send a hello message — if AI can't respond (no API key), we'll detect the error
   addMsg('assistant','Welcome to CortexOS Server. Initializing AI agent...');
+  const idk=crypto.randomUUID();
   ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
-    params:{sessionKey,message:'Hello. Introduce yourself briefly, then run a quick system health check.'}}));
+    params:{sessionKey:sessionKey||'agent:main:webchat',message:'Hello. Introduce yourself briefly, then run a quick system health check.',idempotencyKey:idk}}));
   $('sendBtn').disabled=true;
   $('typingEl').classList.add('active');
 }
