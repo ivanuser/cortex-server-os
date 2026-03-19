@@ -895,6 +895,13 @@ EOF
       "root": "/var/lib/cortexos/dashboard"
     }
   },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-20250514"
+      }
+    }
+  },
   "ui": {
     "assistant": {
       "name": "CortexOS Server"
@@ -903,6 +910,8 @@ EOF
 }
 OCEOF
     chmod 600 /root/.openclaw/openclaw.json
+    # Tighten state directory permissions
+    chmod 700 /root/.openclaw 2>/dev/null || true
     log "OpenClaw gateway config created at /root/.openclaw/openclaw.json"
     
     # Configure AI provider auth

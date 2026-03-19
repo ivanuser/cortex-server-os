@@ -521,7 +521,7 @@
   <div class="main">
     <div class="chat">
       <div class="chat-scroll" id="chatScroll"></div>
-      <div class="typing" id="typingEl">⚡ Athena is thinking</div>
+      <div class="typing" id="typingEl">⚡ CortexOS is thinking</div>
       <div class="chat-input">
         <div id="attachBar" class="attachments-bar" style="display:none"></div>
         <div class="input-row">
@@ -639,8 +639,14 @@ function handle(d){
   if(d.type==='res'&&d.id==='connect'){
     if(!d.ok){showErr(d.error?.message||'Auth failed');resetLogin();return}
     localStorage.setItem('cortexos-token',pendingToken);
-    // Webchat uses implicit session key
     sessionKey='agent:main:webchat';
+    // Use branding from gateway
+    const branding=d.payload?.branding||{};
+    if(branding.assistantName){
+      aiName=branding.assistantName;
+      localStorage.setItem('cortexos-ai-name',aiName);
+      $('typingEl').textContent='⚡ '+aiName+' is thinking';
+    }
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     checkAiReady();
@@ -774,7 +780,7 @@ function qcmd(t){$('chatBox').value=t;doSend()}
 function addMsg(role,text,rawHtml){
   const el=document.createElement('div');
   el.className='msg '+role;
-  el.innerHTML=`<div class="msg-head">${role==='user'?'You':'⚡ Athena'}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
+  el.innerHTML=`<div class="msg-head">${role==='user'?'You':'⚡ '+aiName+''}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
   // Persist to localStorage
@@ -793,7 +799,7 @@ function loadHistory(){
     history.forEach(m=>{ 
       const el=document.createElement('div');
       el.className='msg '+m.role;
-      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'⚡ Athena'}</div><div class="msg-body">${fmtText(m.text)}</div>`;
+      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'⚡ '+aiName+''}</div><div class="msg-body">${fmtText(m.text)}</div>`;
       $('chatScroll').appendChild(el);
     });
     $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
@@ -840,7 +846,7 @@ function escHtml(t){const d=document.createElement('div');d.textContent=t;return
 function updateStream(t){
   let el=$('stream-msg');
   if(!el){el=document.createElement('div');el.id='stream-msg';el.className='msg assistant';
-    el.innerHTML='<div class="msg-head">⚡ Athena</div><div class="msg-body"></div>';
+    el.innerHTML='<div class="msg-head">⚡ '+aiName+'</div><div class="msg-body"></div>';
     $('chatScroll').appendChild(el)}
   el.querySelector('.msg-body').innerHTML=fmtText(t);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
@@ -861,6 +867,7 @@ function doDisconnect(){
   $('chatScroll').innerHTML='';resetLogin();
 }
 
+let aiName=localStorage.getItem('cortexos-ai-name')||'CortexOS';
 let pendingAttachments=[];
 
 function handleFiles(files){
