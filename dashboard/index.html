@@ -997,23 +997,28 @@ function addMsg(role,text,rawHtml){
   el.innerHTML=`<div class="msg-head">${role==='user'?'You':'⚡ '+aiName+''}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
-  // Persist to localStorage
-  if(!rawHtml){
-    const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
-    history.push({role,text,ts:Date.now()});
-    // Keep last 100 messages
-    if(history.length>100)history.splice(0,history.length-100);
+  // Persist to localStorage (save raw HTML for messages with images)
+  const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
+  history.push({role, text:rawHtml?text:text, raw:!!rawHtml, ts:Date.now()});
+  // Keep last 50 messages (images are large in base64)
+  if(history.length>50)history.splice(0,history.length-50);
+  try{
     localStorage.setItem('cortexos-history',JSON.stringify(history));
+  }catch(e){
+    // localStorage full — trim older messages
+    history.splice(0,Math.floor(history.length/2));
+    try{localStorage.setItem('cortexos-history',JSON.stringify(history))}catch{}
   }
 }
 
 function loadHistory(){
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
   if(history.length>0){
-    history.forEach(m=>{ 
+    history.forEach(m=>{
       const el=document.createElement('div');
       el.className='msg '+m.role;
-      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'⚡ '+aiName+''}</div><div class="msg-body">${fmtText(m.text)}</div>`;
+      const content=m.raw?m.text:fmtText(m.text);
+      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'⚡ '+aiName}</div><div class="msg-body">${content}</div>`;
       $('chatScroll').appendChild(el);
     });
     $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
@@ -1232,9 +1237,7 @@ document.addEventListener('drop',e=>{
 // ==================== Health Polling ====================
 function startHealthPoll(){
   if(healthPollInterval)clearInterval(healthPollInterval);
-  // First poll immediately
   pollHealth();
-  // Then every 30 seconds
   healthPollInterval=setInterval(pollHealth,30000);
 }
 
@@ -1244,12 +1247,33 @@ function stopHealthPoll(){
 
 function pollHealth(){
   if(!ws||ws.readyState!==1)return;
-  console.log('[HEALTH] Polling...');
+  // Use status RPC which has more info
+  ws.send(JSON.stringify({type:'req',method:'status',id:'status-poll'}));
   ws.send(JSON.stringify({type:'req',method:'health',id:'health-poll'}));
 }
 
 function updateSystemStats(data){
-  console.log('[STATS] Updating sidebar with:', JSON.stringify(data).substring(0, 500));
+  console.log('[STATS] Raw data keys:', Object.keys(data));
+  console.log('[STATS] Data:', JSON.stringify(data).substring(0, 800));
+  
+  // Gateway health/status doesn't include system metrics, 
+  // but we can extract agent/session info
+  if(data.agents&&Array.isArray(data.agents)){
+    const agent=data.agents[0]||{};
+    if(agent.name)$('agentName').textContent=agent.name;
+  }
+  
+  // Extract uptime from gateway
+  if(data.ts){
+    $('sUp').textContent='Gateway OK';
+  }
+
+  // Extract model from status
+  if(data.model){
+    const m=data.model.split('/').pop()||data.model;
+    $('agentModel').textContent=m.split('-')[0];
+    localStorage.setItem('cortexos-model',data.model);
+  }
   
   // Try to extract system info from various response formats
   const system=data.system||data.os||data;
