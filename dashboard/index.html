@@ -958,6 +958,7 @@ function doSend(){
   
   // Show user message with inline image previews
   let displayHtml=fmtText(txt||'');
+  let historyText=txt||'';
   if(pendingAttachments.length>0){
     const previews=pendingAttachments.map(a=>{
       if(a.isImage){
@@ -966,8 +967,20 @@ function doSend(){
       return `<div style="margin-top:0.4rem;font-size:0.8rem">📄 ${a.fileName}</div>`;
     }).join('');
     displayHtml+=previews;
+    // For history, save filenames not base64
+    historyText+=(historyText?'\n':'')+'📎 '+pendingAttachments.map(a=>a.fileName).join(', ');
   }
-  addMsg('user',displayHtml,true);
+  // Add to DOM with full images
+  const el=document.createElement('div');
+  el.className='msg user';
+  el.innerHTML=`<div class="msg-head">You</div><div class="msg-body">${displayHtml}</div>`;
+  $('chatScroll').appendChild(el);
+  $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
+  // Save to history with text only (no base64)
+  const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
+  history.push({role:'user',text:historyText,ts:Date.now()});
+  if(history.length>100)history.splice(0,history.length-100);
+  try{localStorage.setItem('cortexos-history',JSON.stringify(history))}catch{}
   box.value='';box.style.height='auto';
   $('sendBtn').disabled=true;
   
@@ -991,23 +1004,22 @@ function doSend(){
 
 function qcmd(t){$('chatBox').value=t;doSend()}
 
-function addMsg(role,text,rawHtml){
+function addMsg(role,text,rawHtml,skipSave){
   const el=document.createElement('div');
   el.className='msg '+role;
-  el.innerHTML=`<div class="msg-head">${role==='user'?'You':'⚡ '+aiName+''}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
+  el.innerHTML=`<div class="msg-head">${role==='user'?'You':'⚡ '+aiName}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
-  // Persist to localStorage (save raw HTML for messages with images)
-  const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
-  history.push({role, text:rawHtml?text:text, raw:!!rawHtml, ts:Date.now()});
-  // Keep last 50 messages (images are large in base64)
-  if(history.length>50)history.splice(0,history.length-50);
-  try{
-    localStorage.setItem('cortexos-history',JSON.stringify(history));
-  }catch(e){
-    // localStorage full — trim older messages
-    history.splice(0,Math.floor(history.length/2));
-    try{localStorage.setItem('cortexos-history',JSON.stringify(history))}catch{}
+  // Persist to localStorage (text only, no base64)
+  if(!skipSave){
+    const saveText=rawHtml?text.replace(/<img[^>]*>/g,'[image]').replace(/<[^>]+>/g,''):text;
+    const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
+    history.push({role, text:saveText, ts:Date.now()});
+    if(history.length>100)history.splice(0,history.length-100);
+    try{localStorage.setItem('cortexos-history',JSON.stringify(history))}catch(e){
+      history.splice(0,Math.floor(history.length/2));
+      try{localStorage.setItem('cortexos-history',JSON.stringify(history))}catch{}
+    }
   }
 }
 
@@ -1017,8 +1029,7 @@ function loadHistory(){
     history.forEach(m=>{
       const el=document.createElement('div');
       el.className='msg '+m.role;
-      const content=m.raw?m.text:fmtText(m.text);
-      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'⚡ '+aiName}</div><div class="msg-body">${content}</div>`;
+      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'⚡ '+aiName}</div><div class="msg-body">${fmtText(m.text)}</div>`;
       $('chatScroll').appendChild(el);
     });
     $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
