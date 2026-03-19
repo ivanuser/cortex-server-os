@@ -743,6 +743,7 @@
 
 <script>
 let ws=null, sessionKey=null, msgN=0, streaming='', pendingToken='';
+let healthPollInterval=null;
 const $=id=>document.getElementById(id);
 
 $('hostDisplay').textContent=location.hostname;
@@ -778,8 +779,9 @@ function doConnect(){
     ws.onmessage=e=>{
       try{
         const d=JSON.parse(e.data);
-        // Debug: log all messages
-        console.log('[WS]', d.type, d.event||d.method||d.id||'', d.payload?.state||'');
+        // Debug: log EVERY message with full detail
+        console.log('[WS RAW]', JSON.stringify(d).substring(0, 500));
+        console.log('[WS]', 'type='+d.type, 'event='+(d.event||''), 'method='+(d.method||''), 'id='+(d.id||''), 'state='+(d.payload?.state||d.params?.state||''));
         // Handle challenge
         if(d.type==='event'&&d.event==='connect.challenge'){
           challengeReceived=true;
@@ -787,7 +789,7 @@ function doConnect(){
           return;
         }
         handle(d);
-      }catch{}
+      }catch(err){console.error('[WS parse error]', err, e.data?.substring?.(0,200))}
     };
     ws.onclose=()=>{$('connDot').classList.add('off');$('connText').textContent='Disconnected'};
     ws.onerror=()=>{showErr('Connection failed');resetLogin()};
@@ -833,12 +835,14 @@ function handle(d){
     checkAiReady();
     return;
   }
-  // Stream events — catch ALL event types
+  // Stream events — catch ALL event types and formats
   if(d.type==='event'){
     const ev=d.event||'';
     const p=d.payload||d.params||{};
     const st=p.state;
     const m=p.message;
+    
+    console.log('[EVENT]', 'event='+ev, 'state='+st, 'hasMessage='+(!!m), 'contentType='+(m?.content ? (typeof m.content === 'string' ? 'string' : 'array['+m.content.length+']') : 'none'));
     
     // Handle any event with a state field (streaming, finished, error)
     if(st==='streaming'){
@@ -847,7 +851,7 @@ function handle(d){
         const t=extractTxt(m.content);
         if(t){streaming=t;updateStream(streaming)}
       }
-    }else if(st==='finished'||st==='final'){
+    }else if(st==='finished'||st==='final'||st==='complete'||st==='done'){
       $('typingEl').classList.remove('active');
       if(m?.content){
         const t=extractTxt(m.content);
@@ -860,6 +864,10 @@ function handle(d){
             addMsg('assistant',t);
           }
         }
+      }else if(streaming){
+        // If we were streaming but finished msg has no content, finalize what we had
+        removeStream();
+        addMsg('assistant',streaming);
       }
       streaming='';$('sendBtn').disabled=false;
     }else if(st==='error'){
@@ -870,7 +878,14 @@ function handle(d){
       }else{
         addMsg('assistant','❌ '+errText);
       }
-      $('sendBtn').disabled=false;
+      streaming='';$('sendBtn').disabled=false;
+    }else if(!st && m?.content){
+      // Events without a state field but with message content (some gateway versions)
+      const t=extractTxt(m.content);
+      if(t){
+        $('typingEl').classList.add('active');
+        streaming=t;updateStream(streaming);
+      }
     }
     
     // Also catch embedded agent errors
@@ -879,6 +894,20 @@ function handle(d){
       showSetupNeeded();
       $('sendBtn').disabled=false;
     }
+  }
+  // Health/status poll response
+  if(d.type==='res'&&(d.id==='health-poll'||d.id==='status-poll')){
+    console.log('[HEALTH]', JSON.stringify(d).substring(0, 1000));
+    if(d.ok&&d.payload){
+      updateSystemStats(d.payload);
+    }else if(!d.ok&&d.id==='health-poll'){
+      // health method not available, try status instead
+      console.log('[HEALTH] health method failed, trying status...');
+      if(ws&&ws.readyState===1){
+        ws.send(JSON.stringify({type:'req',method:'status',id:'status-poll'}));
+      }
+    }
+    return;
   }
   // RPC response format
   if(d.type==='res'&&d.id?.startsWith('chat-')){
@@ -905,8 +934,21 @@ function handle(d){
 }
 
 function extractTxt(c){
+  if(!c)return '';
   if(typeof c==='string')return c;
-  if(Array.isArray(c))return c.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+  if(Array.isArray(c)){
+    return c.map(b=>{
+      if(typeof b==='string')return b;
+      if(b.type==='text'&&b.text)return b.text;
+      if(b.type==='tool_use')return ''; // skip tool calls
+      if(b.content)return extractTxt(b.content); // nested content
+      return '';
+    }).filter(Boolean).join('\n');
+  }
+  if(typeof c==='object'){
+    if(c.text)return c.text;
+    if(c.content)return extractTxt(c.content);
+  }
   return '';
 }
 
@@ -1033,6 +1075,7 @@ function onKey(e){
 function showErr(m){const el=$('loginError');el.textContent=m;el.style.display='block'}
 function resetLogin(){$('connectBtn').disabled=false;$('connectBtn').textContent='Connect'}
 function doDisconnect(){
+  stopHealthPoll();
   if(ws)ws.close();localStorage.removeItem('cortexos-token');
   localStorage.removeItem('cortexos-history');
   $('app').classList.remove('active');$('loginScreen').style.display='';
@@ -1083,6 +1126,9 @@ function removeAttach(i){
 }
 
 function checkAiReady(){
+  // Start health polling for system stats
+  startHealthPoll();
+  
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
   if(history.length>0){
     // Returning user — restore chat history
@@ -1182,6 +1228,112 @@ document.addEventListener('drop',e=>{
   e.preventDefault();e.stopPropagation();
   if(e.dataTransfer?.files?.length)handleFiles(e.dataTransfer.files);
 });
+
+// ==================== Health Polling ====================
+function startHealthPoll(){
+  if(healthPollInterval)clearInterval(healthPollInterval);
+  // First poll immediately
+  pollHealth();
+  // Then every 30 seconds
+  healthPollInterval=setInterval(pollHealth,30000);
+}
+
+function stopHealthPoll(){
+  if(healthPollInterval){clearInterval(healthPollInterval);healthPollInterval=null}
+}
+
+function pollHealth(){
+  if(!ws||ws.readyState!==1)return;
+  console.log('[HEALTH] Polling...');
+  ws.send(JSON.stringify({type:'req',method:'health',id:'health-poll'}));
+}
+
+function updateSystemStats(data){
+  console.log('[STATS] Updating sidebar with:', JSON.stringify(data).substring(0, 500));
+  
+  // Try to extract system info from various response formats
+  const system=data.system||data.os||data;
+  const memory=data.memory||system.memory||{};
+  const cpu=data.cpu||system.cpu||{};
+  const disk=data.disk||system.disk||data.storage||{};
+  
+  // CPU
+  let cpuPct=cpu.usage||cpu.percent||cpu.load||null;
+  if(cpuPct!==null){
+    cpuPct=Math.round(parseFloat(cpuPct));
+    $('sCpu').textContent=cpuPct+'%';
+    $('sCpuBar').style.width=cpuPct+'%';
+    $('sCpuBar').style.background=cpuPct>80?'var(--red)':cpuPct>60?'var(--yellow)':'var(--green)';
+  }
+  
+  // Memory
+  let memPct=memory.usedPercent||memory.percent||memory.usage||null;
+  let memText=null;
+  if(memory.used&&memory.total){
+    const usedGB=(memory.used/(1024*1024*1024)).toFixed(1);
+    const totalGB=(memory.total/(1024*1024*1024)).toFixed(1);
+    memText=usedGB+'/'+totalGB+'GB';
+    if(!memPct)memPct=Math.round((memory.used/memory.total)*100);
+  }
+  if(memPct!==null){
+    memPct=Math.round(parseFloat(memPct));
+    $('sMem').textContent=memText||(memPct+'%');
+    $('sMemBar').style.width=memPct+'%';
+    $('sMemBar').style.background=memPct>85?'var(--red)':memPct>70?'var(--yellow)':'var(--accent-light)';
+  }
+  
+  // Disk
+  let diskPct=disk.usedPercent||disk.percent||disk.usage||null;
+  let diskText=null;
+  if(disk.used&&disk.total){
+    const usedGB=(disk.used/(1024*1024*1024)).toFixed(1);
+    const totalGB=(disk.total/(1024*1024*1024)).toFixed(1);
+    diskText=usedGB+'/'+totalGB+'GB';
+    if(!diskPct)diskPct=Math.round((disk.used/disk.total)*100);
+  }
+  if(diskPct!==null){
+    diskPct=Math.round(parseFloat(diskPct));
+    $('sDisk').textContent=diskText||(diskPct+'%');
+    $('sDiskBar').style.width=diskPct+'%';
+    $('sDiskBar').style.background=diskPct>90?'var(--red)':diskPct>75?'var(--yellow)':'var(--yellow)';
+  }
+  
+  // Uptime
+  let uptime=data.uptime||system.uptime||data.uptimeSeconds||null;
+  if(uptime!==null){
+    if(typeof uptime==='number'){
+      $('sUp').textContent=fmtUptime(uptime);
+    }else{
+      $('sUp').textContent=String(uptime);
+    }
+    $('panelUptime').textContent=$('sUp').textContent;
+  }
+  
+  // Version info
+  if(data.version||data.server?.version){
+    const ver=data.version||data.server?.version;
+    $('panelGateway').textContent='v'+ver;
+  }
+  
+  // Model info  
+  if(data.model||data.defaultModel){
+    const model=data.model||data.defaultModel;
+    localStorage.setItem('cortexos-model',model);
+    $('agentModel').textContent=model.split('/').pop().split('-')[0]||model;
+    $('panelModel').textContent=model;
+    $('panelProvider').textContent=model.split('/')[0]||'—';
+  }
+}
+
+function fmtUptime(seconds){
+  if(typeof seconds!=='number'||seconds<0)return '—';
+  const days=Math.floor(seconds/86400);
+  const hrs=Math.floor((seconds%86400)/3600);
+  const mins=Math.floor((seconds%3600)/60);
+  if(days>0)return days+'d '+hrs+'h';
+  if(hrs>0)return hrs+'h '+mins+'m';
+  return mins+'m';
+}
 
 if(saved)setTimeout(doConnect,400);
 </script>
