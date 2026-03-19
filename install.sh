@@ -581,6 +581,15 @@ install_openclaw() {
     local openclaw_version=$("$openclaw_bin" --version 2>/dev/null | head -1 || echo "unknown")
     success "OpenClaw installed successfully: $openclaw_version"
     log "OpenClaw installation completed: $openclaw_version"
+    
+    # Install sharp for image processing (use 0.32.x for broader CPU compatibility)
+    local oc_pkg_dir="$(npm prefix -g)/lib/node_modules/openclaw-cortex"
+    if [ -d "$oc_pkg_dir" ]; then
+        info "Installing image processing support..."
+        cd "$oc_pkg_dir" && npm install sharp@0.32.6 2>&1 | tee -a "$INSTALL_LOG" | tail -2
+        cd - > /dev/null
+        log "Sharp image module installed"
+    fi
 }
 
 # ==============================================================================
