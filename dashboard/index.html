@@ -617,7 +617,18 @@ function handle(d){
       }
     }else if(st==='finished'||st==='final'){
       $('typingEl').classList.remove('active');
-      if(m?.content){const t=extractTxt(m.content);if(t){removeStream();addMsg('assistant',t)}}
+      if(m?.content){
+        const t=extractTxt(m.content);
+        if(t){
+          removeStream();
+          // Check if the "finished" response is actually an API key error
+          if(t.includes('No API key')||t.includes('API key found')||t.includes('Agent failed before reply')){
+            showSetupNeeded();
+          }else{
+            addMsg('assistant',t);
+          }
+        }
+      }
       streaming='';$('sendBtn').disabled=false;
     }else if(st==='error'){
       $('typingEl').classList.remove('active');
