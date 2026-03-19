@@ -564,6 +564,8 @@ function doConnect(){
     ws.onmessage=e=>{
       try{
         const d=JSON.parse(e.data);
+        // Debug: log all messages
+        console.log('[WS]', d.type, d.event||d.method||d.id||'', d.payload?.state||'');
         // Handle challenge
         if(d.type==='event'&&d.event==='connect.challenge'){
           challengeReceived=true;
@@ -599,30 +601,40 @@ function handle(d){
     checkAiReady();
     return;
   }
-  // Stream events
+  // Stream events — catch ALL event types
   if(d.type==='event'){
     const ev=d.event||'';
     const p=d.payload||d.params||{};
-    if(ev==='session.streamEvent'||ev.includes('stream')){
-      const st=p.state, m=p.message;
-      if(st==='streaming'&&m?.content){
-        $('typingEl').classList.add('active');
+    const st=p.state;
+    const m=p.message;
+    
+    // Handle any event with a state field (streaming, finished, error)
+    if(st==='streaming'){
+      $('typingEl').classList.add('active');
+      if(m?.content){
         const t=extractTxt(m.content);
         if(t){streaming=t;updateStream(streaming)}
-      }else if(st==='finished'){
-        $('typingEl').classList.remove('active');
-        if(m?.content){const t=extractTxt(m.content);if(t){removeStream();addMsg('assistant',t)}}
-        streaming='';$('sendBtn').disabled=false;
-      }else if(st==='error'){
-        $('typingEl').classList.remove('active');
-        const errText=extractTxt(m?.content)||'Error';
-        if(errText.includes('No API key')||errText.includes('auth')){
-          showSetupNeeded();
-        }else{
-          addMsg('assistant','❌ '+errText);
-        }
-        $('sendBtn').disabled=false;
       }
+    }else if(st==='finished'||st==='final'){
+      $('typingEl').classList.remove('active');
+      if(m?.content){const t=extractTxt(m.content);if(t){removeStream();addMsg('assistant',t)}}
+      streaming='';$('sendBtn').disabled=false;
+    }else if(st==='error'){
+      $('typingEl').classList.remove('active');
+      const errText=extractTxt(m?.content)||p.error||'Error';
+      if(typeof errText==='string'&&(errText.includes('No API key')||errText.includes('API key'))){
+        showSetupNeeded();
+      }else{
+        addMsg('assistant','❌ '+errText);
+      }
+      $('sendBtn').disabled=false;
+    }
+    
+    // Also catch embedded agent errors
+    if(p.error&&typeof p.error==='string'&&p.error.includes('API key')){
+      $('typingEl').classList.remove('active');
+      showSetupNeeded();
+      $('sendBtn').disabled=false;
     }
   }
   // RPC response format
