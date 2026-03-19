@@ -817,19 +817,20 @@ EOF
         fi
     fi
     
-    # Ask for AI provider API key
+    # Ask for AI provider configuration
     local api_key=""
     local api_provider="anthropic"
+    local auth_method=""
     
     if [[ "$UNATTENDED" == "false" ]]; then
         echo ""
-        echo "CortexOS needs an AI provider API key to power the server management agent."
+        echo "CortexOS needs an AI provider to power the server management agent."
         echo ""
         echo "Supported providers:"
         echo "  1) Anthropic (Claude) — recommended"
         echo "  2) OpenAI (GPT)"
         echo "  3) Google (Gemini)"
-        echo "  4) Skip — configure later via the web dashboard"
+        echo "  4) Skip — configure later"
         echo ""
         echo -n "Choose provider [1]: "
         read -r provider_choice
@@ -840,16 +841,43 @@ EOF
             *) api_provider="anthropic" ;;
         esac
         
-        if [[ "$api_provider" != "skip" ]]; then
+        if [[ "$api_provider" == "anthropic" ]]; then
+            echo ""
+            echo "Anthropic auth options:"
+            echo "  1) Setup token (Claude subscription — recommended)"
+            echo "     Run 'claude setup-token' on any machine, paste the token here"
+            echo "  2) API key (from console.anthropic.com)"
+            echo "  3) Skip — configure after install"
+            echo ""
+            echo -n "Choose auth method [1]: "
+            read -r auth_choice
+            case "$auth_choice" in
+                2) auth_method="apikey" ;;
+                3) auth_method="skip" ;;
+                *) auth_method="setup-token" ;;
+            esac
+            
+            if [[ "$auth_method" == "setup-token" ]]; then
+                echo ""
+                echo "Paste your setup token (from 'claude setup-token'):"
+                read -rs api_key
+                echo ""
+            elif [[ "$auth_method" == "apikey" ]]; then
+                echo -n "Enter your Anthropic API key (sk-ant-...): "
+                read -rs api_key
+                echo ""
+            fi
+        elif [[ "$api_provider" != "skip" ]]; then
             echo -n "Enter your ${api_provider} API key: "
             read -rs api_key
             echo ""
-            if [[ -n "$api_key" ]]; then
-                info "API key configured for ${api_provider}"
-                log "AI provider configured: ${api_provider}"
-            fi
-        else
-            info "Skipping API key — configure via web dashboard after install"
+        fi
+        
+        if [[ -n "$api_key" ]]; then
+            info "Auth configured for ${api_provider}"
+            log "AI provider configured: ${api_provider} (${auth_method:-apikey})"
+        elif [[ "$api_provider" != "skip" && "$auth_method" != "skip" ]]; then
+            info "No key provided — configure after install with: openclaw models auth setup-token --provider ${api_provider}"
         fi
     fi
     
@@ -877,10 +905,34 @@ OCEOF
     chmod 600 /root/.openclaw/openclaw.json
     log "OpenClaw gateway config created at /root/.openclaw/openclaw.json"
     
-    # Write API key auth profile if provided
+    # Configure AI provider auth
     if [[ -n "$api_key" && "$api_provider" != "skip" ]]; then
-        mkdir -p /root/.openclaw/agents/main/agent
-        cat > /root/.openclaw/agents/main/agent/auth-profiles.json << AUTHEOF
+        if [[ "$api_provider" == "anthropic" && "$auth_method" == "setup-token" ]]; then
+            # Use openclaw CLI to paste the setup token
+            info "Configuring Anthropic via setup token..."
+            echo "$api_key" | /usr/local/bin/openclaw models auth paste-token --provider anthropic 2>&1 | tee -a "$INSTALL_LOG" || {
+                warning "Setup token paste failed — configure manually after install:"
+                info "  openclaw models auth setup-token --provider anthropic"
+            }
+        elif [[ "$api_provider" == "anthropic" && "$auth_method" == "apikey" ]]; then
+            # Direct API key
+            mkdir -p /root/.openclaw/agents/main/agent
+            cat > /root/.openclaw/agents/main/agent/auth-profiles.json << AUTHEOF
+{
+  "version": 1,
+  "profiles": {
+    "anthropic:default": {
+      "provider": "anthropic",
+      "apiKey": "${api_key}"
+    }
+  }
+}
+AUTHEOF
+            chmod 600 /root/.openclaw/agents/main/agent/auth-profiles.json
+        else
+            # OpenAI / Google — direct API key
+            mkdir -p /root/.openclaw/agents/main/agent
+            cat > /root/.openclaw/agents/main/agent/auth-profiles.json << AUTHEOF
 {
   "version": 1,
   "profiles": {
@@ -891,8 +943,9 @@ OCEOF
   }
 }
 AUTHEOF
-        chmod 600 /root/.openclaw/agents/main/agent/auth-profiles.json
-        log "API key configured for provider: ${api_provider}"
+            chmod 600 /root/.openclaw/agents/main/agent/auth-profiles.json
+        fi
+        log "Auth configured for provider: ${api_provider} (${auth_method:-apikey})"
     fi
     
     # Display connection info

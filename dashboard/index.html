@@ -738,29 +738,19 @@ function showSetupNeeded(){
   <p style="color:var(--text-dim);font-size:0.8rem;margin-top:0.25rem">CortexOS needs an AI provider API key to work.</p>
 </div>
 
-<div style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem">Option 1 — SSH Setup (recommended)</div>
+<div style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem">Option 1 — Setup Token (Claude subscription)</div>
+<pre style="background:#0a0d16;border:1px solid var(--border);padding:0.75rem;border-radius:8px;font-size:0.75rem;overflow-x:auto;margin-bottom:1rem;line-height:1.5"># On any machine with Claude CLI:
+claude setup-token
+
+# Then on this server:
+ssh root@${location.hostname}
+openclaw models auth paste-token --provider anthropic
+# Paste the token when prompted
+systemctl restart cortex-server</pre>
+
+<div style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem">Option 2 — API Key (console.anthropic.com)</div>
 <pre style="background:#0a0d16;border:1px solid var(--border);padding:0.75rem;border-radius:8px;font-size:0.75rem;overflow-x:auto;margin-bottom:1rem;line-height:1.5">ssh root@${location.hostname}
-openclaw configure --section model</pre>
-
-<div style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem">Option 2 — Manual Key File</div>
-<pre style="background:#0a0d16;border:1px solid var(--border);padding:0.75rem;border-radius:8px;font-size:0.75rem;overflow-x:auto;margin-bottom:1rem;line-height:1.5"># For Anthropic (Claude):
 export ANTHROPIC_API_KEY="sk-ant-your-key"
-
-# Or write auth file:
-mkdir -p /root/.openclaw/agents/main/agent
-cat > /root/.openclaw/agents/main/agent/auth-profiles.json &lt;&lt; 'EOF'
-{
-  "version": 1,
-  "profiles": {
-    "anthropic:default": {
-      "provider": "anthropic",
-      "apiKey": "sk-ant-your-key-here"
-    }
-  }
-}
-EOF
-
-# Then restart:
 systemctl restart cortex-server</pre>
 
 <p style="font-size:0.75rem;color:var(--text-dim)">After configuring, refresh this page to connect.</p>
