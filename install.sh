@@ -942,6 +942,30 @@ setup_dashboard() {
     
     info "Configuring web dashboard on port ${DASHBOARD_PORT}..."
     
+    # Deploy dashboard files
+    local dashboard_dir="/var/lib/cortexos/dashboard"
+    mkdir -p "$dashboard_dir"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    if [ -f "$script_dir/dashboard/index.html" ]; then
+        cp "$script_dir/dashboard/"* "$dashboard_dir/" 2>/dev/null || true
+        log "Dashboard files deployed from repo"
+    else
+        # Download from GitHub
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/dashboard/index.html" \
+            -o "$dashboard_dir/index.html" 2>/dev/null || warning "Failed to download dashboard"
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/dashboard/logo.png" \
+            -o "$dashboard_dir/logo.png" 2>/dev/null || true
+        log "Dashboard files downloaded from GitHub"
+    fi
+    
+    # Verify dashboard deployed
+    if [ -f "$dashboard_dir/index.html" ]; then
+        success "Dashboard deployed to $dashboard_dir"
+    else
+        warning "Dashboard files not found — web UI will not be available"
+    fi
+    
     # Configure firewall for dashboard port
     if command -v ufw &>/dev/null; then
         ufw allow "$DASHBOARD_PORT/tcp" comment "CortexOS Server Dashboard" 2>/dev/null || true
