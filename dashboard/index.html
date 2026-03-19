@@ -705,6 +705,27 @@ function addMsg(role,text,rawHtml){
   el.innerHTML=`<div class="msg-head">${role==='user'?'You':'🖥️ CortexOS'}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
+  // Persist to localStorage
+  if(!rawHtml){
+    const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
+    history.push({role,text,ts:Date.now()});
+    // Keep last 100 messages
+    if(history.length>100)history.splice(0,history.length-100);
+    localStorage.setItem('cortexos-history',JSON.stringify(history));
+  }
+}
+
+function loadHistory(){
+  const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
+  if(history.length>0){
+    history.forEach(m=>{ 
+      const el=document.createElement('div');
+      el.className='msg '+m.role;
+      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'🖥️ CortexOS'}</div><div class="msg-body">${fmtText(m.text)}</div>`;
+      $('chatScroll').appendChild(el);
+    });
+    $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
+  }
 }
 
 function fmtText(t){
@@ -763,17 +784,26 @@ function showErr(m){const el=$('loginError');el.textContent=m;el.style.display='
 function resetLogin(){$('connectBtn').disabled=false;$('connectBtn').textContent='Connect'}
 function doDisconnect(){
   if(ws)ws.close();localStorage.removeItem('cortexos-token');
+  localStorage.removeItem('cortexos-history');
   $('app').classList.remove('active');$('loginScreen').style.display='';
   $('chatScroll').innerHTML='';resetLogin();
 }
 
 function checkAiReady(){
-  addMsg('assistant','Welcome to CortexOS Server. Initializing AI agent...');
-  const idk=crypto.randomUUID();
-  ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
-    params:{sessionKey:sessionKey||'agent:main:webchat',message:'Hello. Introduce yourself briefly, then run a quick system health check.',idempotencyKey:idk}}));
-  $('sendBtn').disabled=true;
-  $('typingEl').classList.add('active');
+  const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
+  if(history.length>0){
+    // Returning user — restore chat history
+    loadHistory();
+    $('sendBtn').disabled=false;
+  }else{
+    // First time — send intro message
+    addMsg('assistant','Welcome to CortexOS Server. Initializing AI agent...');
+    const idk=crypto.randomUUID();
+    ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
+      params:{sessionKey:sessionKey||'agent:main:webchat',message:'Hello. Introduce yourself briefly, then run a quick system health check.',idempotencyKey:idk}}));
+    $('sendBtn').disabled=true;
+    $('typingEl').classList.add('active');
+  }
 }
 
 function showSetupNeeded(){
