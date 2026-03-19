@@ -321,6 +321,48 @@
       flex-shrink: 0;
     }
     .input-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .btn-attach {
+      padding: 0.7rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-attach:hover { border-color: var(--accent); color: var(--accent-light); }
+    .attachments-bar {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 0 0;
+      flex-wrap: wrap;
+    }
+    .attach-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.6rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+    .attach-chip img {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+    .attach-remove {
+      cursor: pointer;
+      color: var(--red);
+      font-size: 0.8rem;
+      margin-left: 0.25rem;
+    }
+    .attach-remove:hover { color: #ff8888; }
     .input-box {
       flex: 1;
       padding: 0.7rem 1rem;
@@ -481,7 +523,10 @@
       <div class="chat-scroll" id="chatScroll"></div>
       <div class="typing" id="typingEl">🖥️ CortexOS is thinking</div>
       <div class="chat-input">
+        <div id="attachBar" class="attachments-bar" style="display:none"></div>
         <div class="input-row">
+          <button class="btn-attach" onclick="$('fileInput').click()" title="Attach file">📎</button>
+          <input type="file" id="fileInput" multiple accept="image/*,.pdf,.txt,.md,.json,.yaml,.yml,.csv,.log,.conf,.xml,.sh,.py,.js,.ts" style="display:none" onchange="handleFiles(this.files)">
           <textarea class="input-box" id="chatBox" rows="1" placeholder="Ask anything… try 'show me system health'" onkeydown="onKey(event)"></textarea>
           <button class="btn-send" id="sendBtn" onclick="doSend()">Send</button>
         </div>
@@ -689,12 +734,34 @@ function extractTxt(c){
 
 function doSend(){
   const box=$('chatBox'),txt=box.value.trim();
-  if(!txt||!ws||ws.readyState!==1)return;
-  addMsg('user',txt);box.value='';box.style.height='auto';
+  if((!txt&&pendingAttachments.length===0)||!ws||ws.readyState!==1)return;
+  
+  // Show user message with attachment indicators
+  let displayTxt=txt;
+  if(pendingAttachments.length>0){
+    const names=pendingAttachments.map(a=>a.fileName).join(', ');
+    displayTxt=txt?(txt+'\n📎 '+names):('📎 '+names);
+  }
+  addMsg('user',displayTxt);
+  box.value='';box.style.height='auto';
   $('sendBtn').disabled=true;
+  
   const idk=crypto.randomUUID();
-  ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
-    params:{sessionKey:sessionKey||'agent:main:webchat',message:txt,idempotencyKey:idk}}));
+  const params={sessionKey:sessionKey||'agent:main:webchat',message:txt||'See attached file(s).',idempotencyKey:idk};
+  
+  // Add attachments
+  if(pendingAttachments.length>0){
+    params.attachments=pendingAttachments.map(a=>({
+      type:a.isImage?'image':'file',
+      mimeType:a.mimeType,
+      fileName:a.fileName,
+      content:a.data
+    }));
+    pendingAttachments=[];
+    renderAttachBar();
+  }
+  
+  ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),params}));
 }
 
 function qcmd(t){$('chatBox').value=t;doSend()}
@@ -789,6 +856,41 @@ function doDisconnect(){
   $('chatScroll').innerHTML='';resetLogin();
 }
 
+let pendingAttachments=[];
+
+function handleFiles(files){
+  for(const f of files){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const base64=e.target.result.split(',')[1];
+      const isImage=f.type.startsWith('image/');
+      pendingAttachments.push({
+        fileName:f.name,
+        mimeType:f.type||'application/octet-stream',
+        data:base64,
+        isImage
+      });
+      renderAttachBar();
+    };
+    reader.readAsDataURL(f);
+  }
+  $('fileInput').value='';
+}
+
+function renderAttachBar(){
+  const bar=$('attachBar');
+  if(pendingAttachments.length===0){bar.style.display='none';bar.innerHTML='';return}
+  bar.style.display='flex';
+  bar.innerHTML=pendingAttachments.map((a,i)=>
+    `<div class="attach-chip">${a.isImage?`<img src="data:${a.mimeType};base64,${a.data}">`:'📄'} ${a.fileName} <span class="attach-remove" onclick="removeAttach(${i})">✕</span></div>`
+  ).join('');
+}
+
+function removeAttach(i){
+  pendingAttachments.splice(i,1);
+  renderAttachBar();
+}
+
 function checkAiReady(){
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
   if(history.length>0){
@@ -833,6 +935,16 @@ systemctl restart cortex-server</pre>
 </div>`;
   addMsg('assistant', html, true);
 }
+
+// Drag & drop support
+const chatArea=$('chatScroll');
+['dragenter','dragover'].forEach(ev=>{
+  document.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation()});
+});
+document.addEventListener('drop',e=>{
+  e.preventDefault();e.stopPropagation();
+  if(e.dataTransfer?.files?.length)handleFiles(e.dataTransfer.files);
+});
 
 if(saved)setTimeout(doConnect,400);
 </script>
