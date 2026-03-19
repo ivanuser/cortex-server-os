@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CortexOS Server</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --border: #1e293b;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Login Screen */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo-text {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+    .logo-text span { color: var(--accent); }
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      margin-bottom: 2rem;
+    }
+    .input-group {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .input-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus { border-color: var(--accent); }
+    .input-group input::placeholder { color: #475569; }
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error-msg {
+      color: var(--red);
+      font-size: 0.8rem;
+      margin-top: 0.75rem;
+      display: none;
+    }
+    .server-info {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* Dashboard */
+    .dashboard { display: none; min-height: 100vh; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-title { font-weight: 600; font-size: 1rem; }
+    .topbar-title span { color: var(--accent); }
+    .topbar-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .status-dot.disconnected { background: var(--red); }
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .btn-sm:hover { border-color: var(--text-dim); color: var(--text); }
+
+    .main-content {
+      display: flex;
+      height: calc(100vh - 49px);
+    }
+
+    /* Chat Panel */
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+    .msg {
+      margin-bottom: 1rem;
+      max-width: 85%;
+    }
+    .msg.user {
+      margin-left: auto;
+      text-align: right;
+    }
+    .msg-label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .msg-bubble {
+      display: inline-block;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.assistant .msg-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .msg.user .msg-bubble {
+      background: var(--accent);
+      color: white;
+    }
+    .msg-bubble code {
+      background: rgba(0,0,0,0.3);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em;
+    }
+    .msg-bubble pre {
+      background: rgba(0,0,0,0.4);
+      padding: 0.75rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.5rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em;
+    }
+    .chat-input-area {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    #chatInput {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      resize: none;
+      min-height: 42px;
+      max-height: 150px;
+      font-family: inherit;
+    }
+    #chatInput:focus { border-color: var(--accent); }
+    .send-btn {
+      padding: 0.75rem 1.25rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .send-btn:hover { background: var(--accent-hover); }
+    .send-btn:disabled { opacity: 0.5; }
+    .typing-indicator {
+      padding: 0.5rem 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      display: none;
+    }
+
+    /* Info Sidebar */
+    .sidebar {
+      width: 300px;
+      border-left: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-y: auto;
+      background: var(--surface);
+    }
+    .sidebar h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+    }
+    .stat-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .stat-label { font-size: 0.7rem; color: var(--text-dim); }
+    .stat-value { font-size: 1.1rem; font-weight: 600; margin-top: 0.25rem; }
+    .stat-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s;
+    }
+    .skills-list {
+      list-style: none;
+      margin-top: 1rem;
+    }
+    .skills-list li {
+      padding: 0.375rem 0;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+    .skills-list li:last-child { border-bottom: none; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .login-card { padding: 2rem 1.5rem; }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div class="login-container" id="loginScreen">
+    <div class="login-card">
+      <div class="logo-text"><span>Cortex</span>OS</div>
+      <div class="subtitle">Server Management Console</div>
+
+      <div class="input-group">
+        <label>Access Token</label>
+        <input type="password" id="tokenInput" placeholder="Paste your gateway token" autocomplete="off">
+      </div>
+      <button class="btn" id="connectBtn" onclick="connect()">Connect</button>
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="server-info">
+        <div>🖥️ <span id="serverHost"></span></div>
+        <div style="margin-top:0.25rem">Gateway WebSocket on port 18789</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+    <div class="topbar">
+      <div class="topbar-title"><span>Cortex</span>OS Server</div>
+      <div class="topbar-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connected</span>
+        <button class="btn-sm" onclick="disconnect()">Disconnect</button>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="chat-panel">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="typing-indicator" id="typingIndicator">🖥️ CortexOS is thinking...</div>
+        <div class="chat-input-area">
+          <div class="chat-input-row">
+            <textarea id="chatInput" rows="1" placeholder="Ask anything... try 'show me system health'" onkeydown="handleKey(event)"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar" id="sidebar">
+        <h3>System Status</h3>
+        <div class="stat-card">
+          <div class="stat-label">CPU</div>
+          <div class="stat-value" id="cpuVal">--</div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="cpuBar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Memory</div>
+          <div class="stat-value" id="memVal">--</div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="memBar" style="width:0%;background:var(--accent)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Disk</div>
+          <div class="stat-value" id="diskVal">--</div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="diskBar" style="width:0%;background:var(--yellow)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Uptime</div>
+          <div class="stat-value" id="uptimeVal">--</div>
+        </div>
+
+        <h3 style="margin-top:1.5rem">Quick Commands</h3>
+        <ul class="skills-list">
+          <li onclick="quickCmd('Show me system health')" style="cursor:pointer">📊 System Health</li>
+          <li onclick="quickCmd('Check for security issues')" style="cursor:pointer">🔒 Security Audit</li>
+          <li onclick="quickCmd('List running services')" style="cursor:pointer">⚙️ Services</li>
+          <li onclick="quickCmd('Check for package updates')" style="cursor:pointer">📦 Updates</li>
+          <li onclick="quickCmd('Show disk usage')" style="cursor:pointer">💾 Disk Usage</li>
+          <li onclick="quickCmd('Show network status')" style="cursor:pointer">🌐 Network</li>
+          <li onclick="quickCmd('Show Docker containers')" style="cursor:pointer">🐳 Docker</li>
+          <li onclick="quickCmd('Check firewall status')" style="cursor:pointer">🛡️ Firewall</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let sessionKey = null;
+    let msgIdCounter = 0;
+    let currentRunId = null;
+    let streamingContent = '';
+
+    document.getElementById('serverHost').textContent = location.hostname;
+
+    // Auto-fill token from localStorage
+    const savedToken = localStorage.getItem('cortexos-token');
+    if (savedToken) {
+      document.getElementById('tokenInput').value = savedToken;
+    }
+
+    // Enter key on token input
+    document.getElementById('tokenInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') connect();
+    });
+
+    function getWsUrl() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${proto}//${location.host}`;
+    }
+
+    function connect() {
+      const token = document.getElementById('tokenInput').value.trim();
+      if (!token) {
+        showError('Please enter your access token');
+        return;
+      }
+
+      document.getElementById('connectBtn').disabled = true;
+      document.getElementById('connectBtn').textContent = 'Connecting...';
+
+      try {
+        ws = new WebSocket(getWsUrl());
+
+        ws.onopen = () => {
+          // Send connect frame with token auth
+          ws.send(JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'connect',
+            id: 'connect',
+            params: {
+              clientId: 'cortexos-dashboard',
+              clientVersion: '0.1.0',
+              role: 'operator',
+              auth: { token }
+            }
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            handleMessage(data);
+          } catch {}
+        };
+
+        ws.onclose = () => {
+          document.getElementById('statusDot').classList.add('disconnected');
+          document.getElementById('statusText').textContent = 'Disconnected';
+        };
+
+        ws.onerror = () => {
+          showError('Connection failed. Check the gateway is running.');
+          resetLogin();
+        };
+      } catch (e) {
+        showError('Failed to connect: ' + e.message);
+        resetLogin();
+      }
+    }
+
+    function handleMessage(data) {
+      // Connect response
+      if (data.id === 'connect') {
+        if (data.error) {
+          showError(data.error.message || 'Authentication failed');
+          resetLogin();
+          return;
+        }
+        // Success — save token, show dashboard
+        localStorage.setItem('cortexos-token', document.getElementById('tokenInput').value.trim());
+        sessionKey = data.result?.sessionKey;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        addMessage('assistant', '🖥️ Connected to CortexOS Server. What would you like to do?');
+        return;
+      }
+
+      // Chat events
+      if (data.method === 'session.streamEvent' || data.type === 'event') {
+        const payload = data.params || data.payload || data;
+        const state = payload.state;
+        const msg = payload.message;
+
+        if (state === 'streaming' && msg?.content) {
+          document.getElementById('typingIndicator').style.display = 'block';
+          // Accumulate streaming content
+          const text = extractText(msg.content);
+          if (text) {
+            streamingContent = text;
+            updateStreamingMessage(streamingContent);
+          }
+        } else if (state === 'finished') {
+          document.getElementById('typingIndicator').style.display = 'none';
+          if (msg?.content) {
+            const text = extractText(msg.content);
+            if (text) {
+              // Remove streaming message and add final
+              removeStreamingMessage();
+              addMessage('assistant', text);
+            }
+          }
+          streamingContent = '';
+          currentRunId = null;
+          document.getElementById('sendBtn').disabled = false;
+        } else if (state === 'error') {
+          document.getElementById('typingIndicator').style.display = 'none';
+          addMessage('assistant', '❌ Error: ' + (msg?.content || 'Unknown error'));
+          document.getElementById('sendBtn').disabled = false;
+        }
+      }
+
+      // RPC responses
+      if (data.result && data.id && data.id.startsWith('chat-')) {
+        // Chat send response — run started
+        if (data.result.runId) {
+          currentRunId = data.result.runId;
+        }
+      }
+    }
+
+    function extractText(content) {
+      if (typeof content === 'string') return content;
+      if (Array.isArray(content)) {
+        return content
+          .filter(b => b.type === 'text')
+          .map(b => b.text)
+          .join('\n');
+      }
+      return '';
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+      addMessage('user', text);
+      input.value = '';
+      input.style.height = 'auto';
+      document.getElementById('sendBtn').disabled = true;
+
+      const msgId = `chat-${++msgIdCounter}`;
+      ws.send(JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'session.chat',
+        id: msgId,
+        params: {
+          sessionKey: sessionKey,
+          message: text
+        }
+      }));
+    }
+
+    function quickCmd(text) {
+      document.getElementById('chatInput').value = text;
+      sendMessage();
+    }
+
+    function addMessage(role, text) {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.innerHTML = `
+        <div class="msg-label">${role === 'user' ? 'You' : '🖥️ CortexOS'}</div>
+        <div class="msg-bubble">${escapeHtml(text)}</div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function updateStreamingMessage(text) {
+      let el = document.getElementById('streaming-msg');
+      if (!el) {
+        const container = document.getElementById('chatMessages');
+        el = document.createElement('div');
+        el.id = 'streaming-msg';
+        el.className = 'msg assistant';
+        el.innerHTML = `
+          <div class="msg-label">🖥️ CortexOS</div>
+          <div class="msg-bubble"></div>
+        `;
+        container.appendChild(el);
+      }
+      el.querySelector('.msg-bubble').textContent = text;
+      const container = document.getElementById('chatMessages');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeStreamingMessage() {
+      const el = document.getElementById('streaming-msg');
+      if (el) el.remove();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+      // Auto-resize
+      const ta = e.target;
+      setTimeout(() => {
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(ta.scrollHeight, 150) + 'px';
+      }, 0);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function resetLogin() {
+      document.getElementById('connectBtn').disabled = false;
+      document.getElementById('connectBtn').textContent = 'Connect';
+    }
+
+    function disconnect() {
+      if (ws) ws.close();
+      localStorage.removeItem('cortexos-token');
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = '';
+      document.getElementById('chatMessages').innerHTML = '';
+      resetLogin();
+    }
+
+    // Auto-connect if token saved
+    if (savedToken) {
+      setTimeout(connect, 500);
+    }
+  </script>
+</body>
+</html>
