@@ -543,11 +543,10 @@ function wsUrl(){
 function sendConnect(nonce){
   const params={
     minProtocol:3, maxProtocol:3,
-    client:{id:'cortexos-dashboard',displayName:'CortexOS Dashboard',version:'0.1.0',platform:'web',mode:'webchat'},
+    client:{id:'webchat-ui',displayName:'CortexOS Dashboard',version:'0.1.0',platform:'web',mode:'webchat'},
     scopes:['operator.admin','operator.approvals'],
     auth:{token:pendingToken}
   };
-  if(nonce)params.device={nonce};
   ws.send(JSON.stringify({type:'req',id:'connect',method:'connect',params}));
 }
 
