@@ -908,11 +908,11 @@ OCEOF
     # Configure AI provider auth
     if [[ -n "$api_key" && "$api_provider" != "skip" ]]; then
         if [[ "$api_provider" == "anthropic" && "$auth_method" == "setup-token" ]]; then
-            # Use openclaw CLI to paste the setup token
+            # Use openclaw CLI to paste the setup token (must run as root with correct HOME)
             info "Configuring Anthropic via setup token..."
-            echo "$api_key" | /usr/local/bin/openclaw models auth paste-token --provider anthropic 2>&1 | tee -a "$INSTALL_LOG" || {
+            HOME=/root echo "$api_key" | HOME=/root /usr/local/bin/openclaw models auth paste-token --provider anthropic 2>&1 | tee -a "$INSTALL_LOG" || {
                 warning "Setup token paste failed — configure manually after install:"
-                info "  openclaw models auth setup-token --provider anthropic"
+                info "  sudo -i openclaw models auth setup-token --provider anthropic"
             }
         elif [[ "$api_provider" == "anthropic" && "$auth_method" == "apikey" ]]; then
             # Direct API key
