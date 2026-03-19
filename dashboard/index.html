@@ -581,6 +581,8 @@
       </div>
       <div id="panelAgentName" style="font-size:1.3rem;font-weight:700"></div>
       <div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.25rem">⚡ Server Management AI</div>
+      <button onclick="$('avatarUpload').click()" style="margin-top:0.5rem;padding:0.3rem 0.7rem;background:var(--accent-glow);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:0.7rem;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent-light)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">📷 Change Avatar</button>
+      <input type="file" id="avatarUpload" accept="image/*" style="display:none" onchange="uploadAvatar(this.files[0])">
     </div>
 
     <!-- Identity Details -->
@@ -1038,6 +1040,13 @@ function doDisconnect(){
 }
 
 let aiName=localStorage.getItem('cortexos-ai-name')||'CortexOS';
+// Restore custom avatar if set
+const savedAvatar=localStorage.getItem('cortexos-avatar');
+if(savedAvatar){
+  setTimeout(()=>{
+    document.querySelectorAll('#agentAvatar img, .agent-panel img[src*="athena"]').forEach(img=>{img.src=savedAvatar});
+  },100);
+}
 let pendingAttachments=[];
 
 function handleFiles(files){
@@ -1116,6 +1125,28 @@ systemctl restart cortex-server</pre>
 <p style="font-size:0.75rem;color:var(--text-dim)">After configuring, refresh this page to connect.</p>
 </div>`;
   addMsg('assistant', html, true);
+}
+
+function uploadAvatar(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const base64=e.target.result.split(',')[1];
+    // Send to gateway to store as workspace file
+    ws.send(JSON.stringify({type:'req',method:'agents.files.set',id:'avatar-upload',
+      params:{agentId:'main',name:'avatars/avatar.png',content:base64,encoding:'base64'}}));
+    // Also tell the AI to update its identity
+    const idk=crypto.randomUUID();
+    ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
+      params:{sessionKey:sessionKey||'agent:main:webchat',message:'I just uploaded a new avatar image for you. Update your IDENTITY.md to reference avatars/avatar.png as your avatar.',idempotencyKey:idk}}));
+    // Update UI immediately
+    const dataUrl=e.target.result;
+    document.querySelectorAll('#agentAvatar img, .agent-panel img[src*="athena"]').forEach(img=>{img.src=dataUrl});
+    localStorage.setItem('cortexos-avatar',dataUrl);
+    addMsg('assistant','Avatar updated! ⚡');
+  };
+  reader.readAsDataURL(file);
+  $('avatarUpload').value='';
 }
 
 function showAgentPanel(){$('agentPanel').classList.add('active')}
