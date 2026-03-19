@@ -736,13 +736,18 @@ function doSend(){
   const box=$('chatBox'),txt=box.value.trim();
   if((!txt&&pendingAttachments.length===0)||!ws||ws.readyState!==1)return;
   
-  // Show user message with attachment indicators
-  let displayTxt=txt;
+  // Show user message with inline image previews
+  let displayHtml=fmtText(txt||'');
   if(pendingAttachments.length>0){
-    const names=pendingAttachments.map(a=>a.fileName).join(', ');
-    displayTxt=txt?(txt+'\n📎 '+names):('📎 '+names);
+    const previews=pendingAttachments.map(a=>{
+      if(a.isImage){
+        return `<div style="margin-top:0.5rem"><img src="data:${a.mimeType};base64,${a.data}" style="max-width:300px;max-height:250px;border-radius:8px;display:block" alt="${a.fileName}"><span style="font-size:0.7rem;opacity:0.7">${a.fileName}</span></div>`;
+      }
+      return `<div style="margin-top:0.4rem;font-size:0.8rem">📄 ${a.fileName}</div>`;
+    }).join('');
+    displayHtml+=previews;
   }
-  addMsg('user',displayTxt);
+  addMsg('user',displayHtml,true);
   box.value='';box.style.height='auto';
   $('sendBtn').disabled=true;
   
