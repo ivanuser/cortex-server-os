@@ -1033,6 +1033,57 @@ setup_dashboard() {
         warning "Dashboard files not found — web UI will not be available"
     fi
     
+    # Install system stats collector
+    local stats_script="$script_dir/scripts/cortexos-stats.sh"
+    if [ -f "$stats_script" ]; then
+        cp "$stats_script" /usr/local/bin/cortexos-stats
+    else
+        cat > /usr/local/bin/cortexos-stats << 'STATEOF'
+#!/bin/bash
+python3 -c "
+import json, subprocess, time
+def cmd(c): return subprocess.check_output(c, shell=True, text=True).strip()
+cpu = int(float(cmd(\"top -bn1 | grep 'Cpu(s)' | awk '{print \$2}'\")))
+load = cmd(\"cat /proc/loadavg | awk '{print \$1}'\")
+m = cmd('free -m').split('\n')[1].split()
+mt, mu = int(m[1]), int(m[2])
+mp = int(mu/mt*100) if mt else 0
+d = cmd(\"df / | awk 'NR==2{printf \\\"%s %s %s\\\", \$2, \$3, \$5}'\").split()
+dt = int(int(d[0])/1048576) if d else 0
+du = int(int(d[1])/1048576) if d else 0
+dp = int(d[2].replace('%','')) if len(d)>2 else 0
+up = cmd('uptime -p').replace('up ','')
+json.dump({'cpu':{'percent':cpu,'load':load},'memory':{'used':mu,'total':mt,'percent':mp},'disk':{'used':du,'total':dt,'percent':dp},'uptime':up,'ts':int(time.time())}, open('/var/lib/cortexos/dashboard/stats.json','w'))
+"
+STATEOF
+    fi
+    chmod +x /usr/local/bin/cortexos-stats
+    
+    # Create systemd timer for stats
+    cat > /etc/systemd/system/cortexos-stats.service << 'EOF'
+[Unit]
+Description=CortexOS Stats Collector
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cortexos-stats
+EOF
+    cat > /etc/systemd/system/cortexos-stats.timer << 'EOF'
+[Unit]
+Description=CortexOS Stats Timer
+[Timer]
+OnBootSec=5
+OnUnitActiveSec=10
+[Install]
+WantedBy=timers.target
+EOF
+    systemctl daemon-reload
+    systemctl enable --now cortexos-stats.timer 2>/dev/null || true
+    log "System stats collector installed"
+    
+    # Symlink workspace avatars into dashboard for serving
+    mkdir -p /root/.openclaw/workspace/avatars
+    ln -sfn /root/.openclaw/workspace/avatars "$dashboard_dir/avatars" 2>/dev/null || true
+    
     # Configure firewall for dashboard port
     if command -v ufw &>/dev/null; then
         ufw allow "$DASHBOARD_PORT/tcp" comment "CortexOS Server Dashboard" 2>/dev/null || true
