@@ -432,7 +432,7 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="login-logo">
-      <div class="icon">🖥️</div>
+      <img src="/logo.png" alt="CortexOS" style="width:56px;height:56px;border-radius:14px;box-shadow:0 4px 20px var(--accent-strong)">
       <h1><span>Cortex</span>OS</h1>
       <p>Server Management Console</p>
     </div>
@@ -455,7 +455,7 @@
 <div class="app" id="app">
   <div class="topbar">
     <div class="topbar-brand">
-      <div class="topbar-icon">🖥️</div>
+      <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
       <div class="topbar-title"><span>Cortex</span>OS Server</div>
     </div>
     <div class="topbar-right">
@@ -528,7 +528,7 @@
 </div>
 
 <script>
-let ws=null, sessionKey=null, msgN=0, streaming='';
+let ws=null, sessionKey=null, msgN=0, streaming='', pendingToken='';
 const $=id=>document.getElementById(id);
 
 $('hostDisplay').textContent=location.hostname;
@@ -540,51 +540,87 @@ function wsUrl(){
   return (location.protocol==='https:'?'wss:':'ws:')+'//'+location.host;
 }
 
+function sendConnect(nonce){
+  const params={
+    minProtocol:3, maxProtocol:3,
+    client:{id:'cortexos-dashboard',displayName:'CortexOS Dashboard',version:'0.1.0',platform:'web',mode:'webchat'},
+    scopes:['operator.admin','operator.approvals'],
+    auth:{token:pendingToken}
+  };
+  if(nonce)params.device={nonce};
+  ws.send(JSON.stringify({type:'req',id:'connect',method:'connect',params}));
+}
+
 function doConnect(){
-  const tok=$('tokenInput').value.trim();
-  if(!tok){showErr('Enter your access token');return}
+  pendingToken=$('tokenInput').value.trim();
+  if(!pendingToken){showErr('Enter your access token');return}
   $('connectBtn').disabled=true;
   $('connectBtn').textContent='Connecting…';
+  let challengeReceived=false;
   try{
     ws=new WebSocket(wsUrl());
     ws.onopen=()=>{
-      ws.send(JSON.stringify({jsonrpc:'2.0',method:'connect',id:'connect',params:{
-        clientId:'cortexos-dashboard',clientVersion:'0.1.0',role:'operator',
-        auth:{token:tok}
-      }}));
+      setTimeout(()=>{if(!challengeReceived)sendConnect()},750);
     };
-    ws.onmessage=e=>{try{handle(JSON.parse(e.data))}catch{}};
+    ws.onmessage=e=>{
+      try{
+        const d=JSON.parse(e.data);
+        // Handle challenge
+        if(d.type==='event'&&d.event==='connect.challenge'){
+          challengeReceived=true;
+          sendConnect(d.payload?.nonce);
+          return;
+        }
+        handle(d);
+      }catch{}
+    };
     ws.onclose=()=>{$('connDot').classList.add('off');$('connText').textContent='Disconnected'};
     ws.onerror=()=>{showErr('Connection failed');resetLogin()};
   }catch(e){showErr(e.message);resetLogin()}
 }
 
 function handle(d){
-  if(d.id==='connect'){
-    if(d.error){showErr(d.error.message||'Auth failed');resetLogin();return}
-    localStorage.setItem('cortexos-token',$('tokenInput').value.trim());
-    sessionKey=d.result?.sessionKey;
+  // Connect response (type:res format)
+  if(d.type==='res'&&d.id==='connect'){
+    if(!d.ok){showErr(d.error?.message||'Auth failed');resetLogin();return}
+    localStorage.setItem('cortexos-token',pendingToken);
+    sessionKey=d.payload?.sessionKey||d.result?.sessionKey;
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     addMsg('assistant','Connected to CortexOS Server. What would you like to do?\n\nTry the quick commands in the sidebar, or just ask me anything about this server.');
     return;
   }
-  if(d.method==='session.streamEvent'||d.type==='event'){
-    const p=d.params||d.payload||d, st=p.state, m=p.message;
-    if(st==='streaming'&&m?.content){
-      $('typingEl').classList.add('active');
-      const t=extractTxt(m.content);
-      if(t){streaming=t;updateStream(streaming)}
-    }else if(st==='finished'){
-      $('typingEl').classList.remove('active');
-      if(m?.content){const t=extractTxt(m.content);if(t){removeStream();addMsg('assistant',t)}}
-      streaming='';$('sendBtn').disabled=false;
-    }else if(st==='error'){
-      $('typingEl').classList.remove('active');
-      addMsg('assistant','❌ '+(m?.content||'Error'));$('sendBtn').disabled=false;
+  // Also handle hello-ok (direct auth)
+  if(d.type==='hello-ok'){
+    localStorage.setItem('cortexos-token',pendingToken);
+    sessionKey=d.sessionKey;
+    $('loginScreen').style.display='none';
+    $('app').classList.add('active');
+    addMsg('assistant','Connected to CortexOS Server. What would you like to do?\n\nTry the quick commands in the sidebar, or just ask me anything about this server.');
+    return;
+  }
+  // Stream events
+  if(d.type==='event'){
+    const ev=d.event||'';
+    const p=d.payload||d.params||{};
+    if(ev==='session.streamEvent'||ev.includes('stream')){
+      const st=p.state, m=p.message;
+      if(st==='streaming'&&m?.content){
+        $('typingEl').classList.add('active');
+        const t=extractTxt(m.content);
+        if(t){streaming=t;updateStream(streaming)}
+      }else if(st==='finished'){
+        $('typingEl').classList.remove('active');
+        if(m?.content){const t=extractTxt(m.content);if(t){removeStream();addMsg('assistant',t)}}
+        streaming='';$('sendBtn').disabled=false;
+      }else if(st==='error'){
+        $('typingEl').classList.remove('active');
+        addMsg('assistant','❌ '+(extractTxt(m?.content)||'Error'));$('sendBtn').disabled=false;
+      }
     }
   }
-  if(d.result&&d.id?.startsWith('chat-')&&d.result.runId){}
+  // RPC response format (jsonrpc or type:res)
+  if(d.type==='res'&&d.id?.startsWith('chat-')){}
 }
 
 function extractTxt(c){
@@ -598,7 +634,7 @@ function doSend(){
   if(!txt||!ws||ws.readyState!==1)return;
   addMsg('user',txt);box.value='';box.style.height='auto';
   $('sendBtn').disabled=true;
-  ws.send(JSON.stringify({jsonrpc:'2.0',method:'session.chat',id:'chat-'+(++msgN),
+  ws.send(JSON.stringify({type:'req',method:'session.chat',id:'chat-'+(++msgN),
     params:{sessionKey,message:txt}}));
 }
 
