@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "updated": "2026-03-20",
+  "repo": "https://github.com/ivanuser/cortex-server-os",
+  "skills": {
+    "monitoring": {"version": "0.1.0", "description": "System health monitoring & alerting"},
+    "docker-manager": {"version": "0.1.0", "description": "Docker container management"},
+    "systemd-manager": {"version": "0.1.0", "description": "Systemd service management"},
+    "security-hardening": {"version": "0.1.0", "description": "Security auditing & hardening"},
+    "network-manager": {"version": "0.1.0", "description": "Network configuration & diagnostics"},
+    "storage-manager": {"version": "0.1.0", "description": "Disk, LVM, NFS & SMART management"},
+    "package-manager": {"version": "0.1.0", "description": "Package & update management"},
+    "user-manager": {"version": "0.1.0", "description": "User, group & SSH key management"},
+    "firewall-manager": {"version": "0.1.0", "description": "UFW, iptables & fail2ban management"},
+    "backup-manager": {"version": "0.1.0", "description": "Backup & disaster recovery"},
+    "cloudflare-install": {"version": "0.1.0", "description": "Cloudflare Tunnel installation"},
+    "cloudflare-ops": {"version": "0.1.0", "description": "Cloudflare Tunnel operations & routing"}
+  }
+}

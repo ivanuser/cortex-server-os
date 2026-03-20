@@ -1,0 +1,231 @@
+#!/bin/bash
+# CortexOS Skill Updater
+# Checks for skill updates from the GitHub repo and applies them
+
+set -euo pipefail
+
+SKILLS_DIR="/var/lib/cortexos/skills"
+MANIFEST_URL="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/skills/manifest.json"
+SKILL_BASE_URL="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/skills"
+LOCAL_MANIFEST="$SKILLS_DIR/manifest.json"
+TEMP_DIR=$(mktemp -d)
+
+trap "rm -rf $TEMP_DIR" EXIT
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+usage() {
+    echo "CortexOS Skill Manager"
+    echo ""
+    echo "Usage: cortexos-skill [command]"
+    echo ""
+    echo "Commands:"
+    echo "  check       Check for available updates"
+    echo "  update      Download and install skill updates"
+    echo "  list        List installed skills"
+    echo "  install     Install a skill from the extended repo"
+    echo "  info        Show info about a specific skill"
+    echo ""
+}
+
+cmd_list() {
+    echo -e "${BLUE}Installed Skills:${NC}"
+    echo ""
+    if [ -f "$LOCAL_MANIFEST" ]; then
+        python3 -c "
+import json
+with open('$LOCAL_MANIFEST') as f:
+    m = json.load(f)
+for name, info in sorted(m.get('skills', {}).items()):
+    print(f'  {name:25s} v{info[\"version\"]:8s} {info.get(\"description\",\"\")}')
+print(f'\nTotal: {len(m.get(\"skills\",{}))} skills (manifest v{m.get(\"version\",\"?\")})')
+"
+    else
+        for skill in "$SKILLS_DIR"/*/; do
+            name=$(basename "$skill")
+            [ -f "$skill/SKILL.md" ] && echo "  $name"
+        done
+    fi
+}
+
+cmd_check() {
+    echo -e "${BLUE}Checking for skill updates...${NC}"
+    
+    # Download remote manifest
+    if ! curl -sfL "$MANIFEST_URL" -o "$TEMP_DIR/remote-manifest.json" 2>/dev/null; then
+        echo "Failed to fetch remote manifest. Are you online?"
+        exit 1
+    fi
+    
+    python3 -c "
+import json, sys
+
+try:
+    with open('$LOCAL_MANIFEST') as f:
+        local = json.load(f)
+except:
+    local = {'skills': {}, 'version': '0.0.0'}
+
+with open('$TEMP_DIR/remote-manifest.json') as f:
+    remote = json.load(f)
+
+updates = []
+new_skills = []
+
+for name, info in remote.get('skills', {}).items():
+    local_info = local.get('skills', {}).get(name)
+    if local_info is None:
+        new_skills.append((name, info))
+    elif info.get('version', '0') > local_info.get('version', '0'):
+        updates.append((name, local_info.get('version','?'), info.get('version','?'), info))
+
+if updates:
+    print(f'Updates available ({len(updates)}):')
+    for name, old_v, new_v, info in updates:
+        print(f'  {name:25s} {old_v} → {new_v}  {info.get(\"description\",\"\")}')
+else:
+    print('All skills are up to date.')
+
+if new_skills:
+    print(f'\nNew skills available ({len(new_skills)}):')
+    for name, info in new_skills:
+        print(f'  {name:25s} v{info.get(\"version\",\"?\")}  {info.get(\"description\",\"\")}')
+
+if not updates and not new_skills:
+    print('Nothing to update.')
+    sys.exit(0)
+else:
+    print(f'\nRun \"cortexos-skill update\" to apply.')
+"
+}
+
+cmd_update() {
+    echo -e "${BLUE}Updating skills...${NC}"
+    
+    # Download remote manifest
+    if ! curl -sfL "$MANIFEST_URL" -o "$TEMP_DIR/remote-manifest.json" 2>/dev/null; then
+        echo "Failed to fetch remote manifest."
+        exit 1
+    fi
+    
+    python3 -c "
+import json
+with open('$TEMP_DIR/remote-manifest.json') as f:
+    remote = json.load(f)
+try:
+    with open('$LOCAL_MANIFEST') as f:
+        local = json.load(f)
+except:
+    local = {'skills': {}, 'version': '0.0.0'}
+
+to_update = []
+for name, info in remote.get('skills', {}).items():
+    local_info = local.get('skills', {}).get(name)
+    if local_info is None or info.get('version','0') > local_info.get('version','0'):
+        to_update.append(name)
+
+with open('$TEMP_DIR/to-update.txt', 'w') as f:
+    f.write('\n'.join(to_update))
+print(f'{len(to_update)} skills to update')
+"
+    
+    while IFS= read -r skill; do
+        [ -z "$skill" ] && continue
+        echo -ne "  Updating ${skill}... "
+        mkdir -p "$SKILLS_DIR/$skill"
+        if curl -sfL "$SKILL_BASE_URL/$skill/SKILL.md" -o "$SKILLS_DIR/$skill/SKILL.md" 2>/dev/null; then
+            echo -e "${GREEN}✅${NC}"
+        else
+            echo -e "${YELLOW}⚠️ failed${NC}"
+        fi
+    done < "$TEMP_DIR/to-update.txt"
+    
+    # Update local manifest
+    cp "$TEMP_DIR/remote-manifest.json" "$LOCAL_MANIFEST"
+    echo -e "${GREEN}Skills updated!${NC}"
+    
+    # Symlink into gateway if needed
+    if [ ! -L /root/.openclaw/skills ]; then
+        ln -sfn "$SKILLS_DIR" /root/.openclaw/skills 2>/dev/null || true
+    fi
+}
+
+cmd_install() {
+    local skill_name="${1:-}"
+    if [ -z "$skill_name" ]; then
+        echo "Usage: cortexos-skill install <skill-name>"
+        echo ""
+        echo "Available from extended repo:"
+        echo "  nginx, apache, postgres, mysql, redis"
+        echo "  nextcloud, discourse, kubernetes"
+        exit 1
+    fi
+    
+    local EXT_MANIFEST_URL="https://raw.githubusercontent.com/ivanuser/cortex-server-skills/main/manifest.json"
+    local EXT_BASE="https://raw.githubusercontent.com/ivanuser/cortex-server-skills/main"
+    
+    echo -e "${BLUE}Installing skill: ${skill_name}${NC}"
+    
+    # Try to find the skill in the extended repo
+    for prefix in "server" "apps" "infra"; do
+        local url="$EXT_BASE/$prefix/$skill_name/SKILL.md"
+        if curl -sfL "$url" -o "$TEMP_DIR/SKILL.md" 2>/dev/null; then
+            mkdir -p "$SKILLS_DIR/$skill_name"
+            cp "$TEMP_DIR/SKILL.md" "$SKILLS_DIR/$skill_name/SKILL.md"
+            echo -e "${GREEN}✅ Installed $skill_name from $prefix/${NC}"
+            
+            # Add to allowlist if configured
+            python3 -c "
+import json
+try:
+    with open('/root/.openclaw/openclaw.json') as f:
+        cfg = json.load(f)
+    allow = cfg.get('skills',{}).get('allow',[])
+    if '$skill_name' not in allow:
+        allow.append('$skill_name')
+        cfg.setdefault('skills',{})['allow'] = allow
+        with open('/root/.openclaw/openclaw.json','w') as f:
+            json.dump(cfg, f, indent=2)
+        print('Added to skill allowlist')
+except: pass
+" 2>/dev/null
+            return 0
+        fi
+    done
+    
+    echo "Skill '$skill_name' not found in the extended repo."
+    echo "Available: nginx, apache, postgres, mysql, redis, nextcloud, discourse, kubernetes"
+    exit 1
+}
+
+cmd_info() {
+    local skill_name="${1:-}"
+    if [ -z "$skill_name" ]; then
+        echo "Usage: cortexos-skill info <skill-name>"
+        exit 1
+    fi
+    
+    local skill_file="$SKILLS_DIR/$skill_name/SKILL.md"
+    if [ -f "$skill_file" ]; then
+        head -5 "$skill_file"
+        echo ""
+        echo "Lines: $(wc -l < "$skill_file")"
+        echo "Size: $(du -h "$skill_file" | awk '{print $1}')"
+    else
+        echo "Skill '$skill_name' not installed."
+    fi
+}
+
+# Main
+case "${1:-}" in
+    list)    cmd_list ;;
+    check)   cmd_check ;;
+    update)  cmd_update ;;
+    install) cmd_install "${2:-}" ;;
+    info)    cmd_info "${2:-}" ;;
+    *)       usage ;;
+esac

@@ -726,10 +726,22 @@ install_skills() {
         success "  ✅ ${skill}"
     done
     
+    # Copy manifest
+    if [ -f "$repo_skills_dir/manifest.json" ]; then
+        cp "$repo_skills_dir/manifest.json" "$skills_dir/manifest.json"
+    fi
+    
     # Symlink skills into gateway's skill directory so the AI can find them
     mkdir -p /root/.openclaw
     ln -sfn "$skills_dir" /root/.openclaw/skills
     log "Skills symlinked to /root/.openclaw/skills"
+    
+    # Install skill manager CLI
+    if [ -f "$script_dir/scripts/cortexos-skill-update.sh" ]; then
+        cp "$script_dir/scripts/cortexos-skill-update.sh" /usr/local/bin/cortexos-skill
+        chmod +x /usr/local/bin/cortexos-skill
+        log "Skill manager installed: cortexos-skill"
+    fi
     
     log "Server management skills installed: ${#skills[@]} skills"
 }
