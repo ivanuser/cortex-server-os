@@ -940,14 +940,7 @@ EOF
       }
     }
   },
-  "skills": {
-    "mode": "allowlist",
-    "allow": [
-      "monitoring", "docker-manager", "systemd-manager", "security-hardening",
-      "network-manager", "storage-manager", "package-manager", "user-manager",
-      "firewall-manager", "backup-manager", "cloudflare-install", "cloudflare-ops"
-    ]
-  },
+
   "ui": {
     "assistant": {
       "name": "CortexOS Server"
