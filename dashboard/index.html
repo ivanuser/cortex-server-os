@@ -715,6 +715,257 @@
     }
     .settings-saved.show { opacity: 1; }
 
+    /* Nav Tabs */
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-left: 1.5rem;
+    }
+    .nav-tab {
+      padding: 0.4rem 0.9rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .nav-tab:hover {
+      color: var(--text);
+      background: var(--surface-hover);
+      border-color: var(--border);
+    }
+    .nav-tab.active {
+      color: var(--accent-light);
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .nav-tab-icon { font-size: 0.85rem; }
+
+    /* Skills Page */
+    .skills-page {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      background: var(--bg);
+    }
+    .skills-page.active { display: block; }
+    .skills-page::-webkit-scrollbar { width: 6px; }
+    .skills-page::-webkit-scrollbar-track { background: transparent; }
+    .skills-page::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .skills-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .skills-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .skills-header h2 span { color: var(--accent-light); }
+    .skills-header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-skills {
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-skills:hover {
+      border-color: var(--accent);
+      color: var(--accent-light);
+      background: var(--accent-glow);
+    }
+    .btn-skills.primary {
+      background: linear-gradient(135deg, var(--accent), #5a4bd1);
+      border-color: transparent;
+      color: white;
+      font-weight: 600;
+    }
+    .btn-skills.primary:hover {
+      box-shadow: 0 2px 16px var(--accent-strong);
+      transform: translateY(-1px);
+    }
+
+    .skills-section {
+      margin-bottom: 2rem;
+    }
+    .skills-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .skills-section-title .count {
+      font-size: 0.6rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      background: var(--accent-glow);
+      color: var(--accent-light);
+      font-weight: 600;
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .skill-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      min-height: 160px;
+      position: relative;
+      overflow: hidden;
+    }
+    .skill-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .skill-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transform: translateY(-2px);
+    }
+    .skill-card:hover::before { opacity: 1; }
+
+    .skill-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.6rem;
+    }
+    .skill-card-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    .skill-card-version {
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      padding: 0.15rem 0.4rem;
+      background: var(--bg);
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .skill-card-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+    }
+    .skill-card-desc {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .skill-card-footer {
+      margin-top: 0.75rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--border);
+    }
+    .skill-card-btn {
+      width: 100%;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      border: 1px solid transparent;
+    }
+    .skill-card-btn.installed {
+      background: var(--green-bg);
+      color: var(--green);
+      border-color: rgba(0, 184, 148, 0.2);
+      cursor: default;
+    }
+    .skill-card-btn.available {
+      background: var(--accent-glow);
+      color: var(--accent-light);
+      border-color: var(--accent);
+    }
+    .skill-card-btn.available:hover {
+      background: var(--accent-strong);
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+    .skill-card-btn.update {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      border-color: rgba(254, 202, 87, 0.3);
+    }
+    .skill-card-btn.update:hover {
+      background: rgba(254, 202, 87, 0.2);
+    }
+
+    .skills-stats-bar {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .skills-stat {
+      text-align: center;
+    }
+    .skills-stat-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .skills-stat-val.green { color: var(--green); }
+    .skills-stat-val.blue { color: var(--blue); }
+    .skills-stat-val.yellow { color: var(--yellow); }
+    .skills-stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.15rem;
+    }
+
     /* Mobile overlay for sidebar */
     .sidebar-overlay {
       display: none;
@@ -752,6 +1003,13 @@
       .topbar { padding: 0 0.75rem; }
       .topbar-title { font-size: 0.85rem; }
       .conn-status span { display: none; }
+      .nav-tabs { margin-left: 0.5rem; gap: 0.15rem; }
+      .nav-tab { padding: 0.35rem 0.6rem; font-size: 0.72rem; }
+      .nav-tab span.nav-tab-label { display: none; }
+      .skills-page { padding: 1rem; }
+      .skills-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.5rem; }
+      .skills-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+      .skills-stats-bar { flex-wrap: wrap; gap: 1rem; }
     }
   </style>
 </head>
@@ -929,6 +1187,14 @@
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
       <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.0</span></div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
+          <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('skills')" id="tabSkills">
+          <span class="nav-tab-icon">🧩</span><span class="nav-tab-label">Skills</span>
+        </button>
+      </div>
     </div>
     <div class="topbar-right">
       <div class="conn-status">
@@ -940,9 +1206,50 @@
     </div>
   </div>
 
-  <div class="main">
+  <div class="main" id="mainContent">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
-    <div class="chat">
+
+    <!-- Skills Page -->
+    <div class="skills-page" id="skillsPage">
+      <div class="skills-header">
+        <h2>🧩 <span>Skills</span> Management</h2>
+        <div class="skills-header-actions">
+          <button class="btn-skills" onclick="checkSkillUpdates()">🔄 Check for Updates</button>
+          <button class="btn-skills primary" onclick="refreshSkillsPage()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="skills-stats-bar">
+        <div class="skills-stat">
+          <div class="skills-stat-val green" id="skillsInstalledCount">12</div>
+          <div class="skills-stat-label">Installed</div>
+        </div>
+        <div class="skills-stat">
+          <div class="skills-stat-val blue" id="skillsAvailableCount">8</div>
+          <div class="skills-stat-label">Available</div>
+        </div>
+        <div class="skills-stat">
+          <div class="skills-stat-val yellow" id="skillsUpdateCount">0</div>
+          <div class="skills-stat-label">Updates</div>
+        </div>
+        <div class="skills-stat">
+          <div class="skills-stat-val" id="skillsTotalCount">20</div>
+          <div class="skills-stat-label">Total</div>
+        </div>
+      </div>
+
+      <div class="skills-section">
+        <div class="skills-section-title">Installed Skills <span class="count" id="installedBadge">12</span></div>
+        <div class="skills-grid" id="installedSkillsGrid"></div>
+      </div>
+
+      <div class="skills-section">
+        <div class="skills-section-title">Available to Install <span class="count" id="availableBadge">8</span></div>
+        <div class="skills-grid" id="availableSkillsGrid"></div>
+      </div>
+    </div>
+
+    <div class="chat" id="chatView">
       <div class="chat-scroll" id="chatScroll"></div>
       <div class="typing" id="typingEl">⚡ CortexOS is thinking</div>
       <div class="chat-input">
@@ -1824,6 +2131,124 @@ function fmtUptime(seconds){
   if(hrs>0)return hrs+'h '+mins+'m';
   return mins+'m';
 }
+
+// ==================== Skills Page ====================
+const coreSkills = [
+  { name: 'monitoring', icon: '📊', version: '0.1.0', description: 'System health monitoring, metrics collection & alerting' },
+  { name: 'docker-manager', icon: '🐳', version: '0.1.0', description: 'Docker container lifecycle, images & compose management' },
+  { name: 'systemd-manager', icon: '⚙️', version: '0.1.0', description: 'Systemd service control, unit files & journal logs' },
+  { name: 'security-hardening', icon: '🔒', version: '0.1.0', description: 'SSH hardening, fail2ban, audit policies & CIS benchmarks' },
+  { name: 'network-manager', icon: '🌐', version: '0.1.0', description: 'Network interfaces, DNS, routes & connectivity diagnostics' },
+  { name: 'storage-manager', icon: '💾', version: '0.1.0', description: 'Disk partitions, LVM, RAID, mounts & storage health' },
+  { name: 'package-manager', icon: '📦', version: '0.1.0', description: 'APT/YUM package install, update, remove & search' },
+  { name: 'user-manager', icon: '👤', version: '0.1.0', description: 'User accounts, groups, permissions & sudo access' },
+  { name: 'firewall-manager', icon: '🛡️', version: '0.1.0', description: 'UFW/iptables rules, port management & traffic filtering' },
+  { name: 'backup-manager', icon: '💿', version: '0.1.0', description: 'Backup scheduling, snapshots, restoration & off-site sync' },
+  { name: 'cloudflare-install', icon: '☁️', version: '0.1.0', description: 'Cloudflare tunnel setup, configuration & authentication' },
+  { name: 'cloudflare-ops', icon: '🔧', version: '0.1.0', description: 'Cloudflare tunnel operations, DNS records & zero-trust rules' }
+];
+
+const extendedSkills = [
+  { name: 'nginx', icon: '🌍', version: '0.1.0', description: 'Nginx web server configuration, virtual hosts & reverse proxy' },
+  { name: 'apache', icon: '🪶', version: '0.1.0', description: 'Apache HTTP server, modules, vhosts & .htaccess management' },
+  { name: 'postgres', icon: '🐘', version: '0.1.0', description: 'PostgreSQL database admin, queries, backups & replication' },
+  { name: 'mysql', icon: '🐬', version: '0.1.0', description: 'MySQL/MariaDB database management, users & optimization' },
+  { name: 'redis', icon: '🔴', version: '0.1.0', description: 'Redis cache server configuration, monitoring & data ops' },
+  { name: 'nextcloud', icon: '☁️', version: '0.1.0', description: 'Nextcloud installation, apps, users & storage management' },
+  { name: 'discourse', icon: '💬', version: '0.1.0', description: 'Discourse forum setup, plugins, themes & administration' },
+  { name: 'kubernetes', icon: '☸️', version: '0.1.0', description: 'Kubernetes cluster management, pods, services & deployments' }
+];
+
+function renderSkillCard(skill, status) {
+  const btnClass = status === 'installed' ? 'installed' : status === 'update' ? 'update' : 'available';
+  const btnText = status === 'installed' ? '✓ Installed' : status === 'update' ? '⬆ Update Available' : '↓ Install';
+  const btnAction = status === 'available'
+    ? `onclick="installSkill('${skill.name}')"`
+    : status === 'update'
+    ? `onclick="updateSkill('${skill.name}')"`
+    : '';
+
+  return `<div class="skill-card">
+    <div class="skill-card-head">
+      <span class="skill-card-icon">${skill.icon}</span>
+      <span class="skill-card-version">v${skill.version}</span>
+    </div>
+    <div class="skill-card-name">${skill.name}</div>
+    <div class="skill-card-desc">${skill.description}</div>
+    <div class="skill-card-footer">
+      <button class="skill-card-btn ${btnClass}" ${btnAction}>${btnText}</button>
+    </div>
+  </div>`;
+}
+
+function renderSkillsPage() {
+  const installedGrid = $('installedSkillsGrid');
+  const availableGrid = $('availableSkillsGrid');
+
+  installedGrid.innerHTML = coreSkills.map(s => renderSkillCard(s, 'installed')).join('');
+  availableGrid.innerHTML = extendedSkills.map(s => renderSkillCard(s, 'available')).join('');
+
+  $('skillsInstalledCount').textContent = coreSkills.length;
+  $('skillsAvailableCount').textContent = extendedSkills.length;
+  $('skillsTotalCount').textContent = coreSkills.length + extendedSkills.length;
+  $('installedBadge').textContent = coreSkills.length;
+  $('availableBadge').textContent = extendedSkills.length;
+}
+
+function switchTab(tab) {
+  const chatView = $('chatView');
+  const sidebarMain = $('sidebarMain');
+  const skillsPage = $('skillsPage');
+  const tabChat = $('tabChat');
+  const tabSkills = $('tabSkills');
+
+  if (tab === 'chat') {
+    chatView.style.display = 'flex';
+    sidebarMain.style.display = '';
+    skillsPage.classList.remove('active');
+    tabChat.classList.add('active');
+    tabSkills.classList.remove('active');
+  } else if (tab === 'skills') {
+    chatView.style.display = 'none';
+    sidebarMain.style.display = 'none';
+    skillsPage.classList.add('active');
+    tabChat.classList.remove('active');
+    tabSkills.classList.add('active');
+    renderSkillsPage();
+  }
+}
+
+function installSkill(name) {
+  switchTab('chat');
+  setTimeout(() => {
+    qcmd('Run cortexos-skill install ' + name + ' and confirm it installed');
+  }, 100);
+}
+
+function updateSkill(name) {
+  switchTab('chat');
+  setTimeout(() => {
+    qcmd('Run cortexos-skill update ' + name + ' and confirm it updated');
+  }, 100);
+}
+
+function checkSkillUpdates() {
+  switchTab('chat');
+  setTimeout(() => {
+    qcmd('Run cortexos-skill check and show me the results');
+  }, 100);
+}
+
+function refreshSkillsPage() {
+  renderSkillsPage();
+  // Flash a subtle indicator
+  const btn = event.target;
+  btn.textContent = '✓ Refreshed';
+  setTimeout(() => { btn.textContent = '↻ Refresh'; }, 1500);
+}
+
+// Render skills on initial load
+setTimeout(renderSkillsPage, 500);
 
 if(saved)setTimeout(doConnect,400);
 </script>
