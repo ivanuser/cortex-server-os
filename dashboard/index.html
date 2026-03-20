@@ -210,8 +210,32 @@
       border-radius: 50%;
       background: var(--green);
       box-shadow: 0 0 6px var(--green);
+      transition: background 0.3s, box-shadow 0.3s;
     }
     .conn-dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .conn-dot.reconnecting {
+      background: var(--yellow);
+      box-shadow: 0 0 6px var(--yellow);
+      animation: connPulse 1s ease-in-out infinite;
+    }
+    @keyframes connPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .btn-topbar {
+      padding: 0.375rem 0.5rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-topbar:hover { border-color: var(--text-dim); color: var(--text); background: var(--surface-hover); }
     .btn-ghost {
       padding: 0.375rem 0.75rem;
       background: transparent;
@@ -223,6 +247,20 @@
       transition: all 0.2s;
     }
     .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); background: var(--surface-hover); }
+
+    /* Hamburger (mobile only) */
+    .hamburger {
+      display: none;
+      padding: 0.375rem 0.5rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .hamburger:hover { border-color: var(--text-dim); color: var(--text); background: var(--surface-hover); }
 
     /* Main Layout */
     .main { display: flex; flex: 1; overflow: hidden; }
@@ -453,8 +491,22 @@
     .quick-item:hover {
       background: var(--accent-glow);
       color: var(--text);
+      border-color: var(--border-glow);
     }
     .quick-icon { font-size: 0.9rem; width: 1.25rem; text-align: center; }
+    .quick-shortcut {
+      margin-left: auto;
+      font-size: 0.55rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      opacity: 0.6;
+      transition: opacity 0.15s;
+    }
+    .quick-item:hover .quick-shortcut { opacity: 1; }
     .skill-badge {
       display: inline-block;
       padding: 0.15rem 0.5rem;
@@ -467,6 +519,26 @@
     .badge-ok { background: var(--green-bg); color: var(--green); }
     .badge-warn { background: var(--yellow-bg); color: var(--yellow); }
     .badge-err { background: var(--red-bg); color: var(--red); }
+
+    /* Skill items in sidebar */
+    .skill-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      margin: 0.15rem;
+    }
+    .skill-item:hover {
+      background: var(--accent-glow);
+      color: var(--accent-light);
+      border-color: var(--border-glow);
+    }
 
     /* Agent Panel Overlay */
     .agent-panel {
@@ -532,12 +604,154 @@
       background: var(--accent-glow);
     }
 
+    /* Settings Panel */
+    .settings-panel {
+      display: none;
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 380px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -8px 0 40px rgba(0,0,0,0.5);
+      z-index: 100;
+      overflow-y: auto;
+      animation: slideIn 0.25s ease;
+    }
+    .settings-panel.active { display: block; }
+    .settings-panel-inner { padding: 1.5rem; }
+    .settings-input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .settings-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .settings-select {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237b83a6' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.8rem center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .settings-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .settings-select option {
+      background: var(--surface);
+      color: var(--text);
+    }
+    .settings-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+    }
+    .settings-hint {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+    .btn-settings-save {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, var(--accent), #5a4bd1);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-settings-save:hover {
+      box-shadow: 0 2px 12px var(--accent-strong);
+      transform: translateY(-1px);
+    }
+    .btn-danger {
+      padding: 0.5rem 1rem;
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover {
+      background: rgba(255, 107, 107, 0.2);
+      border-color: var(--red);
+    }
+    .settings-saved {
+      display: inline-block;
+      color: var(--green);
+      font-size: 0.75rem;
+      margin-left: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .settings-saved.show { opacity: 1; }
+
+    /* Mobile overlay for sidebar */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 49;
+    }
+    .sidebar-overlay.active { display: block; }
+
     @media (max-width: 900px) {
       .sidebar { display: none; }
     }
     @media (max-width: 600px) {
       .login-card { padding: 2rem 1.5rem; }
       .msg { max-width: 95%; }
+      .hamburger { display: flex; }
+      .sidebar {
+        display: none;
+        position: fixed;
+        top: 52px; left: 0; bottom: 0;
+        width: 280px;
+        z-index: 50;
+        border-left: none;
+        border-right: 1px solid var(--border);
+        box-shadow: 8px 0 40px rgba(0,0,0,0.5);
+      }
+      .sidebar.mobile-open { display: block; }
+      .chat-input { padding: 0.5rem 0.75rem; }
+      .input-row { gap: 0.35rem; }
+      .btn-attach { padding: 0.6rem 0.5rem; font-size: 0.9rem; }
+      .btn-send { padding: 0.6rem 0.9rem; font-size: 0.8rem; }
+      .msg.user .msg-body { max-width: 88%; }
+      .agent-panel, .settings-panel { width: 100%; }
+      .topbar { padding: 0 0.75rem; }
+      .topbar-title { font-size: 0.85rem; }
+      .conn-status span { display: none; }
     }
   </style>
 </head>
@@ -577,7 +791,7 @@
     <!-- Avatar & Identity -->
     <div style="text-align:center;margin-bottom:1.5rem">
       <div style="width:96px;height:96px;border-radius:50%;margin:0 auto 1rem;overflow:hidden;border:3px solid var(--accent);box-shadow:0 0 30px var(--accent-glow)">
-        <img src="/athena.png"" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--accent-glow);font-size:2.5rem&quot;>⚡</div>'">
+        <img src="/athena.png" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--accent-glow);font-size:2.5rem&quot;>⚡</div>'">
       </div>
       <div id="panelAgentName" style="font-size:1.3rem;font-weight:700"></div>
       <div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.25rem">⚡ Server Management AI</div>
@@ -638,23 +852,96 @@
   </div>
 </div>
 
+<!-- ==================== SETTINGS PANEL ==================== -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-panel-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <h2 style="font-size:1.1rem;font-weight:700">⚙️ Settings</h2>
+      <button onclick="hideSettingsPanel()" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Gateway Token -->
+    <div class="panel-section">
+      <div class="panel-title">Gateway Token</div>
+      <label class="settings-label">Access Token</label>
+      <input type="password" class="settings-input" id="settingsToken" placeholder="Enter new gateway token">
+      <div class="settings-hint">Used to authenticate with the CortexOS gateway</div>
+      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem">
+        <button class="btn-settings-save" onclick="saveToken()">Update Token</button>
+        <span class="settings-saved" id="tokenSaved">✓ Saved</span>
+      </div>
+    </div>
+
+    <!-- AI Model -->
+    <div class="panel-section">
+      <div class="panel-title">AI Model</div>
+      <label class="settings-label">Active Model</label>
+      <select class="settings-select" id="settingsModel">
+        <option value="claude-sonnet">Claude Sonnet</option>
+        <option value="claude-opus">Claude Opus</option>
+        <option value="gpt-4o">GPT-4o</option>
+        <option value="gemini-flash">Gemini Flash</option>
+      </select>
+      <div class="settings-hint">Select which AI model powers the agent</div>
+      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem">
+        <button class="btn-settings-save" onclick="saveModel()">Save Model</button>
+        <span class="settings-saved" id="modelSaved">✓ Saved</span>
+      </div>
+    </div>
+
+    <!-- External URL -->
+    <div class="panel-section">
+      <div class="panel-title">External URL</div>
+      <label class="settings-label">Allowed Origin URL</label>
+      <input type="url" class="settings-input" id="settingsUrl" placeholder="https://cortex.example.com">
+      <div class="settings-hint">External URL for CORS allowedOrigins (e.g. Cloudflare tunnel)</div>
+      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem">
+        <button class="btn-settings-save" onclick="saveUrl()">Save URL</button>
+        <span class="settings-saved" id="urlSaved">✓ Saved</span>
+      </div>
+    </div>
+
+    <!-- Clear History -->
+    <div class="panel-section">
+      <div class="panel-title">Chat History</div>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Clear all locally stored chat messages. This cannot be undone.</p>
+      <button class="btn-danger" onclick="clearHistory()">🗑️ Clear Chat History</button>
+    </div>
+
+    <!-- Version Info -->
+    <div class="panel-section" style="border-bottom:none">
+      <div class="panel-title">Version Info</div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.0</span></div>
+      <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
+      <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
+      <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
+      <div style="margin-top:0.75rem;text-align:center">
+        <span style="font-size:0.65rem;color:var(--text-muted)">CortexOS Server Dashboard © 2025</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== APP ==================== -->
 <div class="app" id="app">
   <div class="topbar">
     <div class="topbar-brand">
+      <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.1.0</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.0</span></div>
     </div>
     <div class="topbar-right">
       <div class="conn-status">
         <div class="conn-dot" id="connDot"></div>
         <span id="connText">Connected</span>
       </div>
+      <button class="btn-topbar" onclick="showSettingsPanel()" title="Settings">⚙️</button>
       <button class="btn-ghost" onclick="doDisconnect()">Disconnect</button>
     </div>
   </div>
 
   <div class="main">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
     <div class="chat">
       <div class="chat-scroll" id="chatScroll"></div>
       <div class="typing" id="typingEl">⚡ CortexOS is thinking</div>
@@ -673,7 +960,7 @@
       <!-- Agent Profile -->
       <div class="side-section" style="text-align:center;padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1rem">
         <div id="agentAvatar" style="width:72px;height:72px;border-radius:50%;margin:0 auto 0.75rem;overflow:hidden;border:2px solid var(--accent);box-shadow:0 0 20px var(--accent-glow)">
-          <img src="/athena.png"" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--accent-glow);font-size:2rem&quot;>⚡</div>'">
+          <img src="/athena.png" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--accent-glow);font-size:2rem&quot;>⚡</div>'">
         </div>
         <div id="agentName" style="font-size:1.1rem;font-weight:700;letter-spacing:-0.01em"></div>
         <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.2rem">Server Management AI</div>
@@ -715,15 +1002,15 @@
 
       <div class="side-section">
         <div class="side-title">Quick Commands</div>
-        <ul class="quick-list">
-          <li class="quick-item" onclick="qcmd('Show me system health')"><span class="quick-icon">📊</span>System Health</li>
-          <li class="quick-item" onclick="qcmd('Run a security audit')"><span class="quick-icon">🔒</span>Security Audit</li>
-          <li class="quick-item" onclick="qcmd('List all running services')"><span class="quick-icon">⚙️</span>Services</li>
-          <li class="quick-item" onclick="qcmd('Check for package updates')"><span class="quick-icon">📦</span>Updates</li>
-          <li class="quick-item" onclick="qcmd('Show disk usage breakdown')"><span class="quick-icon">💾</span>Disk Usage</li>
-          <li class="quick-item" onclick="qcmd('Show network interfaces and connections')"><span class="quick-icon">🌐</span>Network</li>
-          <li class="quick-item" onclick="qcmd('Show Docker containers')"><span class="quick-icon">🐳</span>Docker</li>
-          <li class="quick-item" onclick="qcmd('Check firewall status and rules')"><span class="quick-icon">🛡️</span>Firewall</li>
+        <ul class="quick-list" id="quickCommandList">
+          <li class="quick-item" onclick="qcmd('Show me system health')"><span class="quick-icon">📊</span>System Health<span class="quick-shortcut">Ctrl+1</span></li>
+          <li class="quick-item" onclick="qcmd('Run a security audit')"><span class="quick-icon">🔒</span>Security Audit<span class="quick-shortcut">Ctrl+2</span></li>
+          <li class="quick-item" onclick="qcmd('List all running services')"><span class="quick-icon">⚙️</span>Services<span class="quick-shortcut">Ctrl+3</span></li>
+          <li class="quick-item" onclick="qcmd('Check for package updates')"><span class="quick-icon">📦</span>Updates<span class="quick-shortcut">Ctrl+4</span></li>
+          <li class="quick-item" onclick="qcmd('Show disk usage breakdown')"><span class="quick-icon">💾</span>Disk Usage<span class="quick-shortcut">Ctrl+5</span></li>
+          <li class="quick-item" onclick="qcmd('Show network interfaces and connections')"><span class="quick-icon">🌐</span>Network<span class="quick-shortcut">Ctrl+6</span></li>
+          <li class="quick-item" onclick="qcmd('Show Docker containers')"><span class="quick-icon">🐳</span>Docker<span class="quick-shortcut">Ctrl+7</span></li>
+          <li class="quick-item" onclick="qcmd('Check firewall status and rules')"><span class="quick-icon">🛡️</span>Firewall<span class="quick-shortcut">Ctrl+8</span></li>
           <li class="quick-item" onclick="qcmd('List recent failed login attempts')"><span class="quick-icon">🚨</span>Auth Logs</li>
           <li class="quick-item" onclick="qcmd('Show backup status')"><span class="quick-icon">💿</span>Backups</li>
         </ul>
@@ -731,11 +1018,18 @@
 
       <div class="side-section">
         <div class="side-title">Skills <span class="skill-badge badge-ok">10 active</span></div>
-        <ul class="quick-list" style="font-size:0.72rem;color:var(--text-muted)">
-          <li style="padding:0.2rem 0">monitoring · docker · systemd</li>
-          <li style="padding:0.2rem 0">security · network · storage</li>
-          <li style="padding:0.2rem 0">packages · users · firewall · backup</li>
-        </ul>
+        <div id="sidebarSkills" style="display:flex;flex-wrap:wrap;gap:0.15rem">
+          <span class="skill-item" onclick="askSkill('monitoring')">📊 monitoring</span>
+          <span class="skill-item" onclick="askSkill('docker')">🐳 docker</span>
+          <span class="skill-item" onclick="askSkill('systemd')">⚙️ systemd</span>
+          <span class="skill-item" onclick="askSkill('security')">🔒 security</span>
+          <span class="skill-item" onclick="askSkill('network')">🌐 network</span>
+          <span class="skill-item" onclick="askSkill('storage')">💾 storage</span>
+          <span class="skill-item" onclick="askSkill('packages')">📦 packages</span>
+          <span class="skill-item" onclick="askSkill('users')">👤 users</span>
+          <span class="skill-item" onclick="askSkill('firewall')">🛡️ firewall</span>
+          <span class="skill-item" onclick="askSkill('backup')">💿 backup</span>
+        </div>
       </div>
     </div>
   </div>
@@ -744,7 +1038,22 @@
 <script>
 let ws=null, sessionKey=null, msgN=0, streaming='', pendingToken='';
 let healthPollInterval=null;
+let reconnectTimer=null;
+let isReconnecting=false;
+let wasConnected=false;
 const $=id=>document.getElementById(id);
+
+// Quick command messages for keyboard shortcuts
+const quickCommands=[
+  'Show me system health',
+  'Run a security audit',
+  'List all running services',
+  'Check for package updates',
+  'Show disk usage breakdown',
+  'Show network interfaces and connections',
+  'Show Docker containers',
+  'Check firewall status and rules'
+];
 
 $('hostDisplay').textContent=location.hostname;
 const saved=localStorage.getItem('cortexos-token');
@@ -758,7 +1067,7 @@ function wsUrl(){
 function sendConnect(nonce){
   const params={
     minProtocol:3, maxProtocol:3,
-    client:{id:'webchat-ui',displayName:'CortexOS Dashboard',version:'0.1.0',platform:'web',mode:'webchat'},
+    client:{id:'webchat-ui',displayName:'CortexOS Dashboard',version:'0.2.0',platform:'web',mode:'webchat'},
     scopes:['operator.admin','operator.approvals'],
     auth:{token:pendingToken}
   };
@@ -768,8 +1077,10 @@ function sendConnect(nonce){
 function doConnect(){
   pendingToken=$('tokenInput').value.trim();
   if(!pendingToken){showErr('Enter your access token');return}
-  $('connectBtn').disabled=true;
-  $('connectBtn').textContent='Connecting…';
+  if(!isReconnecting){
+    $('connectBtn').disabled=true;
+    $('connectBtn').textContent='Connecting…';
+  }
   let challengeReceived=false;
   try{
     ws=new WebSocket(wsUrl());
@@ -779,10 +1090,8 @@ function doConnect(){
     ws.onmessage=e=>{
       try{
         const d=JSON.parse(e.data);
-        // Debug: log EVERY message with full detail
         console.log('[WS RAW]', JSON.stringify(d).substring(0, 500));
         console.log('[WS]', 'type='+d.type, 'event='+(d.event||''), 'method='+(d.method||''), 'id='+(d.id||''), 'state='+(d.payload?.state||d.params?.state||''));
-        // Handle challenge
         if(d.type==='event'&&d.event==='connect.challenge'){
           challengeReceived=true;
           sendConnect(d.payload?.nonce);
@@ -791,51 +1100,111 @@ function doConnect(){
         handle(d);
       }catch(err){console.error('[WS parse error]', err, e.data?.substring?.(0,200))}
     };
-    ws.onclose=()=>{$('connDot').classList.add('off');$('connText').textContent='Disconnected'};
-    ws.onerror=()=>{showErr('Connection failed');resetLogin()};
+    ws.onclose=()=>{
+      setConnStatus('disconnected');
+      stopHealthPoll();
+      if(wasConnected&&!isReconnecting){
+        // Auto-reconnect
+        attemptReconnect();
+      }
+    };
+    ws.onerror=()=>{
+      if(!wasConnected&&!isReconnecting){
+        showErr('Connection failed');
+        resetLogin();
+      }
+    };
   }catch(e){showErr(e.message);resetLogin()}
 }
 
+function attemptReconnect(){
+  isReconnecting=true;
+  setConnStatus('reconnecting');
+  if(reconnectTimer)clearTimeout(reconnectTimer);
+  reconnectTimer=setTimeout(()=>{
+    console.log('[WS] Auto-reconnecting...');
+    pendingToken=localStorage.getItem('cortexos-token')||pendingToken;
+    if(pendingToken){
+      doConnect();
+    }else{
+      isReconnecting=false;
+      setConnStatus('disconnected');
+    }
+  },3000);
+}
+
+function setConnStatus(state){
+  const dot=$('connDot');
+  const text=$('connText');
+  dot.classList.remove('off','reconnecting');
+  if(state==='connected'){
+    dot.classList.remove('off','reconnecting');
+    text.textContent='Connected';
+  }else if(state==='reconnecting'){
+    dot.classList.add('reconnecting');
+    text.textContent='Reconnecting…';
+  }else{
+    dot.classList.add('off');
+    text.textContent='Disconnected';
+  }
+}
+
 function handle(d){
-  // Connect response (type:res format)
+  // Connect response
   if(d.type==='res'&&d.id==='connect'){
-    if(!d.ok){showErr(d.error?.message||'Auth failed');resetLogin();return}
+    if(!d.ok){
+      if(isReconnecting){
+        isReconnecting=false;
+        setConnStatus('disconnected');
+      }else{
+        showErr(d.error?.message||'Auth failed');resetLogin();
+      }
+      return;
+    }
     localStorage.setItem('cortexos-token',pendingToken);
     sessionKey='agent:main:webchat';
-    // Use branding from gateway
+    wasConnected=true;
+    isReconnecting=false;
+    setConnStatus('connected');
     const branding=d.payload?.branding||{};
     if(branding.assistantName){
       aiName=branding.assistantName;
       localStorage.setItem('cortexos-ai-name',aiName);
       $('typingEl').textContent='⚡ '+aiName+' is thinking';
     }
-    // Populate agent profile
     $('agentName').textContent=aiName;
     $('panelAgentName').textContent=aiName;
     $('panelName2').textContent=aiName;
     const server=d.payload?.server||{};
     $('panelGateway').textContent='v'+(server.version||'?');
+    $('settingsGatewayVer').textContent='v'+(server.version||'?');
     $('panelProtocol').textContent='v'+(d.payload?.protocol||'?');
-    // Try to extract model from features or config
+    $('settingsProtocolVer').textContent='v'+(d.payload?.protocol||'?');
     const model=localStorage.getItem('cortexos-model')||'Sonnet';
     $('agentModel').textContent=model.split('/').pop().split('-')[0]||model;
     $('panelModel').textContent=model;
     $('panelProvider').textContent=model.split('/')[0]||'—';
+    // Populate settings
+    $('settingsToken').value=pendingToken;
+    const savedUrl=localStorage.getItem('cortexos-ext-url')||'';
+    $('settingsUrl').value=savedUrl;
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     checkAiReady();
     return;
   }
-  // Also handle hello-ok (direct auth)
   if(d.type==='hello-ok'){
     localStorage.setItem('cortexos-token',pendingToken);
     sessionKey='agent:main:webchat';
+    wasConnected=true;
+    isReconnecting=false;
+    setConnStatus('connected');
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     checkAiReady();
     return;
   }
-  // Stream events — catch ALL event types and formats
+  // Stream events
   if(d.type==='event'){
     const ev=d.event||'';
     const p=d.payload||d.params||{};
@@ -844,7 +1213,6 @@ function handle(d){
     
     console.log('[EVENT]', 'event='+ev, 'state='+st, 'hasMessage='+(!!m), 'contentType='+(m?.content ? (typeof m.content === 'string' ? 'string' : 'array['+m.content.length+']') : 'none'));
     
-    // Handle any event with a state field (streaming, finished, error)
     if(st==='streaming'){
       $('typingEl').classList.add('active');
       if(m?.content){
@@ -857,7 +1225,6 @@ function handle(d){
         const t=extractTxt(m.content);
         if(t){
           removeStream();
-          // Check if the "finished" response is actually an API key error
           if(t.includes('No API key')||t.includes('API key found')||t.includes('Agent failed before reply')){
             showSetupNeeded();
           }else{
@@ -865,7 +1232,6 @@ function handle(d){
           }
         }
       }else if(streaming){
-        // If we were streaming but finished msg has no content, finalize what we had
         removeStream();
         addMsg('assistant',streaming);
       }
@@ -880,7 +1246,6 @@ function handle(d){
       }
       streaming='';$('sendBtn').disabled=false;
     }else if(!st && m?.content){
-      // Events without a state field but with message content (some gateway versions)
       const t=extractTxt(m.content);
       if(t){
         $('typingEl').classList.add('active');
@@ -888,7 +1253,6 @@ function handle(d){
       }
     }
     
-    // Also catch embedded agent errors
     if(p.error&&typeof p.error==='string'&&p.error.includes('API key')){
       $('typingEl').classList.remove('active');
       showSetupNeeded();
@@ -901,7 +1265,6 @@ function handle(d){
     if(d.ok&&d.payload){
       updateSystemStats(d.payload);
     }else if(!d.ok&&d.id==='health-poll'){
-      // health method not available, try status instead
       console.log('[HEALTH] health method failed, trying status...');
       if(ws&&ws.readyState===1){
         ws.send(JSON.stringify({type:'req',method:'status',id:'status-poll'}));
@@ -909,7 +1272,7 @@ function handle(d){
     }
     return;
   }
-  // RPC response format
+  // RPC response
   if(d.type==='res'&&d.id?.startsWith('chat-')){
     if(!d.ok){
       $('typingEl').classList.remove('active');
@@ -922,7 +1285,7 @@ function handle(d){
       $('sendBtn').disabled=false;
     }
   }
-  // Catch agent failure notifications
+  // Agent failure
   if(d.type==='event'&&(d.event||'').includes('agent')&&d.payload?.error){
     const err=d.payload.error;
     if(typeof err==='string'&&(err.includes('No API key')||err.includes('API key'))){
@@ -940,8 +1303,8 @@ function extractTxt(c){
     return c.map(b=>{
       if(typeof b==='string')return b;
       if(b.type==='text'&&b.text)return b.text;
-      if(b.type==='tool_use')return ''; // skip tool calls
-      if(b.content)return extractTxt(b.content); // nested content
+      if(b.type==='tool_use')return '';
+      if(b.content)return extractTxt(b.content);
       return '';
     }).filter(Boolean).join('\n');
   }
@@ -956,7 +1319,6 @@ function doSend(){
   const box=$('chatBox'),txt=box.value.trim();
   if((!txt&&pendingAttachments.length===0)||!ws||ws.readyState!==1)return;
   
-  // Show user message with inline image previews
   let displayHtml=fmtText(txt||'');
   let historyText=txt||'';
   if(pendingAttachments.length>0){
@@ -967,16 +1329,13 @@ function doSend(){
       return `<div style="margin-top:0.4rem;font-size:0.8rem">📄 ${a.fileName}</div>`;
     }).join('');
     displayHtml+=previews;
-    // For history, save filenames not base64
     historyText+=(historyText?'\n':'')+'📎 '+pendingAttachments.map(a=>a.fileName).join(', ');
   }
-  // Add to DOM with full images
   const el=document.createElement('div');
   el.className='msg user';
   el.innerHTML=`<div class="msg-head">You</div><div class="msg-body">${displayHtml}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
-  // Save to history with text only (no base64)
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
   history.push({role:'user',text:historyText,ts:Date.now()});
   if(history.length>100)history.splice(0,history.length-100);
@@ -987,7 +1346,6 @@ function doSend(){
   const idk=crypto.randomUUID();
   const params={sessionKey:sessionKey||'agent:main:webchat',message:txt||'See attached file(s).',idempotencyKey:idk};
   
-  // Add attachments
   if(pendingAttachments.length>0){
     params.attachments=pendingAttachments.map(a=>({
       type:a.isImage?'image':'file',
@@ -1004,13 +1362,16 @@ function doSend(){
 
 function qcmd(t){$('chatBox').value=t;doSend()}
 
+function askSkill(skill){
+  qcmd('Tell me about your '+skill+' capabilities and show me what you can do with it');
+}
+
 function addMsg(role,text,rawHtml,skipSave){
   const el=document.createElement('div');
   el.className='msg '+role;
   el.innerHTML=`<div class="msg-head">${role==='user'?'You':'⚡ '+aiName}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
-  // Persist to localStorage (text only, no base64)
   if(!skipSave){
     const saveText=rawHtml?text.replace(/<img[^>]*>/g,'[image]').replace(/<[^>]+>/g,''):text;
     const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
@@ -1038,28 +1399,18 @@ function loadHistory(){
 
 function fmtText(t){
   let s=escHtml(t);
-  // Code blocks (must be before inline code)
   s=s.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>');
-  // Inline code
   s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
-  // Headers
   s=s.replace(/^#### (.+)$/gm,'<h4>$1</h4>');
   s=s.replace(/^### (.+)$/gm,'<h3>$1</h3>');
-  // Bold
   s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-  // Italic
   s=s.replace(/\*([^*]+)\*/g,'<em>$1</em>');
-  // Horizontal rules
   s=s.replace(/^---$/gm,'<hr>');
-  // Unordered lists
   s=s.replace(/^- (.+)$/gm,'<li>$1</li>');
   s=s.replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>');
-  // Numbered lists
   s=s.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
-  // Paragraphs (double newlines)
   s=s.replace(/\n\n/g,'</p><p>');
   s='<p>'+s+'</p>';
-  // Clean up empty paragraphs
   s=s.replace(/<p>\s*<\/p>/g,'');
   s=s.replace(/<p>(<h[34]>)/g,'$1');
   s=s.replace(/(<\/h[34]>)<\/p>/g,'$1');
@@ -1091,6 +1442,9 @@ function onKey(e){
 function showErr(m){const el=$('loginError');el.textContent=m;el.style.display='block'}
 function resetLogin(){$('connectBtn').disabled=false;$('connectBtn').textContent='Connect'}
 function doDisconnect(){
+  wasConnected=false;
+  isReconnecting=false;
+  if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null}
   stopHealthPoll();
   if(ws)ws.close();localStorage.removeItem('cortexos-token');
   localStorage.removeItem('cortexos-history');
@@ -1099,7 +1453,6 @@ function doDisconnect(){
 }
 
 let aiName=localStorage.getItem('cortexos-ai-name')||'CortexOS';
-// Restore custom avatar if set
 const savedAvatar=localStorage.getItem('cortexos-avatar');
 if(savedAvatar){
   setTimeout(()=>{
@@ -1142,16 +1495,13 @@ function removeAttach(i){
 }
 
 function checkAiReady(){
-  // Start health polling for system stats
   startHealthPoll();
   
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
   if(history.length>0){
-    // Returning user — restore chat history
     loadHistory();
     $('sendBtn').disabled=false;
   }else{
-    // First time — send intro message
     addMsg('assistant','Welcome to CortexOS Server. Initializing AI agent...');
     const idk=crypto.randomUUID();
     ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
@@ -1194,14 +1544,11 @@ function uploadAvatar(file){
   const reader=new FileReader();
   reader.onload=e=>{
     const base64=e.target.result.split(',')[1];
-    // Send to gateway to store as workspace file
     ws.send(JSON.stringify({type:'req',method:'agents.files.set',id:'avatar-upload',
       params:{agentId:'main',name:'avatars/avatar.png',content:base64,encoding:'base64'}}));
-    // Also tell the AI to update its identity
     const idk=crypto.randomUUID();
     ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
       params:{sessionKey:sessionKey||'agent:main:webchat',message:'I just uploaded a new avatar image for you. Update your IDENTITY.md to reference avatars/avatar.png as your avatar.',idempotencyKey:idk}}));
-    // Update UI immediately
     const dataUrl=e.target.result;
     document.querySelectorAll('#agentAvatar img, .agent-panel img[src*="athena"]').forEach(img=>{img.src=dataUrl});
     localStorage.setItem('cortexos-avatar',dataUrl);
@@ -1213,11 +1560,112 @@ function uploadAvatar(file){
 
 function showAgentPanel(){$('agentPanel').classList.add('active')}
 function hideAgentPanel(){$('agentPanel').classList.remove('active')}
-// Click outside to close
+
+// Settings panel
+function showSettingsPanel(){
+  $('settingsPanel').classList.add('active');
+  // Populate current values
+  const currentToken=localStorage.getItem('cortexos-token')||'';
+  $('settingsToken').value=currentToken;
+  const currentModel=localStorage.getItem('cortexos-model')||'claude-sonnet';
+  const modelSelect=$('settingsModel');
+  for(let i=0;i<modelSelect.options.length;i++){
+    if(currentModel.includes(modelSelect.options[i].value)){
+      modelSelect.selectedIndex=i;break;
+    }
+  }
+  const currentUrl=localStorage.getItem('cortexos-ext-url')||'';
+  $('settingsUrl').value=currentUrl;
+}
+function hideSettingsPanel(){$('settingsPanel').classList.remove('active')}
+
+function flashSaved(elId){
+  const el=$(elId);
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+function saveToken(){
+  const newToken=$('settingsToken').value.trim();
+  if(!newToken)return;
+  localStorage.setItem('cortexos-token',newToken);
+  pendingToken=newToken;
+  flashSaved('tokenSaved');
+}
+
+function saveModel(){
+  const model=$('settingsModel').value;
+  localStorage.setItem('cortexos-model',model);
+  $('agentModel').textContent=model.split('-')[0]||model;
+  $('panelModel').textContent=model;
+  $('panelProvider').textContent=model.split('-')[0]||'—';
+  flashSaved('modelSaved');
+  // Notify the agent
+  if(ws&&ws.readyState===1){
+    const idk=crypto.randomUUID();
+    ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
+      params:{sessionKey:sessionKey||'agent:main:webchat',
+        message:'The user wants to switch the AI model to: '+model+'. Please update the configuration if possible.',
+        idempotencyKey:idk}}));
+  }
+}
+
+function saveUrl(){
+  const url=$('settingsUrl').value.trim();
+  localStorage.setItem('cortexos-ext-url',url);
+  flashSaved('urlSaved');
+  if(ws&&ws.readyState===1&&url){
+    const idk=crypto.randomUUID();
+    ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
+      params:{sessionKey:sessionKey||'agent:main:webchat',
+        message:'The user wants to set the external URL / allowedOrigins to: '+url+'. Please update the gateway configuration.',
+        idempotencyKey:idk}}));
+  }
+}
+
+function clearHistory(){
+  if(!confirm('Clear all chat history? This cannot be undone.'))return;
+  localStorage.removeItem('cortexos-history');
+  $('chatScroll').innerHTML='';
+  addMsg('assistant','Chat history cleared. Starting fresh.', false, true);
+}
+
+// Mobile sidebar toggle
+function toggleMobileSidebar(){
+  const sidebar=$('sidebarMain');
+  const overlay=$('sidebarOverlay');
+  const isOpen=sidebar.classList.contains('mobile-open');
+  if(isOpen){
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+  }else{
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('active');
+  }
+}
+
+// Click outside to close panels
 document.addEventListener('click',e=>{
-  const panel=$('agentPanel');
-  if(panel.classList.contains('active')&&!panel.contains(e.target)&&!e.target.closest('[onclick*="showAgentPanel"]')){
+  const agentPanel=$('agentPanel');
+  if(agentPanel.classList.contains('active')&&!agentPanel.contains(e.target)&&!e.target.closest('[onclick*="showAgentPanel"]')){
     hideAgentPanel();
+  }
+  const settingsPanel=$('settingsPanel');
+  if(settingsPanel.classList.contains('active')&&!settingsPanel.contains(e.target)&&!e.target.closest('[onclick*="showSettingsPanel"]')){
+    hideSettingsPanel();
+  }
+});
+
+// Keyboard shortcuts: Ctrl+1 through Ctrl+8 for quick commands
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&!e.metaKey){
+    const num=parseInt(e.key);
+    if(num>=1&&num<=8){
+      e.preventDefault();
+      if(ws&&ws.readyState===1){
+        qcmd(quickCommands[num-1]);
+      }
+    }
   }
 });
 
@@ -1236,7 +1684,6 @@ document.addEventListener('paste',e=>{
 });
 
 // Drag & drop support
-const chatArea=$('chatScroll');
 ['dragenter','dragover'].forEach(ev=>{
   document.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation()});
 });
@@ -1257,31 +1704,26 @@ function stopHealthPoll(){
 }
 
 function pollHealth(){
-  // Fetch system stats from static JSON file (updated every 10s by systemd timer)
   fetch('/stats.json?t='+Date.now()).then(r=>r.json()).then(data=>{
     console.log('[STATS]', data);
-    // CPU
     if(data.cpu){
       const cpuPct=data.cpu.percent||0;
       $('sCpu').textContent=cpuPct+'%';
       $('sCpuBar').style.width=cpuPct+'%';
       $('sCpuBar').style.background=cpuPct>80?'var(--red)':cpuPct>60?'var(--yellow)':'var(--green)';
     }
-    // Memory
     if(data.memory){
       const mp=data.memory.percent||0;
       $('sMem').textContent=Math.round(data.memory.used/1024*10)/10+'G / '+Math.round(data.memory.total/1024*10)/10+'G';
       $('sMemBar').style.width=mp+'%';
       $('sMemBar').style.background=mp>85?'var(--red)':mp>70?'var(--yellow)':'var(--accent-light)';
     }
-    // Disk
     if(data.disk){
       const dp=data.disk.percent||0;
       $('sDisk').textContent=data.disk.used+'G / '+data.disk.total+'G';
       $('sDiskBar').style.width=dp+'%';
       $('sDiskBar').style.background=dp>85?'var(--red)':dp>70?'var(--yellow)':'var(--yellow)';
     }
-    // Uptime
     if(data.uptime)$('sUp').textContent=data.uptime;
   }).catch(e=>console.log('[STATS] fetch error:',e));
 }
@@ -1290,32 +1732,26 @@ function updateSystemStats(data){
   console.log('[STATS] Raw data keys:', Object.keys(data));
   console.log('[STATS] Data:', JSON.stringify(data).substring(0, 800));
   
-  // Gateway health/status doesn't include system metrics, 
-  // but we can extract agent/session info
   if(data.agents&&Array.isArray(data.agents)){
     const agent=data.agents[0]||{};
     if(agent.name)$('agentName').textContent=agent.name;
   }
   
-  // Extract uptime from gateway
   if(data.ts){
     $('sUp').textContent='Gateway OK';
   }
 
-  // Extract model from status
   if(data.model){
     const m=data.model.split('/').pop()||data.model;
     $('agentModel').textContent=m.split('-')[0];
     localStorage.setItem('cortexos-model',data.model);
   }
   
-  // Try to extract system info from various response formats
   const system=data.system||data.os||data;
   const memory=data.memory||system.memory||{};
   const cpu=data.cpu||system.cpu||{};
   const disk=data.disk||system.disk||data.storage||{};
   
-  // CPU
   let cpuPct=cpu.usage||cpu.percent||cpu.load||null;
   if(cpuPct!==null){
     cpuPct=Math.round(parseFloat(cpuPct));
@@ -1324,7 +1760,6 @@ function updateSystemStats(data){
     $('sCpuBar').style.background=cpuPct>80?'var(--red)':cpuPct>60?'var(--yellow)':'var(--green)';
   }
   
-  // Memory
   let memPct=memory.usedPercent||memory.percent||memory.usage||null;
   let memText=null;
   if(memory.used&&memory.total){
@@ -1340,7 +1775,6 @@ function updateSystemStats(data){
     $('sMemBar').style.background=memPct>85?'var(--red)':memPct>70?'var(--yellow)':'var(--accent-light)';
   }
   
-  // Disk
   let diskPct=disk.usedPercent||disk.percent||disk.usage||null;
   let diskText=null;
   if(disk.used&&disk.total){
@@ -1356,7 +1790,6 @@ function updateSystemStats(data){
     $('sDiskBar').style.background=diskPct>90?'var(--red)':diskPct>75?'var(--yellow)':'var(--yellow)';
   }
   
-  // Uptime
   let uptime=data.uptime||system.uptime||data.uptimeSeconds||null;
   if(uptime!==null){
     if(typeof uptime==='number'){
@@ -1367,13 +1800,12 @@ function updateSystemStats(data){
     $('panelUptime').textContent=$('sUp').textContent;
   }
   
-  // Version info
   if(data.version||data.server?.version){
     const ver=data.version||data.server?.version;
     $('panelGateway').textContent='v'+ver;
+    $('settingsGatewayVer').textContent='v'+ver;
   }
   
-  // Model info  
   if(data.model||data.defaultModel){
     const model=data.model||data.defaultModel;
     localStorage.setItem('cortexos-model',model);
