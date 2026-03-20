@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-20 16:51 UTC" lang="en">
+<html data-build="2026-03-20 16:53 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1169,7 +1169,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.3</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.4</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1186,7 +1186,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.3</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.4</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -2176,7 +2176,7 @@ function renderSkillCard(skill, status) {
     ? `onclick="updateSkill('${skill.name}')"`
     : '';
 
-  return `<div class="skill-card">
+  return `<div class="skill-card" onclick="skillInfo('${skill.name}')" style="cursor:pointer" title="Click for details">
     <div class="skill-card-head">
       <span class="skill-card-icon">${skill.icon}</span>
       <span class="skill-card-version">v${skill.version}</span>
@@ -2184,7 +2184,7 @@ function renderSkillCard(skill, status) {
     <div class="skill-card-name">${skill.name}</div>
     <div class="skill-card-desc">${skill.description}</div>
     <div class="skill-card-footer">
-      <button class="skill-card-btn ${btnClass}" ${btnAction}>${btnText}</button>
+      <button class="skill-card-btn ${btnClass}" ${btnAction} onclick="event.stopPropagation()">${btnText}</button>
     </div>
   </div>`;
 }
@@ -2250,6 +2250,13 @@ function switchTab(tab) {
     tabSkills.classList.add('active');
     renderSkillsPage();
   }
+}
+
+function skillInfo(name) {
+  switchTab('chat');
+  setTimeout(() => {
+    qcmd('Show me the full details of your ' + name + ' skill — what commands are available, what it can do, and any key things I should know about it.');
+  }, 100);
 }
 
 function installSkill(name) {
