@@ -179,21 +179,7 @@ cmd_install() {
             cp "$TEMP_DIR/SKILL.md" "$SKILLS_DIR/$skill_name/SKILL.md"
             echo -e "${GREEN}✅ Installed $skill_name from $prefix/${NC}"
             
-            # Add to allowlist if configured
-            python3 -c "
-import json
-try:
-    with open('/root/.openclaw/openclaw.json') as f:
-        cfg = json.load(f)
-    allow = cfg.get('skills',{}).get('allow',[])
-    if '$skill_name' not in allow:
-        allow.append('$skill_name')
-        cfg.setdefault('skills',{})['allow'] = allow
-        with open('/root/.openclaw/openclaw.json','w') as f:
-            json.dump(cfg, f, indent=2)
-        print('Added to skill allowlist')
-except: pass
-" 2>/dev/null
+            # Skills are auto-discovered from filesystem, no config needed
             return 0
         fi
     done
