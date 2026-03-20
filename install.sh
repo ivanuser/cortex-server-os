@@ -696,6 +696,8 @@ install_skills() {
         "user-manager"
         "firewall-manager"
         "backup-manager"
+        "cloudflare-install"
+        "cloudflare-ops"
     )
     
     # Install skills from repo if available, otherwise download from GitHub
@@ -925,6 +927,14 @@ EOF
         "primary": "anthropic/claude-sonnet-4-20250514"
       }
     }
+  },
+  "skills": {
+    "mode": "allowlist",
+    "allow": [
+      "monitoring", "docker-manager", "systemd-manager", "security-hardening",
+      "network-manager", "storage-manager", "package-manager", "user-manager",
+      "firewall-manager", "backup-manager", "cloudflare-install", "cloudflare-ops"
+    ]
   },
   "ui": {
     "assistant": {
