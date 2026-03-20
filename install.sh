@@ -806,7 +806,8 @@ EOF
     mkdir -p /root/.openclaw
     
     # Determine allowed origins for the Control UI
-    local allowed_origins='"http://localhost:18789", "http://127.0.0.1:18789"'
+    local server_ip=$(hostname -I | awk '{print $1}' | head -1)
+    local allowed_origins='"http://localhost:18789", "http://127.0.0.1:18789", "http://'"${server_ip}"':18789"'
     local external_url=""
     
     if [[ "$UNATTENDED" == "false" ]]; then
