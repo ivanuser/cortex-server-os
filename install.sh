@@ -987,6 +987,7 @@ WorkingDirectory=${DATA_DIR}
 Environment=NODE_ENV=production
 Environment=HOME=/root
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=NODE_PATH=$(npm prefix -g)/lib/node_modules/openclaw-cortex/node_modules
 ExecStart=/usr/local/bin/openclaw gateway run --bind lan
 ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=mixed
