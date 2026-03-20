@@ -854,28 +854,41 @@ EOF
         if [[ "$api_provider" == "anthropic" ]]; then
             echo ""
             echo "Anthropic auth options:"
-            echo "  1) Setup token (Claude subscription — recommended)"
-            echo "     Run 'claude setup-token' on any machine, paste the token here"
-            echo "  2) API key (from console.anthropic.com)"
+            echo "  1) API key (from console.anthropic.com) — easiest"
+            echo "  2) Setup token (from 'claude setup-token' — requires Claude CLI on another machine)"
             echo "  3) Skip — configure after install"
             echo ""
             echo -n "Choose auth method [1]: "
             read -r auth_choice
             case "$auth_choice" in
-                2) auth_method="apikey" ;;
+                2) auth_method="setup-token" ;;
                 3) auth_method="skip" ;;
-                *) auth_method="setup-token" ;;
+                *) auth_method="apikey" ;;
             esac
             
-            if [[ "$auth_method" == "setup-token" ]]; then
+            if [[ "$auth_method" == "apikey" ]]; then
                 echo ""
-                echo "Paste your setup token (from 'claude setup-token'):"
+                echo "Get your API key from: https://console.anthropic.com/settings/keys"
+                echo -n "Paste your Anthropic API key (sk-ant-api03-...): "
                 read -rs api_key
                 echo ""
-            elif [[ "$auth_method" == "apikey" ]]; then
-                echo -n "Enter your Anthropic API key (sk-ant-...): "
+            elif [[ "$auth_method" == "setup-token" ]]; then
+                echo ""
+                echo "On a machine with Claude CLI installed, run: claude setup-token"
+                echo "It will output a token starting with sk-ant-oat01-"
+                echo ""
+                echo -n "Paste the setup token: "
                 read -rs api_key
                 echo ""
+                # Validate format
+                if [[ -n "$api_key" && ! "$api_key" =~ ^sk-ant-oat ]]; then
+                    warning "Token doesn't look like a setup-token (should start with sk-ant-oat01-)"
+                    echo -n "Try as regular API key instead? [Y/n]: "
+                    read -r use_as_key
+                    if [[ ! "$use_as_key" =~ ^[Nn]$ ]]; then
+                        auth_method="apikey"
+                    fi
+                fi
             fi
         elif [[ "$api_provider" != "skip" ]]; then
             echo -n "Enter your ${api_provider} API key: "
