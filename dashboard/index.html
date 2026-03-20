@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-20 18:38 UTC" lang="en">
+<html data-build="2026-03-20 18:51 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -996,6 +996,173 @@
     }
     .sidebar-overlay.active { display: block; }
 
+    /* ===================== SYNTAX HIGHLIGHTING ===================== */
+    .code-block-wrapper {
+      position: relative;
+      margin: 0.6rem 0;
+    }
+    .code-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0d1020;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.65rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .code-lang-label {
+      color: var(--accent-light);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+    .code-copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .code-copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-light);
+      background: var(--accent-glow);
+    }
+    .code-copy-btn.copied {
+      color: var(--green);
+      border-color: var(--green);
+    }
+    .code-block-wrapper pre {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .code-block-wrapper .code-block-header + pre {
+      border-top: none;
+    }
+    .sh-keyword { color: #a29bfe; font-weight: 500; }
+    .sh-string { color: #00b894; }
+    .sh-comment { color: #4a5278; font-style: italic; }
+    .sh-number { color: #feca57; }
+    .sh-func { color: #54a0ff; }
+    .sh-operator { color: #ff6b6b; }
+
+    /* ===================== TERMINAL PANEL ===================== */
+    .terminal-page {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      background: #0a0c14;
+      overflow: hidden;
+    }
+    .terminal-page.active { display: flex; }
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1rem;
+      background: #0d1020;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .terminal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .terminal-dots {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .terminal-dots span {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .terminal-dots .dot-red { background: #ff5f56; }
+    .terminal-dots .dot-yellow { background: #ffbd2e; }
+    .terminal-dots .dot-green { background: #27c93f; }
+    .terminal-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .terminal-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .terminal-btn {
+      padding: 0.3rem 0.6rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .terminal-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-light);
+    }
+    .terminal-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: #c8d6e5;
+    }
+    .terminal-output::-webkit-scrollbar { width: 6px; }
+    .terminal-output::-webkit-scrollbar-track { background: transparent; }
+    .terminal-output::-webkit-scrollbar-thumb { background: #1e2642; border-radius: 3px; }
+    .terminal-line { margin-bottom: 0.15rem; white-space: pre-wrap; word-break: break-all; }
+    .terminal-line.cmd { color: #27c93f; }
+    .terminal-line.cmd::before { content: '$ '; color: #00b894; font-weight: 600; }
+    .terminal-line.output { color: #c8d6e5; }
+    .terminal-line.error { color: #ff6b6b; }
+    .terminal-line.system { color: #54a0ff; font-style: italic; }
+    .terminal-line.thinking { color: var(--accent-light); }
+    .terminal-line.thinking::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+    .terminal-input-row {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: #0d1020;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 0.5rem;
+    }
+    .terminal-prompt {
+      color: #00b894;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .terminal-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #27c93f;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      outline: none;
+      caret-color: #27c93f;
+    }
+    .terminal-input::placeholder { color: #2d3a66; }
+
     @media (max-width: 900px) {
       .sidebar { display: none; }
     }
@@ -1200,7 +1367,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.6</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.7</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1217,13 +1384,16 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.6</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.7</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
         </button>
         <button class="nav-tab" onclick="switchTab('skills')" id="tabSkills">
           <span class="nav-tab-icon">🧩</span><span class="nav-tab-label">Skills</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('terminal')" id="tabTerminal">
+          <span class="nav-tab-icon">🖥️</span><span class="nav-tab-label">Terminal</span>
         </button>
       </div>
     </div>
@@ -1277,6 +1447,30 @@
       <div class="skills-section">
         <div class="skills-section-title">Available to Install <span class="count" id="availableBadge">8</span></div>
         <div class="skills-grid" id="availableSkillsGrid"></div>
+      </div>
+    </div>
+
+    <!-- Terminal Page -->
+    <div class="terminal-page" id="terminalPage">
+      <div class="terminal-header">
+        <div class="terminal-header-left">
+          <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="terminal-title">cortexos — bash</span>
+        </div>
+        <div class="terminal-actions">
+          <button class="terminal-btn" onclick="clearTerminal()">clear</button>
+          <button class="terminal-btn" onclick="termCmd('pwd')">pwd</button>
+          <button class="terminal-btn" onclick="termCmd('whoami')">whoami</button>
+        </div>
+      </div>
+      <div class="terminal-output" id="termOutput">
+        <div class="terminal-line system">CortexOS Terminal — Commands are executed via AI agent</div>
+        <div class="terminal-line system">Type a command below. It will be sent to the AI for execution.</div>
+        <div class="terminal-line system">───────────────────────────────────────────</div>
+      </div>
+      <div class="terminal-input-row">
+        <span class="terminal-prompt">$</span>
+        <input class="terminal-input" id="termInput" type="text" placeholder="Type a command..." autocomplete="off" spellcheck="false" onkeydown="onTermKey(event)">
       </div>
     </div>
 
@@ -1735,9 +1929,46 @@ function loadHistory(){
   }
 }
 
+function highlightCode(code, lang) {
+  let s = code;
+  // Collect tokens to protect from double-highlighting
+  const tokens = [];
+  function tok(match, cls) {
+    const id = '\x00T' + tokens.length + '\x00';
+    tokens.push('<span class="' + cls + '">' + match + '</span>');
+    return id;
+  }
+  // Comments first (# and //) — but not inside strings
+  s = s.replace(/(\/\/.*$|(?:^|\s)#.*$)/gm, m => tok(m, 'sh-comment'));
+  // Strings (double then single)
+  s = s.replace(/("(?:[^"\\]|\\.)*")/g, m => tok(m, 'sh-string'));
+  s = s.replace(/('(?:[^'\\]|\\.)*')/g, m => tok(m, 'sh-string'));
+  // Numbers (standalone)
+  s = s.replace(/\b(\d+\.?\d*)\b/g, m => tok(m, 'sh-number'));
+  // Keywords
+  const kws = ['function','const','let','var','if','else','for','while','return','import','export','class','async','await','try','catch','throw','new','typeof','instanceof',
+    'sudo','apt','systemctl','docker','npm','git','curl','echo','cat','grep','chmod','chown','mkdir','cp','mv','rm','cd','ls','pip','python3?','node','bash','sh','wget','tar','sed','awk','find','xargs','tee','tail','head','ssh','scp','rsync','make','gcc','go','cargo','yarn','pnpm','dnf','yum','pacman','snap','flatpak','journalctl','nginx','systemd','ufw','iptables','mount','umount','fdisk','lsblk','df','du','ps','top','htop','kill','pkill','nohup','crontab','at','service'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, m => tok(m, 'sh-keyword'));
+  // Restore tokens
+  tokens.forEach((v, i) => { s = s.replace('\x00T' + i + '\x00', v); });
+  return s;
+}
+
+let codeBlockCounter = 0;
+
 function fmtText(t){
   let s=escHtml(t);
-  s=s.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>');
+  // Code blocks with language detection and syntax highlighting
+  s=s.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
+    const blockId = 'codeblock-' + (++codeBlockCounter);
+    const highlighted = highlightCode(code.replace(/\n$/, ''), lang);
+    const langLabel = lang ? '<span class="code-lang-label">' + lang + '</span>' : '<span class="code-lang-label">code</span>';
+    return '<div class="code-block-wrapper">' +
+      '<div class="code-block-header">' + langLabel +
+      '<button class="code-copy-btn" onclick="copyCodeBlock(this)" data-block="' + blockId + '">📋 Copy</button></div>' +
+      '<pre id="' + blockId + '"><code>' + highlighted + '</code></pre></div>';
+  });
   s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
   s=s.replace(/^#### (.+)$/gm,'<h4>$1</h4>');
   s=s.replace(/^### (.+)$/gm,'<h3>$1</h3>');
@@ -1757,7 +1988,32 @@ function fmtText(t){
   s=s.replace(/<p>(<hr>)<\/p>/g,'$1');
   s=s.replace(/<p>(<pre>)/g,'$1');
   s=s.replace(/(<\/pre>)<\/p>/g,'$1');
+  s=s.replace(/<p>(<div class="code-block-wrapper">)/g,'$1');
+  s=s.replace(/(<\/div>)<\/p>/g,'$1');
   return s;
+}
+
+function copyCodeBlock(btn) {
+  const blockId = btn.getAttribute('data-block');
+  const pre = $(blockId);
+  if (!pre) return;
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+  });
 }
 
 function escHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
@@ -2313,22 +2569,32 @@ function switchTab(tab) {
   const chatView = $('chatView');
   const sidebarMain = $('sidebarMain');
   const skillsPage = $('skillsPage');
+  const terminalPage = $('terminalPage');
   const tabChat = $('tabChat');
   const tabSkills = $('tabSkills');
+  const tabTerminal = $('tabTerminal');
+
+  // Reset all
+  chatView.style.display = 'none';
+  sidebarMain.style.display = 'none';
+  skillsPage.classList.remove('active');
+  terminalPage.classList.remove('active');
+  tabChat.classList.remove('active');
+  tabSkills.classList.remove('active');
+  tabTerminal.classList.remove('active');
 
   if (tab === 'chat') {
     chatView.style.display = 'flex';
     sidebarMain.style.display = '';
-    skillsPage.classList.remove('active');
     tabChat.classList.add('active');
-    tabSkills.classList.remove('active');
   } else if (tab === 'skills') {
-    chatView.style.display = 'none';
-    sidebarMain.style.display = 'none';
     skillsPage.classList.add('active');
-    tabChat.classList.remove('active');
     tabSkills.classList.add('active');
     renderSkillsPage();
+  } else if (tab === 'terminal') {
+    terminalPage.classList.add('active');
+    tabTerminal.classList.add('active');
+    setTimeout(() => $('termInput').focus(), 100);
   }
 }
 
@@ -2370,6 +2636,131 @@ function refreshSkillsPage() {
 
 // Render skills on initial load
 setTimeout(renderSkillsPage, 500);
+
+// ==================== Terminal ====================
+let termHistory = [];
+let termHistoryIdx = -1;
+let termWaitingResponse = false;
+let termMsgId = null;
+let termStreaming = '';
+
+function addTermLine(text, cls) {
+  const el = document.createElement('div');
+  el.className = 'terminal-line ' + (cls || 'output');
+  el.textContent = text;
+  $('termOutput').appendChild(el);
+  $('termOutput').scrollTop = $('termOutput').scrollHeight;
+  return el;
+}
+
+function clearTerminal() {
+  $('termOutput').innerHTML = '<div class="terminal-line system">Terminal cleared.</div>';
+}
+
+function termCmd(cmd) {
+  $('termInput').value = cmd;
+  sendTermCmd();
+}
+
+function sendTermCmd() {
+  const input = $('termInput');
+  const cmd = input.value.trim();
+  if (!cmd || !ws || ws.readyState !== 1) return;
+
+  // Add to history
+  termHistory.push(cmd);
+  if (termHistory.length > 100) termHistory.shift();
+  termHistoryIdx = termHistory.length;
+
+  // Show command in terminal
+  addTermLine(cmd, 'cmd');
+  input.value = '';
+
+  // Show thinking indicator
+  const thinkEl = addTermLine(' Processing...', 'thinking');
+
+  // Send as chat message
+  termWaitingResponse = true;
+  termStreaming = '';
+  const idk = crypto.randomUUID();
+  termMsgId = 'term-' + (++msgN);
+  ws.send(JSON.stringify({
+    type: 'req', method: 'chat.send', id: termMsgId,
+    params: {
+      sessionKey: sessionKey || 'agent:main:webchat',
+      message: 'Run this command and show me the output: `' + cmd + '`',
+      idempotencyKey: idk
+    }
+  }));
+}
+
+function onTermKey(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendTermCmd();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (termHistory.length > 0 && termHistoryIdx > 0) {
+      termHistoryIdx--;
+      $('termInput').value = termHistory[termHistoryIdx];
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (termHistoryIdx < termHistory.length - 1) {
+      termHistoryIdx++;
+      $('termInput').value = termHistory[termHistoryIdx];
+    } else {
+      termHistoryIdx = termHistory.length;
+      $('termInput').value = '';
+    }
+  } else if (e.key === 'l' && e.ctrlKey) {
+    e.preventDefault();
+    clearTerminal();
+  }
+}
+
+// Hook into the existing event handler to intercept terminal responses
+const origHandle = handle;
+handle = function(d) {
+  if (termWaitingResponse && d.type === 'event') {
+    const p = d.payload || d.params || {};
+    const st = p.state;
+    const m = p.message;
+
+    if (st === 'streaming' && m?.content) {
+      const t = extractTxt(m.content);
+      if (t) termStreaming = t;
+    } else if (st === 'finished' || st === 'final' || st === 'complete' || st === 'done') {
+      const t = extractTxt(m?.content) || termStreaming;
+      termWaitingResponse = false;
+      termStreaming = '';
+      // Remove thinking line
+      const lines = $('termOutput').querySelectorAll('.thinking');
+      lines.forEach(l => l.remove());
+      if (t) {
+        // Strip markdown formatting for terminal display
+        let clean = t.replace(/```\w*\n?/g, '').replace(/```/g, '');
+        clean = clean.replace(/\*\*([^*]+)\*\*/g, '$1');
+        clean = clean.replace(/\*([^*]+)\*/g, '$1');
+        clean = clean.replace(/^#+\s+/gm, '');
+        clean.split('\n').forEach(line => {
+          if (line.trim()) addTermLine(line, 'output');
+        });
+        addTermLine('', 'output'); // blank separator
+      }
+      $('termOutput').scrollTop = $('termOutput').scrollHeight;
+    } else if (st === 'error') {
+      termWaitingResponse = false;
+      termStreaming = '';
+      const lines = $('termOutput').querySelectorAll('.thinking');
+      lines.forEach(l => l.remove());
+      const errText = extractTxt(m?.content) || p.error || 'Command failed';
+      addTermLine('Error: ' + errText, 'error');
+    }
+  }
+  // Always call original handler
+  origHandle(d);
+};
 
 if(saved)setTimeout(doConnect,400);
 </script>
