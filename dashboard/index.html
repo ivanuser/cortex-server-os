@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-20 16:58 UTC" lang="en">
+<html data-build="2026-03-20 18:38 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1200,7 +1200,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.5</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.6</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1217,7 +1217,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.5</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.6</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -2207,14 +2207,44 @@ const coreSkills = [
 ];
 
 const extendedSkills = [
-  { name: 'nginx', icon: '🌍', version: '0.1.0', description: 'Nginx web server configuration, virtual hosts & reverse proxy' },
-  { name: 'apache', icon: '🪶', version: '0.1.0', description: 'Apache HTTP server, modules, vhosts & .htaccess management' },
-  { name: 'postgres', icon: '🐘', version: '0.1.0', description: 'PostgreSQL database admin, queries, backups & replication' },
-  { name: 'mysql', icon: '🐬', version: '0.1.0', description: 'MySQL/MariaDB database management, users & optimization' },
-  { name: 'redis', icon: '🔴', version: '0.1.0', description: 'Redis cache server configuration, monitoring & data ops' },
-  { name: 'nextcloud', icon: '☁️', version: '0.1.0', description: 'Nextcloud installation, apps, users & storage management' },
-  { name: 'discourse', icon: '💬', version: '0.1.0', description: 'Discourse forum setup, plugins, themes & administration' },
-  { name: 'kubernetes', icon: '☸️', version: '0.1.0', description: 'Kubernetes cluster management, pods, services & deployments' }
+  // Server
+  { name: 'nginx', icon: '🌍', version: '0.1.0', description: 'Web server, reverse proxy, SSL, load balancing' },
+  { name: 'apache', icon: '🪶', version: '0.1.0', description: 'Apache HTTP server, modules, vhosts' },
+  { name: 'postgres', icon: '🐘', version: '0.1.0', description: 'PostgreSQL database management' },
+  { name: 'mysql', icon: '🐬', version: '0.1.0', description: 'MySQL/MariaDB management' },
+  { name: 'redis', icon: '🔴', version: '0.1.0', description: 'In-memory cache, pub/sub, clustering' },
+  { name: 'mongodb', icon: '🍃', version: '0.1.0', description: 'Document database, replica sets' },
+  { name: 'elasticsearch', icon: '🔎', version: '0.1.0', description: 'Search engine, log analytics' },
+  { name: 'cassandra', icon: '👁️', version: '0.1.0', description: 'Distributed NoSQL database' },
+  { name: 'sqlite', icon: '📄', version: '0.1.0', description: 'Embedded SQL database' },
+  { name: 'caddy', icon: '🔒', version: '0.1.0', description: 'Web server with auto-HTTPS' },
+  { name: 'haproxy', icon: '⚖️', version: '0.1.0', description: 'TCP/HTTP load balancer' },
+  { name: 'rabbitmq', icon: '🐰', version: '0.1.0', description: 'Message broker, queues' },
+  { name: 'memcached', icon: '⚡', version: '0.1.0', description: 'Distributed memory cache' },
+  { name: 'wireguard', icon: '🔐', version: '0.1.0', description: 'VPN tunnels, peer config' },
+  // Apps
+  { name: 'nextcloud', icon: '☁️', version: '0.1.0', description: 'Self-hosted cloud platform' },
+  { name: 'discourse', icon: '💬', version: '0.1.0', description: 'Community forum platform' },
+  // Infra
+  { name: 'kubernetes', icon: '☸️', version: '0.1.0', description: 'Container orchestration' },
+  { name: 'terraform', icon: '🏗️', version: '0.1.0', description: 'Infrastructure as Code' },
+  { name: 'ansible', icon: '🤖', version: '0.1.0', description: 'Configuration management' },
+  { name: 'prometheus', icon: '📈', version: '0.1.0', description: 'Metrics & monitoring' },
+  { name: 'grafana', icon: '📊', version: '0.1.0', description: 'Dashboards & visualization' },
+  { name: 'jenkins', icon: '🏭', version: '0.1.0', description: 'CI/CD automation server' },
+  { name: 'gitlab-runner', icon: '🦊', version: '0.1.0', description: 'GitLab CI/CD agent' },
+  { name: 'certbot', icon: '🔏', version: '0.1.0', description: 'Let\'s Encrypt SSL certs' },
+  { name: 'docker-compose', icon: '🐳', version: '0.1.0', description: 'Multi-container apps' },
+  // Cloud
+  { name: 'aws-cli', icon: '☁️', version: '0.1.0', description: 'Amazon Web Services CLI' },
+  { name: 'gcloud', icon: '🌐', version: '0.1.0', description: 'Google Cloud Platform CLI' },
+  { name: 'azure-cli', icon: '🔵', version: '0.1.0', description: 'Microsoft Azure CLI' },
+  // Runtimes
+  { name: 'nodejs', icon: '💚', version: '0.1.0', description: 'Node.js, npm, PM2' },
+  { name: 'python', icon: '🐍', version: '0.1.0', description: 'Python, venv, pip, pyenv' },
+  { name: 'golang', icon: '🔷', version: '0.1.0', description: 'Go language & modules' },
+  { name: 'java', icon: '☕', version: '0.1.0', description: 'OpenJDK, Maven, Tomcat' },
+  { name: 'rust', icon: '🦀', version: '0.1.0', description: 'Rust, cargo, cross-compile' },
 ];
 
 function renderSkillCard(skill, status) {
