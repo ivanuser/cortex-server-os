@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-20 16:53 UTC" lang="en">
+<html data-build="2026-03-20 16:58 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -286,6 +286,26 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
       margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .msg-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .msg-avatar-placeholder {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      flex-shrink: 0;
     }
     .msg-body {
       display: block;
@@ -1118,6 +1138,17 @@
       <button onclick="hideSettingsPanel()" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer">✕</button>
     </div>
 
+    <!-- Display Name -->
+    <div class="panel-section">
+      <div class="panel-title">Your Name</div>
+      <input type="text" class="settings-input" id="settingsUserName" placeholder="Your display name" value="">
+      <div class="settings-hint">Shown in chat messages</div>
+      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem">
+        <button class="btn-settings-save" onclick="saveUserName()">Save Name</button>
+        <span class="settings-saved" id="nameSaved">✓ Saved</span>
+      </div>
+    </div>
+
     <!-- Gateway Token -->
     <div class="panel-section">
       <div class="panel-title">Gateway Token</div>
@@ -1169,7 +1200,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.4</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.5</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1186,7 +1217,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.4</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.5</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -1640,7 +1671,7 @@ function doSend(){
   }
   const el=document.createElement('div');
   el.className='msg user';
-  el.innerHTML=`<div class="msg-head">You</div><div class="msg-body">${displayHtml}</div>`;
+  el.innerHTML=msgHead('user')+`<div class="msg-body">${displayHtml}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
@@ -1676,7 +1707,7 @@ function askSkill(skill){
 function addMsg(role,text,rawHtml,skipSave){
   const el=document.createElement('div');
   el.className='msg '+role;
-  el.innerHTML=`<div class="msg-head">${role==='user'?'You':'⚡ '+aiName}</div><div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
+  el.innerHTML=msgHead(role)+`<div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
   if(!skipSave){
@@ -1697,7 +1728,7 @@ function loadHistory(){
     history.forEach(m=>{
       const el=document.createElement('div');
       el.className='msg '+m.role;
-      el.innerHTML=`<div class="msg-head">${m.role==='user'?'You':'⚡ '+aiName}</div><div class="msg-body">${fmtText(m.text)}</div>`;
+      el.innerHTML=msgHead(m.role)+`<div class="msg-body">${fmtText(m.text)}</div>`;
       $('chatScroll').appendChild(el);
     });
     $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
@@ -1734,7 +1765,7 @@ function escHtml(t){const d=document.createElement('div');d.textContent=t;return
 function updateStream(t){
   let el=$('stream-msg');
   if(!el){el=document.createElement('div');el.id='stream-msg';el.className='msg assistant';
-    el.innerHTML='<div class="msg-head">⚡ '+aiName+'</div><div class="msg-body"></div>';
+    el.innerHTML=msgHead('assistant')+'<div class="msg-body"></div>';
     $('chatScroll').appendChild(el)}
   el.querySelector('.msg-body').innerHTML=fmtText(t);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
@@ -1760,6 +1791,14 @@ function doDisconnect(){
 }
 
 let aiName=localStorage.getItem('cortexos-ai-name')||'CortexOS';
+let userName=localStorage.getItem('cortexos-user-name')||'You';
+
+function msgHead(role){
+  if(role==='user'){
+    return `<div class="msg-head"><div class="msg-avatar-placeholder">👤</div>${userName}</div>`;
+  }
+  return `<div class="msg-head"><img class="msg-avatar" src="/athena.png" onerror="this.outerHTML='<div class=\\'msg-avatar-placeholder\\'>⚡</div>'">${aiName}</div>`;
+}
 const savedAvatar=localStorage.getItem('cortexos-avatar');
 if(savedAvatar){
   setTimeout(()=>{
@@ -1865,6 +1904,16 @@ function uploadAvatar(file){
   $('avatarUpload').value='';
 }
 
+function saveUserName(){
+  const name=$('settingsUserName').value.trim();
+  if(name){
+    userName=name;
+    localStorage.setItem('cortexos-user-name',name);
+    $('nameSaved').style.opacity='1';
+    setTimeout(()=>$('nameSaved').style.opacity='0',2000);
+  }
+}
+
 function showAgentPanel(){$('agentPanel').classList.add('active')}
 function hideAgentPanel(){$('agentPanel').classList.remove('active')}
 
@@ -1872,6 +1921,7 @@ function hideAgentPanel(){$('agentPanel').classList.remove('active')}
 function showSettingsPanel(){
   $('settingsPanel').classList.add('active');
   // Populate current values
+  $('settingsUserName').value=userName==='You'?'':userName;
   const currentToken=localStorage.getItem('cortexos-token')||'';
   $('settingsToken').value=currentToken;
   const currentModel=localStorage.getItem('cortexos-model')||'claude-sonnet';
