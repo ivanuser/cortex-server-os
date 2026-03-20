@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-20 16:25 UTC" lang="en">
+<html data-build="2026-03-20 16:51 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1169,7 +1169,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.2</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.3</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1186,7 +1186,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.2</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.3</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -1324,7 +1324,7 @@
       </div>
 
       <div class="side-section">
-        <div class="side-title">Skills <span class="skill-badge badge-ok">12 active</span></div>
+        <div class="side-title">Skills <span class="skill-badge badge-ok" id="sidebarSkillBadge">12 active</span></div>
         <div id="sidebarSkills" style="display:flex;flex-wrap:wrap;gap:0.15rem">
           <span class="skill-item" onclick="askSkill('monitoring')">📊 monitoring</span>
           <span class="skill-item" onclick="askSkill('docker')">🐳 docker</span>
@@ -2033,6 +2033,14 @@ function pollHealth(){
     }
     if(data.uptime)$('sUp').textContent=data.uptime;
   }).catch(e=>console.log('[STATS] fetch error:',e));
+  // Also update skill count
+  fetch('/skills.json?t='+Date.now()).then(r=>r.json()).then(data=>{
+    if(data.count){
+      if($('agentSkillCount'))$('agentSkillCount').textContent=data.count;
+      if($('sidebarSkillBadge'))$('sidebarSkillBadge').textContent=data.count+' active';
+      if($('panelSkillBadge'))$('panelSkillBadge').textContent=data.count+' active';
+    }
+  }).catch(()=>{});
 }
 
 function updateSystemStats(data){
@@ -2182,17 +2190,43 @@ function renderSkillCard(skill, status) {
 }
 
 function renderSkillsPage() {
-  const installedGrid = $('installedSkillsGrid');
-  const availableGrid = $('availableSkillsGrid');
+  // Fetch live skill data
+  fetch('/skills.json?t='+Date.now()).then(r=>r.json()).then(data=>{
+    const installedNames = new Set(data.installed.map(s=>s.name));
+    const installedGrid = $('installedSkillsGrid');
+    const availableGrid = $('availableSkillsGrid');
 
-  installedGrid.innerHTML = coreSkills.map(s => renderSkillCard(s, 'installed')).join('');
-  availableGrid.innerHTML = extendedSkills.map(s => renderSkillCard(s, 'available')).join('');
+    // Render installed from live data
+    const installedCards = data.installed.map(s => {
+      const all = [...coreSkills, ...extendedSkills];
+      const meta = all.find(m=>m.name===s.name) || {name:s.name, icon:'📦', desc:s.description||s.name};
+      return renderSkillCard({...meta, version:s.version||meta.version}, 'installed');
+    });
+    installedGrid.innerHTML = installedCards.join('');
 
-  $('skillsInstalledCount').textContent = coreSkills.length;
-  $('skillsAvailableCount').textContent = extendedSkills.length;
-  $('skillsTotalCount').textContent = coreSkills.length + extendedSkills.length;
-  $('installedBadge').textContent = coreSkills.length;
-  $('availableBadge').textContent = extendedSkills.length;
+    // Available = extended skills NOT in installed
+    const available = extendedSkills.filter(s=>!installedNames.has(s.name));
+    availableGrid.innerHTML = available.map(s => renderSkillCard(s, 'available')).join('');
+
+    // Update counts
+    $('skillsInstalledCount').textContent = data.count;
+    $('skillsAvailableCount').textContent = available.length;
+    $('skillsTotalCount').textContent = data.count + available.length;
+    $('installedBadge').textContent = data.count;
+    $('availableBadge').textContent = available.length;
+
+    // Update sidebar count too
+    if($('agentSkillCount')) $('agentSkillCount').textContent = data.count;
+  }).catch(()=>{
+    // Fallback to hardcoded
+    const installedGrid = $('installedSkillsGrid');
+    const availableGrid = $('availableSkillsGrid');
+    installedGrid.innerHTML = coreSkills.map(s => renderSkillCard(s, 'installed')).join('');
+    availableGrid.innerHTML = extendedSkills.map(s => renderSkillCard(s, 'available')).join('');
+    $('skillsInstalledCount').textContent = coreSkills.length;
+    $('skillsAvailableCount').textContent = extendedSkills.length;
+    $('skillsTotalCount').textContent = coreSkills.length + extendedSkills.length;
+  });
 }
 
 function switchTab(tab) {
