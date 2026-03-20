@@ -28,7 +28,8 @@ usage() {
     echo "  update      Download and install skill updates"
     echo "  list        List installed skills"
     echo "  install     Install a skill from the extended repo"
-    echo "  info        Show info about a specific skill"
+    echo "  info        Show info about a specific skill
+  available   Show skills available to install from extended repo"
     echo ""
 }
 
@@ -220,6 +221,47 @@ cmd_info() {
     fi
 }
 
+
+cmd_available() {
+    echo -e "${BLUE}Available Skills (Extended Repo):${NC}"
+    echo ""
+    
+    local EXT_MANIFEST_URL="https://raw.githubusercontent.com/ivanuser/cortex-server-skills/main/manifest.json"
+    
+    if ! curl -sfL "$EXT_MANIFEST_URL" -o "$TEMP_DIR/ext-manifest.json" 2>/dev/null; then
+        echo "Failed to fetch extended skills manifest. Are you online?"
+        exit 1
+    fi
+    
+    python3 -c "
+import json, os
+
+with open('$TEMP_DIR/ext-manifest.json') as f:
+    ext = json.load(f)
+
+installed = set()
+for d in os.listdir('$SKILLS_DIR'):
+    if os.path.isdir(os.path.join('$SKILLS_DIR', d)):
+        installed.add(d)
+
+print('Not Installed:')
+for name, info in sorted(ext.get('skills', {}).items()):
+    short = name.split('/')[-1]
+    if short not in installed:
+        print(f'  {short:25s} v{info.get(chr(34)+chr(118)+chr(101)+chr(114)+chr(115)+chr(105)+chr(111)+chr(110)+chr(34),chr(63)):8s} {info.get(chr(34)+chr(100)+chr(101)+chr(115)+chr(99)+chr(114)+chr(105)+chr(112)+chr(116)+chr(105)+chr(111)+chr(110)+chr(34),chr(34)+chr(34))}')
+
+print()
+print('Already Installed:')
+for name, info in sorted(ext.get('skills', {}).items()):
+    short = name.split('/')[-1]
+    if short in installed:
+        print(f'  {short:25s} (installed)')
+
+print()
+print('Install with: cortexos-skill install <name>')
+"
+}
+
 # Main
 case "${1:-}" in
     list)    cmd_list ;;
@@ -227,5 +269,6 @@ case "${1:-}" in
     update)  cmd_update ;;
     install) cmd_install "${2:-}" ;;
     info)    cmd_info "${2:-}" ;;
+    available) cmd_available ;;
     *)       usage ;;
 esac
