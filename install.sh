@@ -43,13 +43,14 @@ fi
 MGMT_URL="${MGMT_URL:-}"
 MGMT_TOKEN="${MGMT_TOKEN:-}"
 
+FORCE_INSTALL=false
+SKIP_OLLAMA=false
+VERBOSE=false
+
 # If installing from management server, auto-force reinstall
 if [[ -n "$MGMT_TOKEN" ]]; then
     FORCE_INSTALL=true
 fi
-FORCE_INSTALL=false
-SKIP_OLLAMA=false
-VERBOSE=false
 
 # Requirements
 MIN_RAM_GB=2
