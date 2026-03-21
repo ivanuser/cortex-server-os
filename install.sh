@@ -701,7 +701,7 @@ install_skills() {
     )
     
     # Install skills from repo if available, otherwise download from GitHub
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || pwd)"
     local repo_skills_dir="$script_dir/skills"
     
     for skill in "${skills[@]}"; do
@@ -1052,7 +1052,7 @@ setup_dashboard() {
     # Deploy dashboard files
     local dashboard_dir="/var/lib/cortexos/dashboard"
     mkdir -p "$dashboard_dir"
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || pwd)"
     
     if [ -f "$script_dir/dashboard/index.html" ]; then
         cp "$script_dir/dashboard/"* "$dashboard_dir/" 2>/dev/null || true
@@ -1216,7 +1216,7 @@ MOTDEOF
     
     # Install CortexOS workspace files (SOUL, BOOTSTRAP, IDENTITY, etc.)
     local workspace_dir="/root/.openclaw/workspace"
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || pwd)"
     local repo_workspace="$script_dir/workspace"
     
     if [ -d "$repo_workspace" ]; then
@@ -1328,6 +1328,6 @@ main() {
 # ==============================================================================
 
 # Only run main if script is executed directly (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]:-$0}" == "${0}" ]] || [[ -z "${BASH_SOURCE[0]:-}" ]]; then
     main "$@"
 fi
