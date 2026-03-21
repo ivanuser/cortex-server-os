@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-20 18:51 UTC" lang="en">
+<html data-build="2026-03-21 02:07 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1367,7 +1367,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.7</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v0.2.8</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1384,7 +1384,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.7</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v0.2.8</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -1588,6 +1588,14 @@ const quickCommands=[
 ];
 
 $('hostDisplay').textContent=location.hostname;
+// Check for token in URL parameter (from management server)
+const urlParams=new URLSearchParams(window.location.search);
+const urlToken=urlParams.get('token');
+if(urlToken){
+  localStorage.setItem('cortexos-token',urlToken);
+  // Clean URL
+  window.history.replaceState({},'',window.location.pathname);
+}
 const saved=localStorage.getItem('cortexos-token');
 if(saved)$('tokenInput').value=saved;
 $('tokenInput').addEventListener('keydown',e=>{if(e.key==='Enter')doConnect()});
