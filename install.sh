@@ -32,7 +32,16 @@ USER_CORTEX="cortex"
 GROUP_CORTEX="cortex"
 
 # Installation flags
-UNATTENDED=false
+# Auto-detect piped execution (curl | bash) — force unattended
+if [ ! -t 0 ]; then
+    UNATTENDED=true
+else
+    UNATTENDED=false
+fi
+
+# Management server integration (set via environment when installing from management server)
+MGMT_URL="${MGMT_URL:-}"
+MGMT_TOKEN="${MGMT_TOKEN:-}"
 FORCE_INSTALL=false
 SKIP_OLLAMA=false
 VERBOSE=false
@@ -999,6 +1008,29 @@ AUTHEOF
     # Display connection info
     if [[ -n "$external_url" ]]; then
         info "Control UI accessible at: ${external_url}"
+    fi
+    
+    # Register with management server if configured
+    if [[ -n "$MGMT_URL" && -n "$MGMT_TOKEN" ]]; then
+        info "Registering with management server at ${MGMT_URL}..."
+        local server_ip=$(hostname -I | awk '{print $1}' | head -1)
+        local reg_response=$(curl -sf -X POST "${MGMT_URL}/api/v1/servers/register" \
+            -H "Content-Type: application/json" \
+            -d "{
+                \"installToken\": \"${MGMT_TOKEN}\",
+                \"hostname\": \"$(hostname)\",
+                \"ip_address\": \"${server_ip}\",
+                \"gateway_url\": \"http://${server_ip}:18789\",
+                \"gateway_token\": \"${gateway_token}\",
+                \"agent_name\": \"CortexOS Agent\"
+            }" 2>/dev/null)
+        
+        if [[ -n "$reg_response" ]]; then
+            success "Registered with management server"
+            log "Management server registration: ${MGMT_URL}"
+        else
+            warning "Failed to register with management server — register manually"
+        fi
     fi
     
     # Create systemd service file
