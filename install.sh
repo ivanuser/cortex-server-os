@@ -1113,9 +1113,25 @@ setup_dashboard() {
         # Download from GitHub
         curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/dashboard/index.html" \
             -o "$dashboard_dir/index.html" 2>/dev/null || warning "Failed to download dashboard"
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/dashboard/managed.html" \
+            -o "$dashboard_dir/managed.html" 2>/dev/null || true
         curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/dashboard/logo.png" \
             -o "$dashboard_dir/logo.png" 2>/dev/null || true
         log "Dashboard files downloaded from GitHub"
+    fi
+    
+    # If managed by a management server, replace dashboard with redirect page
+    if [[ -n "$MGMT_URL" ]]; then
+        if [ -f "$dashboard_dir/managed.html" ]; then
+            # Keep original dashboard as dashboard-full.html for reference
+            cp "$dashboard_dir/index.html" "$dashboard_dir/dashboard-full.html" 2>/dev/null || true
+            # Replace index.html with managed redirect page, injecting the management URL
+            sed "s|__MGMT_URL__|${MGMT_URL}|g" "$dashboard_dir/managed.html" > "$dashboard_dir/index.html"
+            success "Dashboard set to managed mode (redirects to ${MGMT_URL})"
+            log "Dashboard replaced with managed redirect page"
+        else
+            warning "managed.html not found — using full dashboard"
+        fi
     fi
     
     # Verify dashboard deployed
