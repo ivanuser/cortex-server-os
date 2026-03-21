@@ -837,6 +837,10 @@ EOF
     # Determine allowed origins for the Control UI
     local server_ip=$(hostname -I | awk '{print $1}' | head -1)
     local allowed_origins='"http://localhost:18789", "http://127.0.0.1:18789", "http://'"${server_ip}"':18789"'
+    # If managed, add management server to allowed origins
+    if [[ -n "$MGMT_URL" ]]; then
+        allowed_origins="${allowed_origins}, \"${MGMT_URL}\""
+    fi
     local external_url=""
     
     if [[ "$UNATTENDED" == "false" ]]; then
@@ -973,7 +977,7 @@ OCEOF
         if [[ "$api_provider" == "anthropic" && "$auth_method" == "setup-token" ]]; then
             # Use openclaw CLI to paste the setup token (must run as root with correct HOME)
             info "Configuring Anthropic via setup token..."
-            HOME=/root echo "$api_key" | HOME=/root /usr/local/bin/openclaw models auth paste-token --provider anthropic 2>&1 | tee -a "$INSTALL_LOG" || {
+            echo "$api_key" | env HOME=/root /usr/local/bin/openclaw models auth paste-token --provider anthropic 2>&1 | tee -a "$INSTALL_LOG" || {
                 warning "Setup token paste failed — configure manually after install:"
                 info "  sudo -i openclaw models auth setup-token --provider anthropic"
             }
