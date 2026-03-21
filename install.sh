@@ -1017,7 +1017,7 @@ AUTHEOF
         local reg_response=$(curl -sf -X POST "${MGMT_URL}/api/v1/servers/register" \
             -H "Content-Type: application/json" \
             -d "{
-                \"installToken\": \"${MGMT_TOKEN}\",
+                \"token\": \"${MGMT_TOKEN}\",
                 \"hostname\": \"$(hostname)\",
                 \"ip_address\": \"${server_ip}\",
                 \"gateway_url\": \"http://${server_ip}:18789\",
