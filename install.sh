@@ -42,6 +42,8 @@ fi
 # Management server integration (set via environment when installing from management server)
 MGMT_URL="${MGMT_URL:-}"
 MGMT_TOKEN="${MGMT_TOKEN:-}"
+MGMT_API_PROVIDER="${MGMT_API_PROVIDER:-}"
+MGMT_API_KEY="${MGMT_API_KEY:-}"
 
 FORCE_INSTALL=false
 SKIP_OLLAMA=false
@@ -971,6 +973,14 @@ OCEOF
     # Tighten state directory permissions
     chmod 700 /root/.openclaw 2>/dev/null || true
     log "OpenClaw gateway config created at /root/.openclaw/openclaw.json"
+    
+    # Use management server API key if provided (overrides interactive input)
+    if [[ -n "$MGMT_API_KEY" && -n "$MGMT_API_PROVIDER" && "$MGMT_API_PROVIDER" != "skip" ]]; then
+        api_key="$MGMT_API_KEY"
+        api_provider="$MGMT_API_PROVIDER"
+        auth_method="apikey"
+        info "API key provided by management server (${api_provider})"
+    fi
     
     # Configure AI provider auth
     if [[ -n "$api_key" && "$api_provider" != "skip" ]]; then
