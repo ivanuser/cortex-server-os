@@ -42,6 +42,11 @@ fi
 # Management server integration (set via environment when installing from management server)
 MGMT_URL="${MGMT_URL:-}"
 MGMT_TOKEN="${MGMT_TOKEN:-}"
+
+# If installing from management server, auto-force reinstall
+if [[ -n "$MGMT_TOKEN" ]]; then
+    FORCE_INSTALL=true
+fi
 FORCE_INSTALL=false
 SKIP_OLLAMA=false
 VERBOSE=false
