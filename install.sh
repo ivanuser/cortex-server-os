@@ -1167,6 +1167,16 @@ STATEOF
     fi
     chmod +x /usr/local/bin/cortexos-stats
     
+    # Install system info collector (services, docker, network, packages, logs)
+    local sysinfo_script="$script_dir/scripts/cortexos-sysinfo.sh"
+    if [ -f "$sysinfo_script" ]; then
+        cp "$sysinfo_script" /usr/local/bin/cortexos-sysinfo
+    else
+        # Download from GitHub if not in local bundle
+        curl -fsSL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-sysinfo.sh" -o /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
+    fi
+    chmod +x /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
+    
     # Create systemd timer for stats
     cat > /etc/systemd/system/cortexos-stats.service << 'EOF'
 [Unit]
@@ -1174,13 +1184,14 @@ Description=CortexOS Stats Collector
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/cortexos-stats
+ExecStartPost=/usr/local/bin/cortexos-sysinfo
 EOF
     cat > /etc/systemd/system/cortexos-stats.timer << 'EOF'
 [Unit]
 Description=CortexOS Stats Timer
 [Timer]
 OnBootSec=5
-OnUnitActiveSec=10
+OnUnitActiveSec=30
 [Install]
 WantedBy=timers.target
 EOF
