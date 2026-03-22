@@ -224,6 +224,82 @@ except Exception as e:
     json.dump({'installed_count': 0, 'updates': [], 'update_count': 0, 'error': str(e), 'ts': ts}, open(os.path.join(dashboard, 'packages.json'), 'w'))
 
 # ═══════════════════════════════════════════════════════════
+# CRON
+# ═══════════════════════════════════════════════════════════
+try:
+    import re as _re
+    cron_entries = []
+
+    # Current user crontab
+    user_cron = cmd('crontab -l 2>/dev/null')
+    current_user = cmd('whoami')
+    for line in user_cron.split('\n'):
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        m = _re.match(r'^(@\w+|(?:[^\s]+\s+){5})(.+)$', line)
+        if m:
+            sched = m.group(1).strip()
+            command = m.group(2).strip()
+            cron_entries.append({'user': current_user, 'schedule': sched, 'command': command})
+
+    # System crontab (/etc/crontab)
+    etc_cron = cmd('cat /etc/crontab 2>/dev/null')
+    for line in etc_cron.split('\n'):
+        line = line.strip()
+        if not line or line.startswith('#') or line.startswith('SHELL') or line.startswith('PATH') or line.startswith('MAILTO') or line.startswith('HOME'):
+            continue
+        # /etc/crontab has user field after schedule
+        m = _re.match(r'^(@\w+|(?:[^\s]+\s+){5})(\S+)\s+(.+)$', line)
+        if m:
+            sched = m.group(1).strip()
+            user = m.group(2).strip()
+            command = m.group(3).strip()
+            cron_entries.append({'user': user, 'schedule': sched, 'command': command})
+
+    # Per-user crontabs from /var/spool/cron/crontabs/
+    spool_users = cmd('sudo ls /var/spool/cron/crontabs/ 2>/dev/null')
+    for spool_user in spool_users.split('\n'):
+        spool_user = spool_user.strip()
+        if not spool_user or spool_user == current_user:
+            continue
+        user_lines = cmd(f'sudo cat /var/spool/cron/crontabs/{spool_user} 2>/dev/null')
+        for line in user_lines.split('\n'):
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            m = _re.match(r'^(@\w+|(?:[^\s]+\s+){5})(.+)$', line)
+            if m:
+                sched = m.group(1).strip()
+                command = m.group(2).strip()
+                cron_entries.append({'user': spool_user, 'schedule': sched, 'command': command})
+
+    # Cron.d directory
+    crond_files = cmd('ls /etc/cron.d/ 2>/dev/null')
+    for fname in crond_files.split('\n'):
+        fname = fname.strip()
+        if not fname or fname.startswith('.'):
+            continue
+        crond_content = cmd(f'cat /etc/cron.d/{fname} 2>/dev/null')
+        for line in crond_content.split('\n'):
+            line = line.strip()
+            if not line or line.startswith('#') or line.startswith('SHELL') or line.startswith('PATH') or line.startswith('MAILTO') or line.startswith('HOME'):
+                continue
+            m = _re.match(r'^(@\w+|(?:[^\s]+\s+){5})(\S+)\s+(.+)$', line)
+            if m:
+                sched = m.group(1).strip()
+                user = m.group(2).strip()
+                command = m.group(3).strip()
+                cron_entries.append({'user': user, 'schedule': sched, 'command': command})
+
+    json.dump({
+        'system_cron': cron_entries,
+        'ts': ts
+    }, open(os.path.join(dashboard, 'cron.json'), 'w'))
+except Exception as e:
+    json.dump({'system_cron': [], 'error': str(e), 'ts': ts}, open(os.path.join(dashboard, 'cron.json'), 'w'))
+
+# ═══════════════════════════════════════════════════════════
 # LOGS (last 50 lines of cortex-server)
 # ═══════════════════════════════════════════════════════════
 try:
