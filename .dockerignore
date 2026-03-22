@@ -1,0 +1,17 @@
+.git
+.github
+.gitignore
+.dockerignore
+.env
+*.md
+!README.md
+docs/
+site/
+branding/
+bundles/
+node_modules/
+*.tar.gz
+LICENSE
+CONTRIBUTING.md
+docker-compose.yml
+Dockerfile

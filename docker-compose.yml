@@ -1,0 +1,85 @@
+# CortexOS Server — Docker Compose
+#
+# Basic usage:
+#   docker compose up -d
+#
+# With local Ollama sidecar:
+#   docker compose --profile local-ai up -d
+#
+# With GPU support for Ollama:
+#   docker compose --profile local-ai-gpu up -d
+
+services:
+  cortexos:
+    build: .
+    image: cortexos-server:latest
+    container_name: cortexos
+    restart: unless-stopped
+    ports:
+      - "18789:18789"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GATEWAY_TOKEN=${GATEWAY_TOKEN:-auto}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+    volumes:
+      - cortexos-data:/root/.openclaw
+      - cortexos-logs:/var/log/cortex-server
+    networks:
+      - cortexos-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ─── Ollama (CPU-only) ──────────────────────────────────────
+  # Activate with: docker compose --profile local-ai up -d
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cortexos-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    profiles:
+      - local-ai
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - cortexos-net
+
+  # ─── Ollama (GPU — NVIDIA) ─────────────────────────────────
+  # Activate with: docker compose --profile local-ai-gpu up -d
+  # Requires: nvidia-container-toolkit
+  ollama-gpu:
+    image: ollama/ollama:latest
+    container_name: cortexos-ollama-gpu
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    profiles:
+      - local-ai-gpu
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - cortexos-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  cortexos-data:
+    name: cortexos-data
+  cortexos-logs:
+    name: cortexos-logs
+  ollama-data:
+    name: cortexos-ollama-data
+
+networks:
+  cortexos-net:
+    name: cortexos-net
