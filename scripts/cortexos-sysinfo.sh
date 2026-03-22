@@ -324,3 +324,39 @@ try:
 except Exception as e:
     json.dump({'service': 'cortex-server', 'lines': [], 'count': 0, 'error': str(e), 'ts': ts}, open(os.path.join(dashboard, 'logs.json'), 'w'))
 "
+
+
+# ═══════════════════════════════════════════════════════════
+# SKILLS
+# ═══════════════════════════════════════════════════════════
+python3 -c "
+import json, os, time
+
+ts = int(time.time())
+dashboard = '/var/lib/cortexos/dashboard'
+skills_dir = '/var/lib/cortexos/skills'
+
+installed = []
+if os.path.isdir(skills_dir):
+    manifest = {}
+    try:
+        with open(os.path.join(skills_dir, 'manifest.json')) as f:
+            manifest = json.load(f).get('skills', {})
+    except: pass
+    for name in sorted(os.listdir(skills_dir)):
+        path = os.path.join(skills_dir, name)
+        if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'SKILL.md')):
+            info = manifest.get(name, {})
+            installed.append({
+                'name': name,
+                'version': info.get('version', '0.1.0'),
+                'description': info.get('description', ''),
+                'installed': True
+            })
+
+json.dump({
+    'installed': installed,
+    'count': len(installed),
+    'ts': ts
+}, open(os.path.join(dashboard, 'skills.json'), 'w'))
+" 2>/dev/null || true
