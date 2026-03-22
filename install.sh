@@ -748,17 +748,48 @@ install_skills() {
         cp "$repo_skills_dir/manifest.json" "$skills_dir/manifest.json"
     fi
     
+    # Verify skills were actually installed
+    local installed_count=$(find "$skills_dir" -name "SKILL.md" | wc -l)
+    if [ "$installed_count" -eq 0 ]; then
+        warning "No skills installed from local or GitHub. Retrying downloads..."
+        for skill in "${skills[@]}"; do
+            local skill_dir="$skills_dir/$skill"
+            mkdir -p "$skill_dir"
+            if [ ! -f "$skill_dir/SKILL.md" ] || [ ! -s "$skill_dir/SKILL.md" ]; then
+                curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/skills/$skill/SKILL.md" \
+                    -o "$skill_dir/SKILL.md" 2>/dev/null && info "  Downloaded $skill" || warning "  Failed: $skill"
+            fi
+        done
+        installed_count=$(find "$skills_dir" -name "SKILL.md" -size +0 | wc -l)
+    fi
+    success "Skills installed: $installed_count"
+    
     # Symlink skills into gateway's skill directory so the AI can find them
     mkdir -p /root/.openclaw
+    rm -f /root/.openclaw/skills 2>/dev/null
     ln -sfn "$skills_dir" /root/.openclaw/skills
     log "Skills symlinked to /root/.openclaw/skills"
     
-    # Install skill manager CLI
+    # Install skill manager CLI (download if not available locally)
     if [ -f "$script_dir/scripts/cortexos-skill-update.sh" ]; then
         cp "$script_dir/scripts/cortexos-skill-update.sh" /usr/local/bin/cortexos-skill
-        chmod +x /usr/local/bin/cortexos-skill
-        log "Skill manager installed: cortexos-skill"
+    else
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-skill-update.sh" \
+            -o /usr/local/bin/cortexos-skill 2>/dev/null || warning "Failed to download skill manager"
     fi
+    chmod +x /usr/local/bin/cortexos-skill 2>/dev/null
+    log "Skill manager installed: cortexos-skill"
+    
+    # Install sysinfo script (for management server panels)
+    if [ -f "$script_dir/scripts/cortexos-sysinfo.sh" ]; then
+        cp "$script_dir/scripts/cortexos-sysinfo.sh" /usr/local/bin/cortexos-sysinfo
+    else
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-sysinfo.sh" \
+            -o /usr/local/bin/cortexos-sysinfo 2>/dev/null || warning "Failed to download sysinfo script"
+    fi
+    chmod +x /usr/local/bin/cortexos-sysinfo 2>/dev/null
+    /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
+    log "Sysinfo script installed: cortexos-sysinfo"
     
     log "Server management skills installed: ${#skills[@]} skills"
 }
