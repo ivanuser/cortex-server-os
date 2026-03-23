@@ -1254,6 +1254,37 @@ EOF
     systemctl enable --now cortexos-stats.timer 2>/dev/null || true
     log "System stats collector installed"
     
+    # Install compliance scanner (NIST 800-53 + CMMC)
+    local compliance_script="$script_dir/scripts/cortexos-compliance-scan.sh"
+    if [ -f "$compliance_script" ]; then
+        cp "$compliance_script" /usr/local/bin/cortexos-compliance-scan
+    else
+        curl -fsSL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-compliance-scan.sh" -o /usr/local/bin/cortexos-compliance-scan 2>/dev/null || true
+    fi
+    chmod +x /usr/local/bin/cortexos-compliance-scan 2>/dev/null || true
+    
+    # Create systemd timer for compliance scanning (every 6 hours)
+    cat > /etc/systemd/system/cortexos-compliance.service << 'EOF'
+[Unit]
+Description=CortexOS Compliance Scanner (NIST 800-53 + CMMC)
+After=network.target
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cortexos-compliance-scan
+EOF
+    cat > /etc/systemd/system/cortexos-compliance.timer << 'EOF'
+[Unit]
+Description=CortexOS Compliance Scan Timer
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+[Install]
+WantedBy=timers.target
+EOF
+    systemctl daemon-reload
+    systemctl enable --now cortexos-compliance.timer 2>/dev/null || true
+    log "Compliance scanner installed (runs every 6 hours)"
+    
     # Symlink workspace avatars into dashboard for serving
     mkdir -p /root/.openclaw/workspace/avatars
     ln -sfn /root/.openclaw/workspace/avatars "$dashboard_dir/avatars" 2>/dev/null || true
