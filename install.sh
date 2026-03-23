@@ -20,7 +20,7 @@ set -euo pipefail
 # Configuration
 # ==============================================================================
 
-CORTEX_VERSION="0.1.0"
+CORTEX_VERSION="0.3.0"
 OPENCLAW_VERSION="2026.3.18"
 NODE_VERSION="22"
 DASHBOARD_PORT=8443
@@ -235,7 +235,7 @@ show_header() {
 ║                    CortexOS Server Installer                 ║
 ║                                                              ║
 ║   Transform Ubuntu Server → AI Infrastructure Management     ║
-║                          v0.1.0                             ║
+║                          v0.3.0                             ║
 ╚══════════════════════════════════════════════════════════════╝
 EOF
     echo
@@ -1079,10 +1079,34 @@ AUTHEOF
         if [[ -n "$reg_response" ]]; then
             success "Registered with management server"
             log "Management server registration: ${MGMT_URL}"
+            
+            # Save management server URL for notification webhook
+            echo "$MGMT_URL" > "$CONFIG_DIR/mgmt-url"
+            chmod 644 "$CONFIG_DIR/mgmt-url"
+            log "Saved management server URL to $CONFIG_DIR/mgmt-url"
+            
+            # Extract and save server ID from registration response
+            local registered_id=$(echo "$reg_response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+            if [[ -n "$registered_id" ]]; then
+                echo "$registered_id" > "$CONFIG_DIR/server-id"
+                chmod 644 "$CONFIG_DIR/server-id"
+                log "Saved server ID: $registered_id"
+            fi
         else
             warning "Failed to register with management server — register manually"
         fi
     fi
+    
+    # Install notification webhook script
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || pwd)"
+    if [ -f "$script_dir/scripts/cortexos-notify.sh" ]; then
+        cp "$script_dir/scripts/cortexos-notify.sh" /usr/local/bin/cortexos-notify
+    else
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-notify.sh" \
+            -o /usr/local/bin/cortexos-notify 2>/dev/null || warning "Failed to download notification script"
+    fi
+    chmod +x /usr/local/bin/cortexos-notify 2>/dev/null
+    log "Notification webhook script installed: cortexos-notify"
     
     # Create systemd service file
     cat > /etc/systemd/system/cortex-server.service << EOF
