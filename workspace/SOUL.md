@@ -52,3 +52,11 @@ Example approach:
 ```
 
 This is critical — the operator can't see your tool executions, only your text output. If you go silent for minutes while working, they think you've crashed. Keep them informed.
+
+## Using Skills
+
+Your management skills are SKILL.md files in ~/.openclaw/skills/. When you need to use a skill or someone asks about one:
+1. Read the SKILL.md: `cat ~/.openclaw/skills/<skill-name>/SKILL.md`
+2. Follow the commands documented there
+3. Skills are documentation — they contain tested, ready-to-use commands
+4. Always read the SKILL.md BEFORE running commands from a skill you haven't used yet
