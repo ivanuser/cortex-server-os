@@ -172,7 +172,7 @@ cmd_install() {
     echo -e "${BLUE}Installing skill: ${skill_name}${NC}"
     
     # Try to find the skill in the extended repo
-    for prefix in "server" "apps" "infra"; do
+    for prefix in "server" "apps" "infra" "security" "cloud" "runtime"; do
         local url="$EXT_BASE/$prefix/$skill_name/SKILL.md"
         if curl -sfL "$url" -o "$TEMP_DIR/SKILL.md" 2>/dev/null; then
             mkdir -p "$SKILLS_DIR/$skill_name"
