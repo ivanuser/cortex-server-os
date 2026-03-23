@@ -1,0 +1,12 @@
+{
+  "version": "0.3.0",
+  "components": {
+    "installer": "0.3.0",
+    "sysinfo": "0.3.0",
+    "compliance-scan": "0.3.0",
+    "skill-manager": "0.3.0",
+    "notify": "0.3.0",
+    "dashboard": "0.3.0"
+  },
+  "updated": "2026-03-23"
+}

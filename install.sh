@@ -1108,6 +1108,25 @@ AUTHEOF
     chmod +x /usr/local/bin/cortexos-notify 2>/dev/null
     log "Notification webhook script installed: cortexos-notify"
     
+    # Install update script
+    if [ -f "$script_dir/scripts/cortexos-update.sh" ]; then
+        cp "$script_dir/scripts/cortexos-update.sh" /usr/local/bin/cortexos-update
+    else
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-update.sh" \
+            -o /usr/local/bin/cortexos-update 2>/dev/null || warning "Failed to download update script"
+    fi
+    chmod +x /usr/local/bin/cortexos-update 2>/dev/null
+    log "Update script installed: cortexos-update"
+    
+    # Install version tracking file
+    if [ -f "$script_dir/scripts/cortexos-version.json" ]; then
+        cp "$script_dir/scripts/cortexos-version.json" "$DATA_DIR/version.json"
+    else
+        curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-version.json" \
+            -o "$DATA_DIR/version.json" 2>/dev/null || warning "Failed to download version file"
+    fi
+    log "Version tracking file installed: $DATA_DIR/version.json"
+    
     # Create systemd service file
     cat > /etc/systemd/system/cortex-server.service << EOF
 [Unit]
@@ -1187,6 +1206,12 @@ setup_dashboard() {
         else
             warning "managed.html not found — using full dashboard"
         fi
+    fi
+    
+    # Copy version.json to dashboard dir for serving
+    if [ -f "$DATA_DIR/version.json" ]; then
+        cp "$DATA_DIR/version.json" "$dashboard_dir/version.json" 2>/dev/null || true
+        log "Version file copied to dashboard directory"
     fi
     
     # Verify dashboard deployed
