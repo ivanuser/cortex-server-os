@@ -4,6 +4,15 @@
 
 set -euo pipefail
 
+# Self-healing: verify this script has valid syntax, auto-update if broken
+if ! bash -n "$0" 2>/dev/null; then
+    echo "⚠️ Skill manager has syntax errors. Auto-downloading latest version..."
+    curl -sfL "https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-skill-update.sh" \
+        -o /usr/local/bin/cortexos-skill 2>/dev/null && chmod +x /usr/local/bin/cortexos-skill
+    echo "✅ Skill manager updated. Re-running..."
+    exec /usr/local/bin/cortexos-skill "$@"
+fi
+
 SKILLS_DIR="/var/lib/cortexos/skills"
 MANIFEST_URL="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/skills/manifest.json"
 SKILL_BASE_URL="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/skills"
