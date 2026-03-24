@@ -20,7 +20,7 @@ set -euo pipefail
 # Configuration
 # ==============================================================================
 
-CORTEX_VERSION="0.3.0"
+CORTEX_VERSION="1.0.0"
 OPENCLAW_VERSION="2026.3.18"
 NODE_VERSION="22"
 DASHBOARD_PORT=8443
