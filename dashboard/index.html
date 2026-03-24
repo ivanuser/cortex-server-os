@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-24 02:40 UTC" lang="en">
+<html data-build="2026-03-24 02:58 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -78,7 +78,12 @@
       text-align: center;
       margin-bottom: 2rem;
     }
-    .login-logo .icon {
+    .login-logo .logo-img {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px var(--accent-strong);
+    }
+    .login-logo .logo-fallback {
       width: 56px; height: 56px;
       background: linear-gradient(135deg, var(--accent), var(--blue));
       border-radius: 14px;
@@ -86,8 +91,11 @@
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
-      margin-bottom: 1rem;
       box-shadow: 0 4px 20px var(--accent-strong);
+      color: white;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
     }
     .login-logo h1 {
       font-size: 1.75rem;
@@ -755,6 +763,7 @@
       display: flex;
       align-items: center;
       gap: 0.4rem;
+      position: relative;
     }
     .nav-tab:hover {
       color: var(--text);
@@ -768,6 +777,25 @@
       font-weight: 600;
     }
     .nav-tab-icon { font-size: 0.85rem; }
+    .unread-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--red);
+      color: white;
+      font-size: 0.55rem;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      line-height: 1;
+      box-shadow: 0 0 6px rgba(255, 107, 107, 0.5);
+    }
+    .unread-badge.visible { display: flex; }
 
     /* Skills Page */
     .skills-page {
@@ -856,6 +884,39 @@
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 0.75rem;
     }
+    .skills-search-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .skills-search-input {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .skills-search-input:focus { border-color: var(--accent); }
+    .skills-search-input::placeholder { color: var(--text-muted); }
+    .skills-filter-btn {
+      padding: 0.5rem 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .skills-filter-btn:hover, .skills-filter-btn.active {
+      border-color: var(--accent);
+      color: var(--accent-light);
+      background: var(--accent-glow);
+    }
 
     .skill-card {
       background: var(--surface);
@@ -884,6 +945,10 @@
       transform: translateY(-2px);
     }
     .skill-card:hover::before { opacity: 1; }
+    .skill-card.has-update {
+      border-color: var(--yellow);
+      box-shadow: 0 0 12px rgba(254, 202, 87, 0.15);
+    }
 
     .skill-card-head {
       display: flex;
@@ -984,6 +1049,531 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-top: 0.15rem;
+    }
+
+    /* ===================== SKILL DETAIL MODAL ===================== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.15s ease;
+    }
+    .modal-overlay.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .skill-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 720px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 60px rgba(0,0,0,0.5);
+      animation: modalSlide 0.2s ease;
+    }
+    @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .skill-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .skill-modal-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .skill-modal-close {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 1rem;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .skill-modal-close:hover { border-color: var(--red); color: var(--red); }
+    .skill-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+    }
+    .skill-modal-body::-webkit-scrollbar { width: 6px; }
+    .skill-modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .skill-modal-body h1, .skill-modal-body h2, .skill-modal-body h3 {
+      color: var(--text);
+      margin: 1rem 0 0.5rem;
+    }
+    .skill-modal-body h1 { font-size: 1.2rem; }
+    .skill-modal-body h2 { font-size: 1rem; }
+    .skill-modal-body h3 { font-size: 0.9rem; }
+    .skill-modal-body code {
+      background: rgba(0,0,0,0.35);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em;
+    }
+    .skill-modal-body pre {
+      background: #0a0d16;
+      border: 1px solid var(--border);
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 0.5rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78em;
+    }
+    .skill-modal-body pre code { background: none; padding: 0; }
+    .skill-modal-body ul, .skill-modal-body ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+    .skill-modal-body li { margin: 0.25rem 0; }
+    .skill-modal-body p { margin: 0.5rem 0; }
+    .skill-modal-body strong { color: var(--text); }
+    .skill-modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .skill-modal-loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    /* ===================== FILES PAGE ===================== */
+    .files-page {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .files-page.active { display: flex; }
+    .files-sidebar {
+      width: 280px;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .files-sidebar-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .files-sidebar-header h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .files-refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .files-refresh-btn:hover { border-color: var(--accent); color: var(--accent-light); }
+    .files-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .files-list::-webkit-scrollbar { width: 4px; }
+    .files-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border: 1px solid transparent;
+    }
+    .file-item:hover {
+      background: var(--accent-glow);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .file-item.active {
+      background: var(--accent-glow);
+      color: var(--accent-light);
+      border-color: var(--accent);
+    }
+    .file-item.key-file {
+      font-weight: 600;
+    }
+    .file-item-icon { font-size: 1rem; flex-shrink: 0; }
+    .file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item-size { font-size: 0.65rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    .files-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .files-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .files-editor-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-light);
+    }
+    .files-editor-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .files-save-btn {
+      padding: 0.4rem 1rem;
+      background: linear-gradient(135deg, var(--accent), #5a4bd1);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .files-save-btn:hover { box-shadow: 0 2px 12px var(--accent-strong); }
+    .files-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .files-saved-indicator {
+      color: var(--green);
+      font-size: 0.75rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      display: flex;
+      align-items: center;
+    }
+    .files-saved-indicator.show { opacity: 1; }
+    .files-textarea {
+      flex: 1;
+      width: 100%;
+      padding: 1rem 1.25rem;
+      background: var(--bg);
+      border: none;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      resize: none;
+      outline: none;
+    }
+    .files-textarea::-webkit-scrollbar { width: 6px; }
+    .files-textarea::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .files-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .files-empty-icon { font-size: 2.5rem; opacity: 0.5; }
+
+    /* ===================== COMPLIANCE PAGE ===================== */
+    .compliance-page {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      background: var(--bg);
+    }
+    .compliance-page.active { display: block; }
+    .compliance-page::-webkit-scrollbar { width: 6px; }
+    .compliance-page::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .compliance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .compliance-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .compliance-header h2 span { color: var(--accent-light); }
+    .compliance-header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .compliance-framework-select {
+      padding: 0.5rem 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.78rem;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237b83a6' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      padding-right: 2rem;
+    }
+    .compliance-score-ring {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .score-circle svg {
+      width: 120px;
+      height: 120px;
+      transform: rotate(-90deg);
+    }
+    .score-circle .bg-ring {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 8;
+    }
+    .score-circle .fg-ring {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s ease, stroke 0.5s;
+    }
+    .score-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .score-text .pct {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .score-text .label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .score-details {
+      flex: 1;
+    }
+    .score-details h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .score-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .score-detail-val { font-weight: 600; color: var(--text); }
+    .compliance-families {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .family-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      transition: all 0.2s;
+    }
+    .family-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-1px);
+    }
+    .family-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .family-code {
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-light);
+      background: var(--accent-glow);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .family-score {
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .family-name {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+    .family-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .family-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+    .compliance-findings {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .findings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .findings-header h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .finding-row {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .finding-row:hover { background: var(--surface-hover); }
+    .finding-row:last-child { border-bottom: none; }
+    .finding-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .finding-title { font-size: 0.8rem; font-weight: 500; }
+    .finding-badges {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .finding-badge {
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .finding-badge.pass { background: var(--green-bg); color: var(--green); }
+    .finding-badge.fail { background: var(--red-bg); color: var(--red); }
+    .finding-badge.warn { background: var(--yellow-bg); color: var(--yellow); }
+    .finding-badge.info { background: var(--blue-bg); color: var(--blue); }
+    .finding-badge.high { background: var(--red-bg); color: var(--red); }
+    .finding-badge.medium { background: var(--yellow-bg); color: var(--yellow); }
+    .finding-badge.low { background: var(--blue-bg); color: var(--blue); }
+    .finding-details {
+      display: none;
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+      background: var(--bg);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    .finding-details.open { display: block; }
+    .compliance-empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    .compliance-empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+
+    /* ===================== TOAST NOTIFICATIONS ===================== */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 300;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      max-width: 320px;
+      animation: toastIn 0.3s ease;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    .toast.fade-out { opacity: 0; transform: translateX(20px); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    .toast-head {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent-light);
+      margin-bottom: 0.3rem;
+    }
+    .toast-body {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     /* Mobile overlay for sidebar */
@@ -1165,6 +1755,7 @@
 
     @media (max-width: 900px) {
       .sidebar { display: none; }
+      .files-sidebar { width: 220px; }
     }
     @media (max-width: 600px) {
       .login-card { padding: 2rem 1.5rem; }
@@ -1191,12 +1782,15 @@
       .topbar-title { font-size: 0.85rem; }
       .conn-status span { display: none; }
       .nav-tabs { margin-left: 0.5rem; gap: 0.15rem; }
-      .nav-tab { padding: 0.35rem 0.6rem; font-size: 0.72rem; }
+      .nav-tab { padding: 0.35rem 0.5rem; font-size: 0.72rem; }
       .nav-tab span.nav-tab-label { display: none; }
-      .skills-page { padding: 1rem; }
+      .skills-page, .compliance-page { padding: 1rem; }
       .skills-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.5rem; }
-      .skills-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+      .skills-header, .compliance-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
       .skills-stats-bar { flex-wrap: wrap; gap: 1rem; }
+      .files-sidebar { width: 180px; }
+      .compliance-families { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .compliance-score-ring { flex-direction: column; align-items: center; text-align: center; }
     }
   </style>
 </head>
@@ -1206,7 +1800,8 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="login-logo">
-      <img src="/logo.png" alt="CortexOS" style="width:56px;height:56px;border-radius:14px;box-shadow:0 4px 20px var(--accent-strong)">
+      <img src="/logo.png" alt="CortexOS" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'">
+      <div class="logo-fallback" style="display:none">CortexOS</div>
       <h1><span>Cortex</span>OS</h1>
       <p>Server Management Console</p>
     </div>
@@ -1221,6 +1816,23 @@
     <div class="login-footer">
       <div>🖥️ <span class="host" id="hostDisplay"></span></div>
       <div style="margin-top:0.25rem">Gateway port 18789</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SKILL DETAIL MODAL ==================== -->
+<div class="modal-overlay" id="skillModalOverlay" onclick="if(event.target===this)closeSkillModal()">
+  <div class="skill-modal">
+    <div class="skill-modal-header">
+      <h2 id="skillModalTitle">🧩 Skill Details</h2>
+      <button class="skill-modal-close" onclick="closeSkillModal()">✕</button>
+    </div>
+    <div class="skill-modal-body" id="skillModalBody">
+      <div class="skill-modal-loading">Loading skill details...</div>
+    </div>
+    <div class="skill-modal-footer">
+      <div id="skillModalMeta" style="font-size:0.7rem;color:var(--text-muted)"></div>
+      <button class="btn-skills primary" id="skillModalAction" style="display:none" onclick="closeSkillModal()">Done</button>
     </div>
   </div>
 </div>
@@ -1367,7 +1979,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v1.0.2</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v1.1.1</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1383,17 +1995,24 @@
   <div class="topbar">
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
-      <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v1.0.2</span></div>
+      <img src="/logo.png" alt="CortexOS" style="width:32px;height:32px;border-radius:8px" onerror="this.style.display='none'">
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v1.1.1</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
+          <span class="unread-badge" id="chatUnreadBadge">0</span>
         </button>
         <button class="nav-tab" onclick="switchTab('skills')" id="tabSkills">
           <span class="nav-tab-icon">🧩</span><span class="nav-tab-label">Skills</span>
         </button>
         <button class="nav-tab" onclick="switchTab('terminal')" id="tabTerminal">
           <span class="nav-tab-icon">🖥️</span><span class="nav-tab-label">Terminal</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('files')" id="tabFiles">
+          <span class="nav-tab-icon">📁</span><span class="nav-tab-label">Files</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('compliance')" id="tabCompliance">
+          <span class="nav-tab-icon">🛡️</span><span class="nav-tab-label">Compliance</span>
         </button>
       </div>
     </div>
@@ -1420,13 +2039,21 @@
         </div>
       </div>
 
+      <div class="skills-search-bar">
+        <input class="skills-search-input" type="text" id="skillsSearchInput" placeholder="Search skills..." oninput="filterSkills()">
+        <button class="skills-filter-btn active" data-filter="all" onclick="setSkillFilter('all',this)">All</button>
+        <button class="skills-filter-btn" data-filter="installed" onclick="setSkillFilter('installed',this)">Installed</button>
+        <button class="skills-filter-btn" data-filter="available" onclick="setSkillFilter('available',this)">Available</button>
+        <button class="skills-filter-btn" data-filter="updates" onclick="setSkillFilter('updates',this)">Updates</button>
+      </div>
+
       <div class="skills-stats-bar">
         <div class="skills-stat">
-          <div class="skills-stat-val green" id="skillsInstalledCount">12</div>
+          <div class="skills-stat-val green" id="skillsInstalledCount">0</div>
           <div class="skills-stat-label">Installed</div>
         </div>
         <div class="skills-stat">
-          <div class="skills-stat-val blue" id="skillsAvailableCount">8</div>
+          <div class="skills-stat-val blue" id="skillsAvailableCount">0</div>
           <div class="skills-stat-label">Available</div>
         </div>
         <div class="skills-stat">
@@ -1434,18 +2061,23 @@
           <div class="skills-stat-label">Updates</div>
         </div>
         <div class="skills-stat">
-          <div class="skills-stat-val" id="skillsTotalCount">20</div>
+          <div class="skills-stat-val" id="skillsTotalCount">0</div>
           <div class="skills-stat-label">Total</div>
         </div>
       </div>
 
-      <div class="skills-section">
-        <div class="skills-section-title">Installed Skills <span class="count" id="installedBadge">12</span></div>
+      <div class="skills-section" id="skillsSectionInstalled">
+        <div class="skills-section-title">Installed Skills <span class="count" id="installedBadge">0</span></div>
         <div class="skills-grid" id="installedSkillsGrid"></div>
       </div>
 
-      <div class="skills-section">
-        <div class="skills-section-title">Available to Install <span class="count" id="availableBadge">8</span></div>
+      <div class="skills-section" id="skillsSectionUpdates" style="display:none">
+        <div class="skills-section-title">Updates Available <span class="count" id="updatesBadge">0</span></div>
+        <div class="skills-grid" id="updateSkillsGrid"></div>
+      </div>
+
+      <div class="skills-section" id="skillsSectionAvailable">
+        <div class="skills-section-title">Available to Install <span class="count" id="availableBadge">0</span></div>
         <div class="skills-grid" id="availableSkillsGrid"></div>
       </div>
     </div>
@@ -1474,6 +2106,89 @@
       </div>
     </div>
 
+    <!-- Files Page -->
+    <div class="files-page" id="filesPage">
+      <div class="files-sidebar">
+        <div class="files-sidebar-header">
+          <h3>📁 Agent Files</h3>
+          <button class="files-refresh-btn" onclick="loadFilesList()" title="Refresh">🔄</button>
+        </div>
+        <div class="files-list" id="filesList">
+          <div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center">Loading files...</div>
+        </div>
+      </div>
+      <div class="files-editor">
+        <div class="files-editor-header" id="filesEditorHeader" style="display:none">
+          <div class="files-editor-title" id="filesEditorTitle">No file selected</div>
+          <div class="files-editor-actions">
+            <span class="files-saved-indicator" id="filesSavedIndicator">✓ Saved</span>
+            <button class="files-save-btn" id="filesSaveBtn" onclick="saveCurrentFile()" disabled>💾 Save</button>
+          </div>
+        </div>
+        <textarea class="files-textarea" id="filesTextarea" style="display:none" oninput="onFileEdit()"></textarea>
+        <div class="files-empty" id="filesEmpty">
+          <div class="files-empty-icon">📄</div>
+          <div>Select a file to view and edit</div>
+          <div style="font-size:0.75rem;margin-top:0.25rem">Key agent files: SOUL.md, IDENTITY.md, MEMORY.md</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compliance Page -->
+    <div class="compliance-page" id="compliancePage">
+      <div class="compliance-header">
+        <h2>🛡️ <span>Compliance</span> Dashboard</h2>
+        <div class="compliance-header-actions">
+          <select class="compliance-framework-select" id="complianceFramework" onchange="loadCompliance()">
+            <option value="nist-800-53">NIST 800-53</option>
+            <option value="cmmc-l1">CMMC Level 1</option>
+            <option value="cmmc-l2">CMMC Level 2</option>
+          </select>
+          <button class="btn-skills" onclick="runComplianceScan()">🔍 Run Scan</button>
+          <button class="btn-skills primary" onclick="loadCompliance()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="compliance-score-ring" id="complianceScoreSection">
+        <div class="score-circle">
+          <svg viewBox="0 0 120 120">
+            <circle class="bg-ring" cx="60" cy="60" r="52"/>
+            <circle class="fg-ring" id="scoreRing" cx="60" cy="60" r="52"
+              stroke-dasharray="326.73" stroke-dashoffset="326.73"/>
+          </svg>
+          <div class="score-text">
+            <div class="pct" id="complianceScorePct">—</div>
+            <div class="label">Score</div>
+          </div>
+        </div>
+        <div class="score-details">
+          <h3 id="complianceFrameworkTitle">NIST 800-53 Compliance</h3>
+          <div class="score-detail-row"><span>Controls Passed</span><span class="score-detail-val" id="compliancePassed">—</span></div>
+          <div class="score-detail-row"><span>Controls Failed</span><span class="score-detail-val" id="complianceFailed">—</span></div>
+          <div class="score-detail-row"><span>Warnings</span><span class="score-detail-val" id="complianceWarnings">—</span></div>
+          <div class="score-detail-row"><span>Last Scan</span><span class="score-detail-val" id="complianceLastScan">—</span></div>
+        </div>
+      </div>
+
+      <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.75rem">Control Families</div>
+      <div class="compliance-families" id="complianceFamilies"></div>
+
+      <div class="compliance-findings" id="complianceFindings">
+        <div class="findings-header">
+          <h3>📋 Findings</h3>
+          <div style="font-size:0.7rem;color:var(--text-muted)" id="findingsCount">0 findings</div>
+        </div>
+        <div id="findingsBody">
+          <div class="compliance-empty">
+            <div class="compliance-empty-icon">🛡️</div>
+            <div>No compliance data yet</div>
+            <div style="font-size:0.75rem;margin-top:0.25rem;color:var(--text-muted)">Run a scan to check your server's compliance posture</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat View -->
     <div class="chat" id="chatView">
       <div class="chat-scroll" id="chatScroll"></div>
       <div class="typing" id="typingEl">⚡ CortexOS is thinking</div>
@@ -1502,7 +2217,7 @@
             <div style="font-size:0.6rem;color:var(--text-muted)">Online</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:0.9rem;font-weight:700" id="agentSkillCount">12</div>
+            <div style="font-size:0.9rem;font-weight:700" id="agentSkillCount">0</div>
             <div style="font-size:0.6rem;color:var(--text-muted)">Skills</div>
           </div>
           <div style="text-align:center">
@@ -1549,7 +2264,7 @@
       </div>
 
       <div class="side-section">
-        <div class="side-title">Skills <span class="skill-badge badge-ok" id="sidebarSkillBadge">12 active</span></div>
+        <div class="side-title">Skills <span class="skill-badge badge-ok" id="sidebarSkillBadge">0 active</span></div>
         <div id="sidebarSkills" style="display:flex;flex-wrap:wrap;gap:0.15rem">
           <span class="skill-item" onclick="askSkill('monitoring')">📊 monitoring</span>
           <span class="skill-item" onclick="askSkill('docker')">🐳 docker</span>
@@ -1567,13 +2282,32 @@
   </div>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
 <script>
 let ws=null, sessionKey=null, msgN=0, streaming='', pendingToken='';
 let healthPollInterval=null;
 let reconnectTimer=null;
 let isReconnecting=false;
 let wasConnected=false;
+let currentTab='chat';
+let unreadCount=0;
+let githubManifest=null;
+let currentFile=null;
+let filesDirty=false;
+let allSkillsData={installed:[],available:[],updates:[]};
+let currentSkillFilter='all';
 const $=id=>document.getElementById(id);
+
+// Key files for highlighting in files tab
+const KEY_FILES=['SOUL.md','IDENTITY.md','MEMORY.md','USER.md','TOOLS.md','AGENTS.md','HEARTBEAT.md'];
+const FILE_ICONS={
+  'SOUL.md':'🧠','IDENTITY.md':'🪪','MEMORY.md':'💾','USER.md':'👤',
+  'TOOLS.md':'🔧','AGENTS.md':'🤖','HEARTBEAT.md':'💓',
+  '.md':'📝','.json':'📋','.yaml':'⚙️','.yml':'⚙️','.txt':'📄',
+  '.sh':'🖥️','.py':'🐍','.js':'💛','.ts':'🔷','.conf':'⚙️','.log':'📊'
+};
 
 // Quick command messages for keyboard shortcuts
 const quickCommands=[
@@ -1588,12 +2322,10 @@ const quickCommands=[
 ];
 
 $('hostDisplay').textContent=location.hostname;
-// Check for token in URL parameter (from management server)
 const urlParams=new URLSearchParams(window.location.search);
 const urlToken=urlParams.get('token');
 if(urlToken){
   localStorage.setItem('cortexos-token',urlToken);
-  // Clean URL
   window.history.replaceState({},'',window.location.pathname);
 }
 const saved=localStorage.getItem('cortexos-token');
@@ -1607,7 +2339,7 @@ function wsUrl(){
 function sendConnect(nonce){
   const params={
     minProtocol:3, maxProtocol:3,
-    client:{id:'webchat-ui',displayName:'CortexOS Dashboard',version:'1.0.0',platform:'web',mode:'webchat'},
+    client:{id:'webchat-ui',displayName:'CortexOS Dashboard',version:'1.1.0',platform:'web',mode:'webchat'},
     caps:['tool-events'],
     scopes:['operator.admin','operator.approvals'],
     auth:{token:pendingToken}
@@ -1631,23 +2363,14 @@ function doConnect(){
     ws.onmessage=e=>{
       try{
         const d=JSON.parse(e.data);
-        console.log('[WS RAW]', JSON.stringify(d).substring(0, 500));
-        console.log('[WS]', 'type='+d.type, 'event='+(d.event||''), 'method='+(d.method||''), 'id='+(d.id||''), 'state='+(d.payload?.state||d.params?.state||''));
-        if(d.type==='event'&&d.event==='connect.challenge'){
-          challengeReceived=true;
-          sendConnect(d.payload?.nonce);
-          return;
-        }
+        console.log('[WS]', 'type='+d.type, 'event='+(d.event||''), 'method='+(d.method||''), 'id='+(d.id||''));
         handle(d);
-      }catch(err){console.error('[WS parse error]', err, e.data?.substring?.(0,200))}
+      }catch(err){console.error('[WS parse error]', err)}
     };
     ws.onclose=()=>{
       setConnStatus('disconnected');
       stopHealthPoll();
-      if(wasConnected&&!isReconnecting){
-        // Auto-reconnect
-        attemptReconnect();
-      }
+      if(wasConnected&&!isReconnecting){attemptReconnect()}
     };
     ws.onerror=()=>{
       if(!wasConnected&&!isReconnecting){
@@ -1663,14 +2386,8 @@ function attemptReconnect(){
   setConnStatus('reconnecting');
   if(reconnectTimer)clearTimeout(reconnectTimer);
   reconnectTimer=setTimeout(()=>{
-    console.log('[WS] Auto-reconnecting...');
     pendingToken=localStorage.getItem('cortexos-token')||pendingToken;
-    if(pendingToken){
-      doConnect();
-    }else{
-      isReconnecting=false;
-      setConnStatus('disconnected');
-    }
+    if(pendingToken){doConnect()}else{isReconnecting=false;setConnStatus('disconnected')}
   },3000);
 }
 
@@ -1678,34 +2395,26 @@ function setConnStatus(state){
   const dot=$('connDot');
   const text=$('connText');
   dot.classList.remove('off','reconnecting');
-  if(state==='connected'){
-    dot.classList.remove('off','reconnecting');
-    text.textContent='Connected';
-  }else if(state==='reconnecting'){
-    dot.classList.add('reconnecting');
-    text.textContent='Reconnecting…';
-  }else{
-    dot.classList.add('off');
-    text.textContent='Disconnected';
-  }
+  if(state==='connected'){text.textContent='Connected'}
+  else if(state==='reconnecting'){dot.classList.add('reconnecting');text.textContent='Reconnecting…'}
+  else{dot.classList.add('off');text.textContent='Disconnected'}
 }
 
 function handle(d){
   // Connect response
+  if(d.type==='event'&&d.event==='connect.challenge'){
+    sendConnect(d.payload?.nonce);
+    return;
+  }
   if(d.type==='res'&&d.id==='connect'){
     if(!d.ok){
-      if(isReconnecting){
-        isReconnecting=false;
-        setConnStatus('disconnected');
-      }else{
-        showErr(d.error?.message||'Auth failed');resetLogin();
-      }
+      if(isReconnecting){isReconnecting=false;setConnStatus('disconnected')}
+      else{showErr(d.error?.message||'Auth failed');resetLogin()}
       return;
     }
     localStorage.setItem('cortexos-token',pendingToken);
     sessionKey='agent:main:webchat';
-    wasConnected=true;
-    isReconnecting=false;
+    wasConnected=true;isReconnecting=false;
     setConnStatus('connected');
     const branding=d.payload?.branding||{};
     if(branding.assistantName){
@@ -1725,24 +2434,43 @@ function handle(d){
     $('agentModel').textContent=model.split('/').pop().split('-')[0]||model;
     $('panelModel').textContent=model;
     $('panelProvider').textContent=model.split('/')[0]||'—';
-    // Populate settings
     $('settingsToken').value=pendingToken;
     const savedUrl=localStorage.getItem('cortexos-ext-url')||'';
     $('settingsUrl').value=savedUrl;
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     checkAiReady();
+    fetchGithubManifest();
     return;
   }
   if(d.type==='hello-ok'){
     localStorage.setItem('cortexos-token',pendingToken);
     sessionKey='agent:main:webchat';
-    wasConnected=true;
-    isReconnecting=false;
+    wasConnected=true;isReconnecting=false;
     setConnStatus('connected');
     $('loginScreen').style.display='none';
     $('app').classList.add('active');
     checkAiReady();
+    fetchGithubManifest();
+    return;
+  }
+  // Files RPC responses
+  if(d.type==='res'&&d.id==='files-list'){
+    if(d.ok)renderFilesList(d.payload);
+    return;
+  }
+  if(d.type==='res'&&d.id==='files-get'){
+    if(d.ok)openFileContent(d.payload);
+    return;
+  }
+  if(d.type==='res'&&d.id==='files-set'){
+    if(d.ok){
+      filesDirty=false;
+      $('filesSaveBtn').disabled=true;
+      const ind=$('filesSavedIndicator');
+      ind.classList.add('show');
+      setTimeout(()=>ind.classList.remove('show'),2000);
+    }
     return;
   }
   // Stream events
@@ -1752,7 +2480,6 @@ function handle(d){
     const st=p.state;
     const m=p.message;
     
-    // Handle tool events (from tool-events capability)
     if(p.stream==='tool'&&p.data){
       const phase=p.data.phase;
       const toolName=p.data.name||p.data.toolName||'tool';
@@ -1788,11 +2515,13 @@ function handle(d){
             showSetupNeeded();
           }else{
             addMsg('assistant',t);
+            notifyIfBackground(t);
           }
         }
       }else if(streaming){
         removeStream();
         addMsg('assistant',streaming);
+        notifyIfBackground(streaming);
       }
       streaming='';$('sendBtn').disabled=false;
     }else if(st==='error'){
@@ -1820,11 +2549,8 @@ function handle(d){
   }
   // Health/status poll response
   if(d.type==='res'&&(d.id==='health-poll'||d.id==='status-poll')){
-    console.log('[HEALTH]', JSON.stringify(d).substring(0, 1000));
-    if(d.ok&&d.payload){
-      updateSystemStats(d.payload);
-    }else if(!d.ok&&d.id==='health-poll'){
-      console.log('[HEALTH] health method failed, trying status...');
+    if(d.ok&&d.payload){updateSystemStats(d.payload)}
+    else if(!d.ok&&d.id==='health-poll'){
       if(ws&&ws.readyState===1){
         ws.send(JSON.stringify({type:'req',method:'status',id:'status-poll'}));
       }
@@ -1874,25 +2600,68 @@ function extractTxt(c){
   return '';
 }
 
+// ==================== TOAST / NOTIFICATION SYSTEM ====================
+function notifyIfBackground(text){
+  if(currentTab!=='chat'){
+    unreadCount++;
+    updateUnreadBadge();
+    showToast(text);
+  }
+}
+
+function updateUnreadBadge(){
+  const badge=$('chatUnreadBadge');
+  if(unreadCount>0){
+    badge.textContent=unreadCount>99?'99+':unreadCount;
+    badge.classList.add('visible');
+  }else{
+    badge.classList.remove('visible');
+  }
+}
+
+function showToast(text){
+  const container=$('toastContainer');
+  const toast=document.createElement('div');
+  toast.className='toast';
+  const preview=text.replace(/<[^>]+>/g,'').substring(0,120);
+  toast.innerHTML=`<div class="toast-head">⚡ ${aiName}</div><div class="toast-body">${escHtml(preview)}${text.length>120?'…':''}</div>`;
+  toast.onclick=()=>{
+    switchTab('chat');
+    toast.remove();
+  };
+  container.appendChild(toast);
+  // Remove after 5s
+  setTimeout(()=>{
+    toast.classList.add('fade-out');
+    setTimeout(()=>toast.remove(),300);
+  },5000);
+  // Limit to 3 toasts
+  while(container.children.length>3){container.firstChild.remove()}
+}
+
+// ==================== SEND / MESSAGES ====================
 function doSend(){
   const box=$('chatBox'),txt=box.value.trim();
   if((!txt&&pendingAttachments.length===0)||!ws||ws.readyState!==1)return;
+  
+  // Switch to chat tab if not there
+  if(currentTab!=='chat')switchTab('chat');
   
   let displayHtml=fmtText(txt||'');
   let historyText=txt||'';
   if(pendingAttachments.length>0){
     const previews=pendingAttachments.map(a=>{
       if(a.isImage){
-        return `<div style="margin-top:0.5rem"><img src="data:${a.mimeType};base64,${a.data}" style="max-width:300px;max-height:250px;border-radius:8px;display:block" alt="${a.fileName}"><span style="font-size:0.7rem;opacity:0.7">${a.fileName}</span></div>`;
+        return '<div style="margin-top:0.5rem"><img src="data:'+a.mimeType+';base64,'+a.data+'" style="max-width:300px;max-height:250px;border-radius:8px;display:block" alt="'+a.fileName+'"><span style="font-size:0.7rem;opacity:0.7">'+a.fileName+'</span></div>';
       }
-      return `<div style="margin-top:0.4rem;font-size:0.8rem">📄 ${a.fileName}</div>`;
+      return '<div style="margin-top:0.4rem;font-size:0.8rem">📄 '+a.fileName+'</div>';
     }).join('');
     displayHtml+=previews;
     historyText+=(historyText?'\n':'')+'📎 '+pendingAttachments.map(a=>a.fileName).join(', ');
   }
   const el=document.createElement('div');
   el.className='msg user';
-  el.innerHTML=msgHead('user')+`<div class="msg-body">${displayHtml}</div>`;
+  el.innerHTML=msgHead('user')+'<div class="msg-body">'+displayHtml+'</div>';
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
@@ -1919,7 +2688,10 @@ function doSend(){
   ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),params}));
 }
 
-function qcmd(t){$('chatBox').value=t;doSend()}
+function qcmd(t){
+  if(currentTab!=='chat')switchTab('chat');
+  $('chatBox').value=t;doSend();
+}
 
 function askSkill(skill){
   qcmd('Tell me about your '+skill+' capabilities and show me what you can do with it');
@@ -1928,7 +2700,7 @@ function askSkill(skill){
 function addMsg(role,text,rawHtml,skipSave){
   const el=document.createElement('div');
   el.className='msg '+role;
-  el.innerHTML=msgHead(role)+`<div class="msg-body">${rawHtml?text:fmtText(text)}</div>`;
+  el.innerHTML=msgHead(role)+'<div class="msg-body">'+(rawHtml?text:fmtText(text))+'</div>';
   $('chatScroll').appendChild(el);
   $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
   if(!skipSave){
@@ -1949,7 +2721,7 @@ function loadHistory(){
     history.forEach(m=>{
       const el=document.createElement('div');
       el.className='msg '+m.role;
-      el.innerHTML=msgHead(m.role)+`<div class="msg-body">${fmtText(m.text)}</div>`;
+      el.innerHTML=msgHead(m.role)+'<div class="msg-body">'+fmtText(m.text)+'</div>';
       $('chatScroll').appendChild(el);
     });
     $('chatScroll').scrollTop=$('chatScroll').scrollHeight;
@@ -1958,26 +2730,20 @@ function loadHistory(){
 
 function highlightCode(code, lang) {
   let s = code;
-  // Collect tokens to protect from double-highlighting
   const tokens = [];
   function tok(match, cls) {
     const id = '\x00T' + tokens.length + '\x00';
     tokens.push('<span class="' + cls + '">' + match + '</span>');
     return id;
   }
-  // Comments first (# and //) — but not inside strings
   s = s.replace(/(\/\/.*$|(?:^|\s)#.*$)/gm, m => tok(m, 'sh-comment'));
-  // Strings (double then single)
   s = s.replace(/("(?:[^"\\]|\\.)*")/g, m => tok(m, 'sh-string'));
   s = s.replace(/('(?:[^'\\]|\\.)*')/g, m => tok(m, 'sh-string'));
-  // Numbers (standalone)
   s = s.replace(/\b(\d+\.?\d*)\b/g, m => tok(m, 'sh-number'));
-  // Keywords
   const kws = ['function','const','let','var','if','else','for','while','return','import','export','class','async','await','try','catch','throw','new','typeof','instanceof',
     'sudo','apt','systemctl','docker','npm','git','curl','echo','cat','grep','chmod','chown','mkdir','cp','mv','rm','cd','ls','pip','python3?','node','bash','sh','wget','tar','sed','awk','find','xargs','tee','tail','head','ssh','scp','rsync','make','gcc','go','cargo','yarn','pnpm','dnf','yum','pacman','snap','flatpak','journalctl','nginx','systemd','ufw','iptables','mount','umount','fdisk','lsblk','df','du','ps','top','htop','kill','pkill','nohup','crontab','at','service'];
   const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
   s = s.replace(kwRe, m => tok(m, 'sh-keyword'));
-  // Restore tokens
   tokens.forEach((v, i) => { s = s.replace('\x00T' + i + '\x00', v); });
   return s;
 }
@@ -1986,7 +2752,6 @@ let codeBlockCounter = 0;
 
 function fmtText(t){
   let s=escHtml(t);
-  // Code blocks with language detection and syntax highlighting
   s=s.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
     const blockId = 'codeblock-' + (++codeBlockCounter);
     const highlighted = highlightCode(code.replace(/\n$/, ''), lang);
@@ -2030,15 +2795,10 @@ function copyCodeBlock(btn) {
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
   }).catch(() => {
-    // Fallback for older browsers
     const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    btn.textContent = '✓ Copied';
-    btn.classList.add('copied');
+    ta.value = text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    btn.textContent = '✓ Copied';btn.classList.add('copied');
     setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
   });
 }
@@ -2063,8 +2823,7 @@ function onKey(e){
 function showErr(m){const el=$('loginError');el.textContent=m;el.style.display='block'}
 function resetLogin(){$('connectBtn').disabled=false;$('connectBtn').textContent='Connect'}
 function doDisconnect(){
-  wasConnected=false;
-  isReconnecting=false;
+  wasConnected=false;isReconnecting=false;
   if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null}
   stopHealthPoll();
   if(ws)ws.close();localStorage.removeItem('cortexos-token');
@@ -2078,9 +2837,9 @@ let userName=localStorage.getItem('cortexos-user-name')||'You';
 
 function msgHead(role){
   if(role==='user'){
-    return `<div class="msg-head"><div class="msg-avatar-placeholder">👤</div>${userName}</div>`;
+    return '<div class="msg-head"><div class="msg-avatar-placeholder">👤</div>'+userName+'</div>';
   }
-  return `<div class="msg-head"><img class="msg-avatar" src="/athena.png" onerror="this.outerHTML='<div class=\\'msg-avatar-placeholder\\'>⚡</div>'">${aiName}</div>`;
+  return '<div class="msg-head"><img class="msg-avatar" src="/athena.png" onerror="this.outerHTML=\'<div class=\\\'msg-avatar-placeholder\\\'>⚡</div>\'">'+aiName+'</div>';
 }
 const savedAvatar=localStorage.getItem('cortexos-avatar');
 if(savedAvatar){
@@ -2096,12 +2855,7 @@ function handleFiles(files){
     reader.onload=e=>{
       const base64=e.target.result.split(',')[1];
       const isImage=f.type.startsWith('image/');
-      pendingAttachments.push({
-        fileName:f.name,
-        mimeType:f.type||'application/octet-stream',
-        data:base64,
-        isImage
-      });
+      pendingAttachments.push({fileName:f.name,mimeType:f.type||'application/octet-stream',data:base64,isImage});
       renderAttachBar();
     };
     reader.readAsDataURL(f);
@@ -2114,18 +2868,14 @@ function renderAttachBar(){
   if(pendingAttachments.length===0){bar.style.display='none';bar.innerHTML='';return}
   bar.style.display='flex';
   bar.innerHTML=pendingAttachments.map((a,i)=>
-    `<div class="attach-chip">${a.isImage?`<img src="data:${a.mimeType};base64,${a.data}">`:'📄'} ${a.fileName} <span class="attach-remove" onclick="removeAttach(${i})">✕</span></div>`
+    '<div class="attach-chip">'+(a.isImage?'<img src="data:'+a.mimeType+';base64,'+a.data+'">':'📄')+' '+a.fileName+' <span class="attach-remove" onclick="removeAttach('+i+')">✕</span></div>'
   ).join('');
 }
 
-function removeAttach(i){
-  pendingAttachments.splice(i,1);
-  renderAttachBar();
-}
+function removeAttach(i){pendingAttachments.splice(i,1);renderAttachBar()}
 
 function checkAiReady(){
   startHealthPoll();
-  
   const history=JSON.parse(localStorage.getItem('cortexos-history')||'[]');
   if(history.length>0){
     loadHistory();
@@ -2141,30 +2891,14 @@ function checkAiReady(){
 }
 
 function showSetupNeeded(){
-  const html=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;max-width:520px">
-<div style="text-align:center;margin-bottom:1rem">
-  <div style="font-size:1.5rem;margin-bottom:0.5rem">⚠️</div>
-  <h3 style="font-size:1rem;font-weight:700">AI Provider Not Configured</h3>
-  <p style="color:var(--text-dim);font-size:0.8rem;margin-top:0.25rem">CortexOS needs an AI provider API key to work.</p>
-</div>
-
-<div style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem">Option 1 — Setup Token (Claude subscription)</div>
-<pre style="background:#0a0d16;border:1px solid var(--border);padding:0.75rem;border-radius:8px;font-size:0.75rem;overflow-x:auto;margin-bottom:1rem;line-height:1.5"># On any machine with Claude CLI:
-claude setup-token
-
-# Then on this server:
-ssh root@${location.hostname}
-openclaw models auth paste-token --provider anthropic
-# Paste the token when prompted
-systemctl restart cortex-server</pre>
-
-<div style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem">Option 2 — API Key (console.anthropic.com)</div>
-<pre style="background:#0a0d16;border:1px solid var(--border);padding:0.75rem;border-radius:8px;font-size:0.75rem;overflow-x:auto;margin-bottom:1rem;line-height:1.5">ssh root@${location.hostname}
-export ANTHROPIC_API_KEY="sk-ant-your-key"
-systemctl restart cortex-server</pre>
-
-<p style="font-size:0.75rem;color:var(--text-dim)">After configuring, refresh this page to connect.</p>
-</div>`;
+  const html='<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;max-width:520px">'+
+'<div style="text-align:center;margin-bottom:1rem">'+
+  '<div style="font-size:1.5rem;margin-bottom:0.5rem">⚠️</div>'+
+  '<h3 style="font-size:1rem;font-weight:700">AI Provider Not Configured</h3>'+
+  '<p style="color:var(--text-dim);font-size:0.8rem;margin-top:0.25rem">CortexOS needs an AI provider API key to work.</p>'+
+'</div>'+
+'<pre style="background:#0a0d16;border:1px solid var(--border);padding:0.75rem;border-radius:8px;font-size:0.75rem;overflow-x:auto;line-height:1.5">ssh root@'+location.hostname+'\nexport ANTHROPIC_API_KEY="sk-ant-your-key"\nsystemctl restart cortex-server</pre>'+
+'</div>';
   addMsg('assistant', html, true);
 }
 
@@ -2175,9 +2909,6 @@ function uploadAvatar(file){
     const base64=e.target.result.split(',')[1];
     ws.send(JSON.stringify({type:'req',method:'agents.files.set',id:'avatar-upload',
       params:{agentId:'main',name:'avatars/avatar.png',content:base64,encoding:'base64'}}));
-    const idk=crypto.randomUUID();
-    ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
-      params:{sessionKey:sessionKey||'agent:main:webchat',message:'I just uploaded a new avatar image for you. Update your IDENTITY.md to reference avatars/avatar.png as your avatar.',idempotencyKey:idk}}));
     const dataUrl=e.target.result;
     document.querySelectorAll('#agentAvatar img, .agent-panel img[src*="athena"]').forEach(img=>{img.src=dataUrl});
     localStorage.setItem('cortexos-avatar',dataUrl);
@@ -2200,28 +2931,22 @@ function saveUserName(){
 function showAgentPanel(){$('agentPanel').classList.add('active')}
 function hideAgentPanel(){$('agentPanel').classList.remove('active')}
 
-// Settings panel
 function showSettingsPanel(){
   $('settingsPanel').classList.add('active');
-  // Populate current values
   $('settingsUserName').value=userName==='You'?'':userName;
   const currentToken=localStorage.getItem('cortexos-token')||'';
   $('settingsToken').value=currentToken;
   const currentModel=localStorage.getItem('cortexos-model')||'claude-sonnet';
   const modelSelect=$('settingsModel');
   for(let i=0;i<modelSelect.options.length;i++){
-    if(currentModel.includes(modelSelect.options[i].value)){
-      modelSelect.selectedIndex=i;break;
-    }
+    if(currentModel.includes(modelSelect.options[i].value)){modelSelect.selectedIndex=i;break}
   }
-  const currentUrl=localStorage.getItem('cortexos-ext-url')||'';
-  $('settingsUrl').value=currentUrl;
+  $('settingsUrl').value=localStorage.getItem('cortexos-ext-url')||'';
 }
 function hideSettingsPanel(){$('settingsPanel').classList.remove('active')}
 
 function flashSaved(elId){
-  const el=$(elId);
-  el.classList.add('show');
+  const el=$(elId);el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'),2000);
 }
 
@@ -2240,13 +2965,11 @@ function saveModel(){
   $('panelModel').textContent=model;
   $('panelProvider').textContent=model.split('-')[0]||'—';
   flashSaved('modelSaved');
-  // Notify the agent
   if(ws&&ws.readyState===1){
     const idk=crypto.randomUUID();
     ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
       params:{sessionKey:sessionKey||'agent:main:webchat',
-        message:'The user wants to switch the AI model to: '+model+'. Please update the configuration if possible.',
-        idempotencyKey:idk}}));
+        message:'The user wants to switch the AI model to: '+model,idempotencyKey:idk}}));
   }
 }
 
@@ -2258,8 +2981,7 @@ function saveUrl(){
     const idk=crypto.randomUUID();
     ws.send(JSON.stringify({type:'req',method:'chat.send',id:'chat-'+(++msgN),
       params:{sessionKey:sessionKey||'agent:main:webchat',
-        message:'The user wants to set the external URL / allowedOrigins to: '+url+'. Please update the gateway configuration.',
-        idempotencyKey:idk}}));
+        message:'Set external URL / allowedOrigins to: '+url,idempotencyKey:idk}}));
   }
 }
 
@@ -2270,41 +2992,29 @@ function clearHistory(){
   addMsg('assistant','Chat history cleared. Starting fresh.', false, true);
 }
 
-// Mobile sidebar toggle
 function toggleMobileSidebar(){
   const sidebar=$('sidebarMain');
   const overlay=$('sidebarOverlay');
   const isOpen=sidebar.classList.contains('mobile-open');
-  if(isOpen){
-    sidebar.classList.remove('mobile-open');
-    overlay.classList.remove('active');
-  }else{
-    sidebar.classList.add('mobile-open');
-    overlay.classList.add('active');
-  }
+  if(isOpen){sidebar.classList.remove('mobile-open');overlay.classList.remove('active')}
+  else{sidebar.classList.add('mobile-open');overlay.classList.add('active')}
 }
 
 // Click outside to close panels
 document.addEventListener('click',e=>{
   const agentPanel=$('agentPanel');
-  if(agentPanel.classList.contains('active')&&!agentPanel.contains(e.target)&&!e.target.closest('[onclick*="showAgentPanel"]')){
-    hideAgentPanel();
-  }
+  if(agentPanel.classList.contains('active')&&!agentPanel.contains(e.target)&&!e.target.closest('[onclick*="showAgentPanel"]')){hideAgentPanel()}
   const settingsPanel=$('settingsPanel');
-  if(settingsPanel.classList.contains('active')&&!settingsPanel.contains(e.target)&&!e.target.closest('[onclick*="showSettingsPanel"]')){
-    hideSettingsPanel();
-  }
+  if(settingsPanel.classList.contains('active')&&!settingsPanel.contains(e.target)&&!e.target.closest('[onclick*="showSettingsPanel"]')){hideSettingsPanel()}
 });
 
-// Keyboard shortcuts: Ctrl+1 through Ctrl+8 for quick commands
+// Keyboard shortcuts
 document.addEventListener('keydown',e=>{
   if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&!e.metaKey){
     const num=parseInt(e.key);
     if(num>=1&&num<=8){
       e.preventDefault();
-      if(ws&&ws.readyState===1){
-        qcmd(quickCommands[num-1]);
-      }
+      if(ws&&ws.readyState===1)qcmd(quickCommands[num-1]);
     }
   }
 });
@@ -2324,13 +3034,52 @@ document.addEventListener('paste',e=>{
 });
 
 // Drag & drop support
-['dragenter','dragover'].forEach(ev=>{
-  document.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation()});
-});
+['dragenter','dragover'].forEach(ev=>{document.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation()})});
 document.addEventListener('drop',e=>{
   e.preventDefault();e.stopPropagation();
   if(e.dataTransfer?.files?.length)handleFiles(e.dataTransfer.files);
 });
+
+// ==================== TAB SWITCHING ====================
+function switchTab(tab) {
+  currentTab=tab;
+  const views=['chatView','skillsPage','terminalPage','filesPage','compliancePage'];
+  const tabs=['tabChat','tabSkills','tabTerminal','tabFiles','tabCompliance'];
+  const viewMap={chat:'chatView',skills:'skillsPage',terminal:'terminalPage',files:'filesPage',compliance:'compliancePage'};
+  const tabMap={chat:'tabChat',skills:'tabSkills',terminal:'tabTerminal',files:'tabFiles',compliance:'tabCompliance'};
+  
+  // Hide all
+  views.forEach(v=>{const el=$(v);if(el){el.style.display='none';el.classList.remove('active')}});
+  tabs.forEach(t=>{const el=$(t);if(el)el.classList.remove('active')});
+  
+  // Also hide sidebar when not on chat
+  const sidebar=$('sidebarMain');
+  if(tab==='chat'){
+    sidebar.style.display='';
+    unreadCount=0;
+    updateUnreadBadge();
+  }else{
+    sidebar.style.display='none';
+  }
+  
+  // Show selected
+  const viewId=viewMap[tab];
+  const tabId=tabMap[tab];
+  if(viewId){
+    const el=$(viewId);
+    if(tab==='chat'){el.style.display='flex'}
+    else if(tab==='files'){el.style.display='flex'}
+    else{el.style.display='block'}
+    el.classList.add('active');
+  }
+  if(tabId)$(tabId).classList.add('active');
+  
+  // Tab-specific init
+  if(tab==='skills')renderSkillsPage();
+  if(tab==='terminal')setTimeout(()=>$('termInput').focus(),100);
+  if(tab==='files')loadFilesList();
+  if(tab==='compliance')loadCompliance();
+}
 
 // ==================== Health Polling ====================
 function startHealthPoll(){
@@ -2338,14 +3087,10 @@ function startHealthPoll(){
   pollHealth();
   healthPollInterval=setInterval(pollHealth,30000);
 }
-
-function stopHealthPoll(){
-  if(healthPollInterval){clearInterval(healthPollInterval);healthPollInterval=null}
-}
+function stopHealthPoll(){if(healthPollInterval){clearInterval(healthPollInterval);healthPollInterval=null}}
 
 function pollHealth(){
   fetch('/stats.json?t='+Date.now()).then(r=>r.json()).then(data=>{
-    console.log('[STATS]', data);
     if(data.cpu){
       const cpuPct=data.cpu.percent||0;
       $('sCpu').textContent=cpuPct+'%';
@@ -2365,8 +3110,7 @@ function pollHealth(){
       $('sDiskBar').style.background=dp>85?'var(--red)':dp>70?'var(--yellow)':'var(--yellow)';
     }
     if(data.uptime)$('sUp').textContent=data.uptime;
-  }).catch(e=>console.log('[STATS] fetch error:',e));
-  // Also update skill count
+  }).catch(()=>{});
   fetch('/skills.json?t='+Date.now()).then(r=>r.json()).then(data=>{
     if(data.count){
       if($('agentSkillCount'))$('agentSkillCount').textContent=data.count;
@@ -2377,29 +3121,20 @@ function pollHealth(){
 }
 
 function updateSystemStats(data){
-  console.log('[STATS] Raw data keys:', Object.keys(data));
-  console.log('[STATS] Data:', JSON.stringify(data).substring(0, 800));
-  
   if(data.agents&&Array.isArray(data.agents)){
     const agent=data.agents[0]||{};
     if(agent.name)$('agentName').textContent=agent.name;
   }
-  
-  if(data.ts){
-    $('sUp').textContent='Gateway OK';
-  }
-
+  if(data.ts)$('sUp').textContent='Gateway OK';
   if(data.model){
     const m=data.model.split('/').pop()||data.model;
     $('agentModel').textContent=m.split('-')[0];
     localStorage.setItem('cortexos-model',data.model);
   }
-  
   const system=data.system||data.os||data;
   const memory=data.memory||system.memory||{};
   const cpu=data.cpu||system.cpu||{};
   const disk=data.disk||system.disk||data.storage||{};
-  
   let cpuPct=cpu.usage||cpu.percent||cpu.load||null;
   if(cpuPct!==null){
     cpuPct=Math.round(parseFloat(cpuPct));
@@ -2407,7 +3142,6 @@ function updateSystemStats(data){
     $('sCpuBar').style.width=cpuPct+'%';
     $('sCpuBar').style.background=cpuPct>80?'var(--red)':cpuPct>60?'var(--yellow)':'var(--green)';
   }
-  
   let memPct=memory.usedPercent||memory.percent||memory.usage||null;
   let memText=null;
   if(memory.used&&memory.total){
@@ -2422,7 +3156,6 @@ function updateSystemStats(data){
     $('sMemBar').style.width=memPct+'%';
     $('sMemBar').style.background=memPct>85?'var(--red)':memPct>70?'var(--yellow)':'var(--accent-light)';
   }
-  
   let diskPct=disk.usedPercent||disk.percent||disk.usage||null;
   let diskText=null;
   if(disk.used&&disk.total){
@@ -2437,23 +3170,17 @@ function updateSystemStats(data){
     $('sDiskBar').style.width=diskPct+'%';
     $('sDiskBar').style.background=diskPct>90?'var(--red)':diskPct>75?'var(--yellow)':'var(--yellow)';
   }
-  
   let uptime=data.uptime||system.uptime||data.uptimeSeconds||null;
   if(uptime!==null){
-    if(typeof uptime==='number'){
-      $('sUp').textContent=fmtUptime(uptime);
-    }else{
-      $('sUp').textContent=String(uptime);
-    }
+    if(typeof uptime==='number')$('sUp').textContent=fmtUptime(uptime);
+    else $('sUp').textContent=String(uptime);
     $('panelUptime').textContent=$('sUp').textContent;
   }
-  
   if(data.version||data.server?.version){
     const ver=data.version||data.server?.version;
     $('panelGateway').textContent='v'+ver;
     $('settingsGatewayVer').textContent='v'+ver;
   }
-  
   if(data.model||data.defaultModel){
     const model=data.model||data.defaultModel;
     localStorage.setItem('cortexos-model',model);
@@ -2473,163 +3200,296 @@ function fmtUptime(seconds){
   return mins+'m';
 }
 
-// ==================== Skills Page ====================
-const coreSkills = [
-  { name: 'monitoring', icon: '📊', version: '0.1.0', description: 'System health monitoring, metrics collection & alerting' },
-  { name: 'docker-manager', icon: '🐳', version: '0.1.0', description: 'Docker container lifecycle, images & compose management' },
-  { name: 'systemd-manager', icon: '⚙️', version: '0.1.0', description: 'Systemd service control, unit files & journal logs' },
-  { name: 'security-hardening', icon: '🔒', version: '0.1.0', description: 'SSH hardening, fail2ban, audit policies & CIS benchmarks' },
-  { name: 'network-manager', icon: '🌐', version: '0.1.0', description: 'Network interfaces, DNS, routes & connectivity diagnostics' },
-  { name: 'storage-manager', icon: '💾', version: '0.1.0', description: 'Disk partitions, LVM, RAID, mounts & storage health' },
-  { name: 'package-manager', icon: '📦', version: '0.1.0', description: 'APT/YUM package install, update, remove & search' },
-  { name: 'user-manager', icon: '👤', version: '0.1.0', description: 'User accounts, groups, permissions & sudo access' },
-  { name: 'firewall-manager', icon: '🛡️', version: '0.1.0', description: 'UFW/iptables rules, port management & traffic filtering' },
-  { name: 'backup-manager', icon: '💿', version: '0.1.0', description: 'Backup scheduling, snapshots, restoration & off-site sync' },
-  { name: 'cloudflare-install', icon: '☁️', version: '0.1.0', description: 'Cloudflare tunnel setup, configuration & authentication' },
-  { name: 'cloudflare-ops', icon: '🔧', version: '0.1.0', description: 'Cloudflare tunnel operations, DNS records & zero-trust rules' }
-];
+// ==================== GITHUB MANIFEST ====================
+function fetchGithubManifest(){
+  fetch('https://raw.githubusercontent.com/ivanuser/cortex-server-skills/main/manifest.json')
+    .then(r=>r.json())
+    .then(data=>{
+      githubManifest=data;
+      console.log('[SKILLS] GitHub manifest loaded:', Object.keys(data.skills||data).length, 'skills');
+      renderSkillsPage();
+    })
+    .catch(e=>{
+      console.log('[SKILLS] GitHub manifest fetch failed:', e);
+      githubManifest=null;
+    });
+}
 
-const extendedSkills = [
-  // Server
-  { name: 'nginx', icon: '🌍', version: '0.1.0', description: 'Web server, reverse proxy, SSL, load balancing' },
-  { name: 'apache', icon: '🪶', version: '0.1.0', description: 'Apache HTTP server, modules, vhosts' },
-  { name: 'postgres', icon: '🐘', version: '0.1.0', description: 'PostgreSQL database management' },
-  { name: 'mysql', icon: '🐬', version: '0.1.0', description: 'MySQL/MariaDB management' },
-  { name: 'redis', icon: '🔴', version: '0.1.0', description: 'In-memory cache, pub/sub, clustering' },
-  { name: 'mongodb', icon: '🍃', version: '0.1.0', description: 'Document database, replica sets' },
-  { name: 'elasticsearch', icon: '🔎', version: '0.1.0', description: 'Search engine, log analytics' },
-  { name: 'cassandra', icon: '👁️', version: '0.1.0', description: 'Distributed NoSQL database' },
-  { name: 'sqlite', icon: '📄', version: '0.1.0', description: 'Embedded SQL database' },
-  { name: 'caddy', icon: '🔒', version: '0.1.0', description: 'Web server with auto-HTTPS' },
-  { name: 'haproxy', icon: '⚖️', version: '0.1.0', description: 'TCP/HTTP load balancer' },
-  { name: 'rabbitmq', icon: '🐰', version: '0.1.0', description: 'Message broker, queues' },
-  { name: 'memcached', icon: '⚡', version: '0.1.0', description: 'Distributed memory cache' },
-  { name: 'wireguard', icon: '🔐', version: '0.1.0', description: 'VPN tunnels, peer config' },
-  // Apps
-  { name: 'nextcloud', icon: '☁️', version: '0.1.0', description: 'Self-hosted cloud platform' },
-  { name: 'discourse', icon: '💬', version: '0.1.0', description: 'Community forum platform' },
-  // Infra
-  { name: 'kubernetes', icon: '☸️', version: '0.1.0', description: 'Container orchestration' },
-  { name: 'terraform', icon: '🏗️', version: '0.1.0', description: 'Infrastructure as Code' },
-  { name: 'ansible', icon: '🤖', version: '0.1.0', description: 'Configuration management' },
-  { name: 'prometheus', icon: '📈', version: '0.1.0', description: 'Metrics & monitoring' },
-  { name: 'grafana', icon: '📊', version: '0.1.0', description: 'Dashboards & visualization' },
-  { name: 'jenkins', icon: '🏭', version: '0.1.0', description: 'CI/CD automation server' },
-  { name: 'gitlab-runner', icon: '🦊', version: '0.1.0', description: 'GitLab CI/CD agent' },
-  { name: 'certbot', icon: '🔏', version: '0.1.0', description: 'Let\'s Encrypt SSL certs' },
-  { name: 'docker-compose', icon: '🐳', version: '0.1.0', description: 'Multi-container apps' },
-  // Cloud
-  { name: 'aws-cli', icon: '☁️', version: '0.1.0', description: 'Amazon Web Services CLI' },
-  { name: 'gcloud', icon: '🌐', version: '0.1.0', description: 'Google Cloud Platform CLI' },
-  { name: 'azure-cli', icon: '🔵', version: '0.1.0', description: 'Microsoft Azure CLI' },
-  // Runtimes
-  { name: 'nodejs', icon: '💚', version: '0.1.0', description: 'Node.js, npm, PM2' },
-  { name: 'python', icon: '🐍', version: '0.1.0', description: 'Python, venv, pip, pyenv' },
-  { name: 'golang', icon: '🔷', version: '0.1.0', description: 'Go language & modules' },
-  { name: 'java', icon: '☕', version: '0.1.0', description: 'OpenJDK, Maven, Tomcat' },
-  { name: 'rust', icon: '🦀', version: '0.1.0', description: 'Rust, cargo, cross-compile' },
-];
+// ==================== SKILLS PAGE (Full Feature Parity) ====================
+function compareVersions(v1, v2){
+  if(!v1||!v2)return 0;
+  const a=v1.replace(/^v/,'').split('.').map(Number);
+  const b=v2.replace(/^v/,'').split('.').map(Number);
+  for(let i=0;i<3;i++){
+    if((a[i]||0)<(b[i]||0))return -1;
+    if((a[i]||0)>(b[i]||0))return 1;
+  }
+  return 0;
+}
 
 function renderSkillCard(skill, status) {
   const btnClass = status === 'installed' ? 'installed' : status === 'update' ? 'update' : 'available';
   const btnText = status === 'installed' ? '✓ Installed' : status === 'update' ? '⬆ Update Available' : '↓ Install';
   const btnAction = status === 'available'
-    ? `onclick="installSkill('${skill.name}')"`
+    ? 'onclick="event.stopPropagation();installSkill(\''+skill.name+'\')"'
     : status === 'update'
-    ? `onclick="updateSkill('${skill.name}')"`
+    ? 'onclick="event.stopPropagation();updateSkill(\''+skill.name+'\')"'
     : '';
+  const extraClass = status === 'update' ? ' has-update' : '';
+  const versionDisplay = skill.installedVersion && skill.latestVersion && status === 'update'
+    ? 'v'+skill.installedVersion+' → v'+skill.latestVersion
+    : 'v'+(skill.version||'0.1.0');
 
-  return `<div class="skill-card" onclick="skillInfo('${skill.name}')" style="cursor:pointer" title="Click for details">
-    <div class="skill-card-head">
-      <span class="skill-card-icon">${skill.icon}</span>
-      <span class="skill-card-version">v${skill.version}</span>
-    </div>
-    <div class="skill-card-name">${skill.name}</div>
-    <div class="skill-card-desc">${skill.description}</div>
-    <div class="skill-card-footer">
-      <button class="skill-card-btn ${btnClass}" ${btnAction} onclick="event.stopPropagation()">${btnText}</button>
-    </div>
-  </div>`;
+  return '<div class="skill-card'+extraClass+'" onclick="openSkillModal(\''+skill.name+'\')" style="cursor:pointer" title="Click for details" data-name="'+skill.name+'" data-status="'+status+'">'+
+    '<div class="skill-card-head">'+
+      '<span class="skill-card-icon">'+(skill.icon||'📦')+'</span>'+
+      '<span class="skill-card-version">'+versionDisplay+'</span>'+
+    '</div>'+
+    '<div class="skill-card-name">'+skill.name+'</div>'+
+    '<div class="skill-card-desc">'+(skill.description||skill.name)+'</div>'+
+    '<div class="skill-card-footer">'+
+      '<button class="skill-card-btn '+btnClass+'" '+btnAction+'>'+btnText+'</button>'+
+    '</div>'+
+  '</div>';
 }
 
 function renderSkillsPage() {
-  // Fetch live skill data
-  fetch('/skills.json?t='+Date.now()).then(r=>r.json()).then(data=>{
-    const installedNames = new Set(data.installed.map(s=>s.name));
-    const installedGrid = $('installedSkillsGrid');
-    const availableGrid = $('availableSkillsGrid');
-
-    // Render installed from live data
-    const installedCards = data.installed.map(s => {
-      const all = [...coreSkills, ...extendedSkills];
-      const meta = all.find(m=>m.name===s.name) || {name:s.name, icon:'📦', desc:s.description||s.name};
-      return renderSkillCard({...meta, version:s.version||meta.version}, 'installed');
+  // Fetch local installed skills
+  fetch('/skills.json?t='+Date.now()).then(r=>r.json()).then(localData=>{
+    const installedMap={};
+    (localData.installed||[]).forEach(s=>{installedMap[s.name]=s});
+    
+    // Merge with GitHub manifest
+    const allSkills={};
+    
+    // Add installed skills
+    Object.keys(installedMap).forEach(name=>{
+      const s=installedMap[name];
+      allSkills[name]={
+        name:name,
+        icon:s.icon||'📦',
+        version:s.version||'0.1.0',
+        description:s.description||name,
+        installed:true,
+        installedVersion:s.version||'0.1.0'
+      };
     });
-    installedGrid.innerHTML = installedCards.join('');
+    
+    // Add GitHub manifest skills
+    if(githubManifest){
+      const skills=githubManifest.skills||githubManifest;
+      Object.keys(skills).forEach(name=>{
+        const s=skills[name];
+        if(allSkills[name]){
+          // Merge — check for updates
+          allSkills[name].latestVersion=s.version||s.latestVersion;
+          allSkills[name].description=s.description||allSkills[name].description;
+          allSkills[name].icon=s.icon||allSkills[name].icon;
+          allSkills[name].path=s.path||s.skillPath;
+        }else{
+          allSkills[name]={
+            name:name,
+            icon:s.icon||'📦',
+            version:s.version||'0.1.0',
+            description:s.description||name,
+            installed:false,
+            latestVersion:s.version,
+            path:s.path||s.skillPath
+          };
+        }
+      });
+    }
 
-    // Available = extended skills NOT in installed
-    const available = extendedSkills.filter(s=>!installedNames.has(s.name));
-    availableGrid.innerHTML = available.map(s => renderSkillCard(s, 'available')).join('');
+    // Fallback hardcoded skills if no manifest
+    if(!githubManifest){
+      const fallbackSkills=[
+        {name:'monitoring',icon:'📊',version:'0.1.0',description:'System health monitoring, metrics collection & alerting'},
+        {name:'docker-manager',icon:'🐳',version:'0.1.0',description:'Docker container lifecycle, images & compose management'},
+        {name:'systemd-manager',icon:'⚙️',version:'0.1.0',description:'Systemd service control, unit files & journal logs'},
+        {name:'security-hardening',icon:'🔒',version:'0.1.0',description:'SSH hardening, fail2ban, audit policies & CIS benchmarks'},
+        {name:'network-manager',icon:'🌐',version:'0.1.0',description:'Network interfaces, DNS, routes & connectivity diagnostics'},
+        {name:'storage-manager',icon:'💾',version:'0.1.0',description:'Disk partitions, LVM, RAID, mounts & storage health'},
+        {name:'package-manager',icon:'📦',version:'0.1.0',description:'APT/YUM package install, update, remove & search'},
+        {name:'user-manager',icon:'👤',version:'0.1.0',description:'User accounts, groups, permissions & sudo access'},
+        {name:'firewall-manager',icon:'🛡️',version:'0.1.0',description:'UFW/iptables rules, port management & traffic filtering'},
+        {name:'backup-manager',icon:'💿',version:'0.1.0',description:'Backup scheduling, snapshots, restoration & off-site sync'},
+        {name:'nginx',icon:'🌍',version:'0.1.0',description:'Web server, reverse proxy, SSL, load balancing'},
+        {name:'postgres',icon:'🐘',version:'0.1.0',description:'PostgreSQL database management'},
+        {name:'redis',icon:'🔴',version:'0.1.0',description:'In-memory cache, pub/sub, clustering'},
+        {name:'kubernetes',icon:'☸️',version:'0.1.0',description:'Container orchestration'},
+        {name:'prometheus',icon:'📈',version:'0.1.0',description:'Metrics & monitoring'},
+        {name:'grafana',icon:'📊',version:'0.1.0',description:'Dashboards & visualization'},
+        {name:'certbot',icon:'🔏',version:'0.1.0',description:"Let's Encrypt SSL certs"},
+        {name:'wireguard',icon:'🔐',version:'0.1.0',description:'VPN tunnels, peer config'},
+        {name:'nodejs',icon:'💚',version:'0.1.0',description:'Node.js, npm, PM2'},
+        {name:'python',icon:'🐍',version:'0.1.0',description:'Python, venv, pip, pyenv'}
+      ];
+      fallbackSkills.forEach(s=>{
+        if(!allSkills[s.name]){
+          allSkills[s.name]={...s,installed:false};
+        }
+      });
+    }
 
+    // Categorize
+    const installed=[], available=[], updates=[];
+    Object.values(allSkills).forEach(s=>{
+      if(s.installed){
+        if(s.latestVersion&&compareVersions(s.installedVersion,s.latestVersion)<0){
+          updates.push(s);
+        }else{
+          installed.push(s);
+        }
+      }else{
+        available.push(s);
+      }
+    });
+    
+    allSkillsData={installed,available,updates};
+    
+    // Apply current filter/search
+    applySkillsFilter();
+    
     // Update counts
-    $('skillsInstalledCount').textContent = data.count;
-    $('skillsAvailableCount').textContent = available.length;
-    $('skillsTotalCount').textContent = data.count + available.length;
-    $('installedBadge').textContent = data.count;
-    $('availableBadge').textContent = available.length;
-
-    // Update sidebar count too
-    if($('agentSkillCount')) $('agentSkillCount').textContent = data.count;
+    const totalInstalled=installed.length+updates.length;
+    $('skillsInstalledCount').textContent=totalInstalled;
+    $('skillsAvailableCount').textContent=available.length;
+    $('skillsUpdateCount').textContent=updates.length;
+    $('skillsTotalCount').textContent=totalInstalled+available.length;
+    $('installedBadge').textContent=installed.length;
+    $('availableBadge').textContent=available.length;
+    $('updatesBadge').textContent=updates.length;
+    
+    if($('agentSkillCount'))$('agentSkillCount').textContent=totalInstalled;
+    if($('sidebarSkillBadge'))$('sidebarSkillBadge').textContent=totalInstalled+' active';
+    
+    // Show/hide updates section
+    $('skillsSectionUpdates').style.display=updates.length>0?'':'none';
+    
   }).catch(()=>{
-    // Fallback to hardcoded
-    const installedGrid = $('installedSkillsGrid');
-    const availableGrid = $('availableSkillsGrid');
-    installedGrid.innerHTML = coreSkills.map(s => renderSkillCard(s, 'installed')).join('');
-    availableGrid.innerHTML = extendedSkills.map(s => renderSkillCard(s, 'available')).join('');
-    $('skillsInstalledCount').textContent = coreSkills.length;
-    $('skillsAvailableCount').textContent = extendedSkills.length;
-    $('skillsTotalCount').textContent = coreSkills.length + extendedSkills.length;
+    // Complete fallback
+    $('installedSkillsGrid').innerHTML='<div style="padding:1rem;color:var(--text-muted);grid-column:1/-1">Unable to load skills data</div>';
   });
 }
 
-function switchTab(tab) {
-  const chatView = $('chatView');
-  const sidebarMain = $('sidebarMain');
-  const skillsPage = $('skillsPage');
-  const terminalPage = $('terminalPage');
-  const tabChat = $('tabChat');
-  const tabSkills = $('tabSkills');
-  const tabTerminal = $('tabTerminal');
-
-  // Reset all
-  chatView.style.display = 'none';
-  sidebarMain.style.display = 'none';
-  skillsPage.classList.remove('active');
-  terminalPage.classList.remove('active');
-  tabChat.classList.remove('active');
-  tabSkills.classList.remove('active');
-  tabTerminal.classList.remove('active');
-
-  if (tab === 'chat') {
-    chatView.style.display = 'flex';
-    sidebarMain.style.display = '';
-    tabChat.classList.add('active');
-  } else if (tab === 'skills') {
-    skillsPage.classList.add('active');
-    tabSkills.classList.add('active');
-    renderSkillsPage();
-  } else if (tab === 'terminal') {
-    terminalPage.classList.add('active');
-    tabTerminal.classList.add('active');
-    setTimeout(() => $('termInput').focus(), 100);
+function applySkillsFilter(){
+  const search=($('skillsSearchInput')?.value||'').toLowerCase();
+  const filter=currentSkillFilter;
+  
+  const filterFn=s=>{
+    if(search&&!s.name.toLowerCase().includes(search)&&!(s.description||'').toLowerCase().includes(search))return false;
+    return true;
+  };
+  
+  const {installed,available,updates}=allSkillsData;
+  
+  const showInstalled=filter==='all'||filter==='installed';
+  const showAvailable=filter==='all'||filter==='available';
+  const showUpdates=filter==='all'||filter==='updates';
+  
+  $('skillsSectionInstalled').style.display=showInstalled?'':'none';
+  $('skillsSectionAvailable').style.display=showAvailable?'':'none';
+  $('skillsSectionUpdates').style.display=(showUpdates&&updates.length>0)?'':'none';
+  
+  if(showInstalled){
+    const filtered=installed.filter(filterFn);
+    $('installedSkillsGrid').innerHTML=filtered.map(s=>renderSkillCard(s,'installed')).join('')||'<div style="padding:1rem;color:var(--text-muted);grid-column:1/-1">No matching installed skills</div>';
+  }
+  if(showAvailable){
+    const filtered=available.filter(filterFn);
+    $('availableSkillsGrid').innerHTML=filtered.map(s=>renderSkillCard(s,'available')).join('')||'<div style="padding:1rem;color:var(--text-muted);grid-column:1/-1">No matching available skills</div>';
+  }
+  if(showUpdates&&updates.length>0){
+    const filtered=updates.filter(filterFn);
+    $('updateSkillsGrid').innerHTML=filtered.map(s=>renderSkillCard(s,'update')).join('');
   }
 }
 
-function skillInfo(name) {
-  switchTab('chat');
-  setTimeout(() => {
-    qcmd('Show me the full details of your ' + name + ' skill — what commands are available, what it can do, and any key things I should know about it.');
-  }, 100);
+function filterSkills(){applySkillsFilter()}
+function setSkillFilter(f,btn){
+  currentSkillFilter=f;
+  document.querySelectorAll('.skills-filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  applySkillsFilter();
+}
+
+// ==================== SKILL DETAIL MODAL ====================
+function openSkillModal(name){
+  const overlay=$('skillModalOverlay');
+  const body=$('skillModalBody');
+  const title=$('skillModalTitle');
+  const meta=$('skillModalMeta');
+  const actionBtn=$('skillModalAction');
+  
+  // Find skill data
+  const all=[...allSkillsData.installed,...allSkillsData.available,...allSkillsData.updates];
+  const skill=all.find(s=>s.name===name)||{name};
+  
+  title.innerHTML=(skill.icon||'🧩')+' '+name;
+  body.innerHTML='<div class="skill-modal-loading">⏳ Loading SKILL.md from GitHub...</div>';
+  meta.textContent='v'+(skill.version||skill.latestVersion||'0.1.0');
+  actionBtn.style.display='inline-block';
+  
+  if(skill.installed){
+    actionBtn.textContent='✓ Installed';
+    actionBtn.onclick=()=>closeSkillModal();
+  }else{
+    actionBtn.textContent='↓ Install';
+    actionBtn.onclick=()=>{installSkill(name);closeSkillModal()};
+  }
+  
+  overlay.classList.add('active');
+  
+  // Try fetching SKILL.md from GitHub
+  const skillPath=skill.path||name;
+  const mdUrl='https://raw.githubusercontent.com/ivanuser/cortex-server-skills/main/'+skillPath+'/SKILL.md';
+  
+  fetch(mdUrl)
+    .then(r=>{if(!r.ok)throw new Error('Not found');return r.text()})
+    .then(md=>{
+      body.innerHTML=renderMarkdown(md);
+    })
+    .catch(()=>{
+      // Fallback: show what we know
+      body.innerHTML='<h2>'+(skill.icon||'📦')+' '+name+'</h2>'+
+        '<p>'+(skill.description||'No description available.')+'</p>'+
+        '<hr>'+
+        '<p style="color:var(--text-muted);font-size:0.8rem">SKILL.md not found on GitHub. The skill may use a different path structure.</p>'+
+        '<p>Version: '+(skill.version||skill.latestVersion||'unknown')+'</p>';
+    });
+}
+
+function closeSkillModal(){
+  $('skillModalOverlay').classList.remove('active');
+}
+
+function renderMarkdown(md){
+  let s=escHtml(md);
+  // Code blocks
+  s=s.replace(/```(\w*)\n([\s\S]*?)```/g, function(m,lang,code){
+    return '<pre><code>'+code+'</code></pre>';
+  });
+  s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  // Headings
+  s=s.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  s=s.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+  s=s.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  s=s.replace(/^---$/gm,'<hr>');
+  s=s.replace(/^- (.+)$/gm,'<li>$1</li>');
+  s=s.replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>');
+  s=s.replace(/\n\n/g,'</p><p>');
+  s='<p>'+s+'</p>';
+  s=s.replace(/<p>\s*<\/p>/g,'');
+  s=s.replace(/<p>(<h[123]>)/g,'$1');
+  s=s.replace(/(<\/h[123]>)<\/p>/g,'$1');
+  s=s.replace(/<p>(<ul>)/g,'$1');
+  s=s.replace(/(<\/ul>)<\/p>/g,'$1');
+  s=s.replace(/<p>(<hr>)<\/p>/g,'$1');
+  s=s.replace(/<p>(<pre>)/g,'$1');
+  s=s.replace(/(<\/pre>)<\/p>/g,'$1');
+  return s;
 }
 
 function installSkill(name) {
@@ -2654,15 +3514,220 @@ function checkSkillUpdates() {
 }
 
 function refreshSkillsPage() {
+  fetchGithubManifest();
   renderSkillsPage();
-  // Flash a subtle indicator
-  const btn = event.target;
-  btn.textContent = '✓ Refreshed';
-  setTimeout(() => { btn.textContent = '↻ Refresh'; }, 1500);
 }
 
-// Render skills on initial load
-setTimeout(renderSkillsPage, 500);
+function skillInfo(name) {
+  openSkillModal(name);
+}
+
+// ==================== FILES TAB ====================
+function loadFilesList(){
+  if(!ws||ws.readyState!==1)return;
+  ws.send(JSON.stringify({type:'req',method:'agents.files.list',id:'files-list',params:{agentId:'main'}}));
+}
+
+function renderFilesList(payload){
+  const list=$('filesList');
+  const files=payload?.files||payload?.list||[];
+  
+  if(files.length===0){
+    list.innerHTML='<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center">No agent files found</div>';
+    return;
+  }
+  
+  // Sort: key files first, then alphabetical
+  const sorted=[...files].sort((a,b)=>{
+    const nameA=typeof a==='string'?a:a.name;
+    const nameB=typeof b==='string'?b:b.name;
+    const isKeyA=KEY_FILES.includes(nameA)?0:1;
+    const isKeyB=KEY_FILES.includes(nameB)?0:1;
+    if(isKeyA!==isKeyB)return isKeyA-isKeyB;
+    return nameA.localeCompare(nameB);
+  });
+  
+  list.innerHTML=sorted.map(f=>{
+    const name=typeof f==='string'?f:f.name;
+    const size=typeof f==='object'&&f.size?formatFileSize(f.size):'';
+    const isKey=KEY_FILES.includes(name);
+    const icon=getFileIcon(name);
+    const activeClass=currentFile===name?' active':'';
+    const keyClass=isKey?' key-file':'';
+    return '<div class="file-item'+activeClass+keyClass+'" onclick="openFile(\''+escAttr(name)+'\')" title="'+escAttr(name)+'">'+
+      '<span class="file-item-icon">'+icon+'</span>'+
+      '<span class="file-item-name">'+escHtml(name)+'</span>'+
+      (size?'<span class="file-item-size">'+size+'</span>':'')+
+    '</div>';
+  }).join('');
+}
+
+function getFileIcon(name){
+  if(FILE_ICONS[name])return FILE_ICONS[name];
+  const ext='.'+name.split('.').pop();
+  return FILE_ICONS[ext]||'📄';
+}
+
+function formatFileSize(bytes){
+  if(bytes<1024)return bytes+'B';
+  if(bytes<1024*1024)return (bytes/1024).toFixed(1)+'K';
+  return (bytes/(1024*1024)).toFixed(1)+'M';
+}
+
+function escAttr(s){return s.replace(/'/g,"\\'")}
+
+function openFile(name){
+  if(!ws||ws.readyState!==1)return;
+  currentFile=name;
+  filesDirty=false;
+  
+  // Update active state in list
+  document.querySelectorAll('.file-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.file-item').forEach(el=>{
+    if(el.getAttribute('title')===name)el.classList.add('active');
+  });
+  
+  // Show editor
+  $('filesEditorHeader').style.display='flex';
+  $('filesEditorTitle').textContent=name;
+  $('filesTextarea').style.display='block';
+  $('filesTextarea').value='Loading...';
+  $('filesTextarea').disabled=true;
+  $('filesSaveBtn').disabled=true;
+  $('filesEmpty').style.display='none';
+  
+  ws.send(JSON.stringify({type:'req',method:'agents.files.get',id:'files-get',params:{agentId:'main',name:name}}));
+}
+
+function openFileContent(payload){
+  const content=payload?.file?.content||payload?.content||'';
+  $('filesTextarea').value=content;
+  $('filesTextarea').disabled=false;
+}
+
+function onFileEdit(){
+  if(!filesDirty){
+    filesDirty=true;
+    $('filesSaveBtn').disabled=false;
+  }
+}
+
+function saveCurrentFile(){
+  if(!currentFile||!ws||ws.readyState!==1)return;
+  const content=$('filesTextarea').value;
+  $('filesSaveBtn').disabled=true;
+  ws.send(JSON.stringify({type:'req',method:'agents.files.set',id:'files-set',params:{agentId:'main',name:currentFile,content:content}}));
+}
+
+// ==================== COMPLIANCE TAB ====================
+function loadCompliance(){
+  fetch('/compliance.json?t='+Date.now())
+    .then(r=>r.json())
+    .then(data=>renderCompliance(data))
+    .catch(()=>renderComplianceEmpty());
+}
+
+function renderCompliance(data){
+  const framework=$('complianceFramework').value;
+  const frameworkNames={'nist-800-53':'NIST 800-53 Compliance','cmmc-l1':'CMMC Level 1','cmmc-l2':'CMMC Level 2'};
+  $('complianceFrameworkTitle').textContent=frameworkNames[framework]||'Compliance';
+  
+  // Score
+  const score=data.score||data.overall_score||0;
+  const pct=Math.round(score);
+  $('complianceScorePct').textContent=pct+'%';
+  
+  // Animate ring
+  const ring=$('scoreRing');
+  const circumference=2*Math.PI*52;
+  const offset=circumference-(pct/100)*circumference;
+  ring.style.strokeDasharray=circumference;
+  ring.style.strokeDashoffset=offset;
+  ring.style.stroke=pct>=80?'var(--green)':pct>=60?'var(--yellow)':'var(--red)';
+  
+  // Details
+  $('compliancePassed').textContent=data.passed||data.controls_passed||'—';
+  $('complianceFailed').textContent=data.failed||data.controls_failed||'—';
+  $('complianceWarnings').textContent=data.warnings||'—';
+  $('complianceLastScan').textContent=data.last_scan?new Date(data.last_scan).toLocaleString():(data.timestamp||'—');
+  
+  // Control Families
+  const families=data.families||data.control_families||{};
+  const familyNames={
+    AC:'Access Control',AU:'Audit & Accountability',CM:'Configuration Management',
+    IA:'Identification & Authentication',SC:'System & Communications Protection',SI:'System & Information Integrity',
+    MP:'Media Protection',PE:'Physical & Environmental',PS:'Personnel Security',
+    SA:'System & Services Acquisition',RA:'Risk Assessment',CA:'Assessment & Authorization',
+    PL:'Planning',AT:'Awareness & Training',IR:'Incident Response',MA:'Maintenance',CP:'Contingency Planning'
+  };
+  
+  const familyKeys=Object.keys(families);
+  if(familyKeys.length>0){
+    $('complianceFamilies').innerHTML=familyKeys.map(code=>{
+      const f=families[code];
+      const fScore=typeof f==='number'?f:(f.score||f.percent||0);
+      const fPct=Math.round(fScore);
+      const color=fPct>=80?'var(--green)':fPct>=60?'var(--yellow)':'var(--red)';
+      return '<div class="family-card">'+
+        '<div class="family-card-head">'+
+          '<span class="family-code">'+code+'</span>'+
+          '<span class="family-score" style="color:'+color+'">'+fPct+'%</span>'+
+        '</div>'+
+        '<div class="family-name">'+(familyNames[code]||code)+'</div>'+
+        '<div class="family-bar"><div class="family-bar-fill" style="width:'+fPct+'%;background:'+color+'"></div></div>'+
+      '</div>';
+    }).join('');
+  }else{
+    $('complianceFamilies').innerHTML='';
+  }
+  
+  // Findings
+  const findings=data.findings||data.results||[];
+  if(findings.length>0){
+    $('findingsCount').textContent=findings.length+' findings';
+    $('findingsBody').innerHTML=findings.map((f,i)=>{
+      const status=f.status||'info';
+      const severity=f.severity||'low';
+      const statusBadge='<span class="finding-badge '+(status==='pass'?'pass':status==='fail'?'fail':'warn')+'">'+status+'</span>';
+      const severityBadge='<span class="finding-badge '+severity+'">'+severity+'</span>';
+      return '<div class="finding-row" onclick="toggleFinding('+i+')">'+
+        '<div class="finding-row-top">'+
+          '<span class="finding-title">'+(f.title||f.control||f.id||'Finding #'+(i+1))+'</span>'+
+          '<div class="finding-badges">'+statusBadge+severityBadge+'</div>'+
+        '</div>'+
+        '<div class="finding-details" id="finding-'+i+'">'+(f.details||f.description||f.remediation||'No additional details.')+'</div>'+
+      '</div>';
+    }).join('');
+  }else{
+    $('findingsCount').textContent='0 findings';
+    $('findingsBody').innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--text-muted)">No findings — looking good! 🎉</div>';
+  }
+}
+
+function renderComplianceEmpty(){
+  $('complianceScorePct').textContent='—';
+  const ring=$('scoreRing');
+  ring.style.strokeDashoffset='326.73';
+  $('compliancePassed').textContent='—';
+  $('complianceFailed').textContent='—';
+  $('complianceWarnings').textContent='—';
+  $('complianceLastScan').textContent='No scan data';
+  $('complianceFamilies').innerHTML='';
+  $('findingsCount').textContent='0 findings';
+  $('findingsBody').innerHTML='<div class="compliance-empty"><div class="compliance-empty-icon">🛡️</div><div>No compliance data yet</div><div style="font-size:0.75rem;margin-top:0.25rem;color:var(--text-muted)">Run a scan to check your server\'s compliance posture</div></div>';
+}
+
+function toggleFinding(idx){
+  const el=$('finding-'+idx);
+  if(el)el.classList.toggle('open');
+}
+
+function runComplianceScan(){
+  switchTab('chat');
+  setTimeout(()=>{
+    qcmd('Run sudo cortexos-compliance-scan');
+  },100);
+}
 
 // ==================== Terminal ====================
 let termHistory = [];
@@ -2693,20 +3758,12 @@ function sendTermCmd() {
   const input = $('termInput');
   const cmd = input.value.trim();
   if (!cmd || !ws || ws.readyState !== 1) return;
-
-  // Add to history
   termHistory.push(cmd);
   if (termHistory.length > 100) termHistory.shift();
   termHistoryIdx = termHistory.length;
-
-  // Show command in terminal
   addTermLine(cmd, 'cmd');
   input.value = '';
-
-  // Show thinking indicator
-  const thinkEl = addTermLine(' Processing...', 'thinking');
-
-  // Send as chat message
+  addTermLine(' Processing...', 'thinking');
   termWaitingResponse = true;
   termStreaming = '';
   const idk = crypto.randomUUID();
@@ -2722,28 +3779,15 @@ function sendTermCmd() {
 }
 
 function onTermKey(e) {
-  if (e.key === 'Enter') {
+  if (e.key === 'Enter') { e.preventDefault(); sendTermCmd(); }
+  else if (e.key === 'ArrowUp') {
     e.preventDefault();
-    sendTermCmd();
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    if (termHistory.length > 0 && termHistoryIdx > 0) {
-      termHistoryIdx--;
-      $('termInput').value = termHistory[termHistoryIdx];
-    }
+    if (termHistory.length > 0 && termHistoryIdx > 0) { termHistoryIdx--; $('termInput').value = termHistory[termHistoryIdx]; }
   } else if (e.key === 'ArrowDown') {
     e.preventDefault();
-    if (termHistoryIdx < termHistory.length - 1) {
-      termHistoryIdx++;
-      $('termInput').value = termHistory[termHistoryIdx];
-    } else {
-      termHistoryIdx = termHistory.length;
-      $('termInput').value = '';
-    }
-  } else if (e.key === 'l' && e.ctrlKey) {
-    e.preventDefault();
-    clearTerminal();
-  }
+    if (termHistoryIdx < termHistory.length - 1) { termHistoryIdx++; $('termInput').value = termHistory[termHistoryIdx]; }
+    else { termHistoryIdx = termHistory.length; $('termInput').value = ''; }
+  } else if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); clearTerminal(); }
 }
 
 // Hook into the existing event handler to intercept terminal responses
@@ -2753,7 +3797,6 @@ handle = function(d) {
     const p = d.payload || d.params || {};
     const st = p.state;
     const m = p.message;
-
     if (st === 'streaming' && m?.content) {
       const t = extractTxt(m.content);
       if (t) termStreaming = t;
@@ -2761,19 +3804,15 @@ handle = function(d) {
       const t = extractTxt(m?.content) || termStreaming;
       termWaitingResponse = false;
       termStreaming = '';
-      // Remove thinking line
       const lines = $('termOutput').querySelectorAll('.thinking');
       lines.forEach(l => l.remove());
       if (t) {
-        // Strip markdown formatting for terminal display
         let clean = t.replace(/```\w*\n?/g, '').replace(/```/g, '');
         clean = clean.replace(/\*\*([^*]+)\*\*/g, '$1');
         clean = clean.replace(/\*([^*]+)\*/g, '$1');
         clean = clean.replace(/^#+\s+/gm, '');
-        clean.split('\n').forEach(line => {
-          if (line.trim()) addTermLine(line, 'output');
-        });
-        addTermLine('', 'output'); // blank separator
+        clean.split('\n').forEach(line => { if (line.trim()) addTermLine(line, 'output'); });
+        addTermLine('', 'output');
       }
       $('termOutput').scrollTop = $('termOutput').scrollHeight;
     } else if (st === 'error') {
@@ -2781,14 +3820,14 @@ handle = function(d) {
       termStreaming = '';
       const lines = $('termOutput').querySelectorAll('.thinking');
       lines.forEach(l => l.remove());
-      const errText = extractTxt(m?.content) || p.error || 'Command failed';
-      addTermLine('Error: ' + errText, 'error');
+      addTermLine('Error: ' + (extractTxt(m?.content) || p.error || 'Command failed'), 'error');
     }
   }
-  // Always call original handler
   origHandle(d);
 };
 
+// ==================== INIT ====================
+setTimeout(renderSkillsPage, 500);
 if(saved)setTimeout(doConnect,400);
 </script>
 </body>
