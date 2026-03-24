@@ -241,11 +241,6 @@ except: pass
         echo -e "${RED}Failed to download $skill_name from $url${NC}"
         exit 1
     fi
-    done
-    
-    echo "Skill '$skill_name' not found in the extended repo."
-    echo "Available: nginx, apache, postgres, mysql, redis, nextcloud, discourse, kubernetes"
-    exit 1
 }
 
 cmd_info() {
