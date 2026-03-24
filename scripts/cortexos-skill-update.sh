@@ -179,7 +179,30 @@ cmd_install() {
             cp "$TEMP_DIR/SKILL.md" "$SKILLS_DIR/$skill_name/SKILL.md"
             echo -e "${GREEN}✅ Installed $skill_name from $prefix/${NC}"
             
-            # Skills are auto-discovered from filesystem, no config needed
+            # Update local manifest with the installed skill version
+            if curl -sfL "$EXT_MANIFEST_URL" -o "$TEMP_DIR/ext-manifest.json" 2>/dev/null; then
+                python3 -c "
+import json, os
+try:
+    ext = json.load(open('$TEMP_DIR/ext-manifest.json'))
+    local_path = '$SKILLS_DIR/manifest.json'
+    try:
+        local = json.load(open(local_path))
+    except:
+        local = {'version': '0.0.0', 'skills': {}}
+    # Update the installed skill's version from remote
+    for key, info in ext.get('skills', {}).items():
+        if key.endswith('/$skill_name') or key == '$skill_name':
+            local['skills']['$skill_name'] = info
+            break
+    json.dump(local, open(local_path, 'w'), indent=2)
+except: pass
+" 2>/dev/null
+            fi
+            
+            # Regenerate skills.json for dashboard
+            /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
+            
             return 0
         fi
     done
