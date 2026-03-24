@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-21 02:07 UTC" lang="en">
+<html data-build="2026-03-24 02:26 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1367,7 +1367,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v1.0.0</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v1.0.1</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1384,7 +1384,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v1.0.0</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v1.0.1</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -1607,7 +1607,8 @@ function wsUrl(){
 function sendConnect(nonce){
   const params={
     minProtocol:3, maxProtocol:3,
-    client:{id:'webchat-ui',displayName:'CortexOS Dashboard',version:'0.2.0',platform:'web',mode:'webchat'},
+    client:{id:'webchat-ui',displayName:'CortexOS Dashboard',version:'1.0.0',platform:'web',mode:'webchat'},
+    caps:['tool-events'],
     scopes:['operator.admin','operator.approvals'],
     auth:{token:pendingToken}
   };
@@ -1751,7 +1752,25 @@ function handle(d){
     const st=p.state;
     const m=p.message;
     
-    console.log('[EVENT]', 'event='+ev, 'state='+st, 'hasMessage='+(!!m), 'contentType='+(m?.content ? (typeof m.content === 'string' ? 'string' : 'array['+m.content.length+']') : 'none'));
+    // Handle tool events (from tool-events capability)
+    if(p.stream==='tool'&&p.data){
+      const phase=p.data.phase;
+      const toolName=p.data.name||p.data.toolName||'tool';
+      if(phase==='start'){
+        const cmd=p.data.input?.command||p.data.input?.path||'';
+        $('typingEl').classList.add('active');
+        $('typingEl').textContent='🔧 '+aiName+' → '+toolName+(cmd?': '+cmd.substring(0,60):'');
+        const statusText=(streaming||'')+'\n🔧 Running: '+toolName+(cmd?' — `'+cmd.substring(0,80)+'`':'')+'\n';
+        streaming=statusText;
+        updateStream(streaming);
+      }else if(phase==='result'){
+        const ok=!p.data.isError;
+        const statusText=(streaming||'')+(ok?'✅':'❌')+' '+toolName+' '+(ok?'completed':'failed')+'\n';
+        streaming=statusText;
+        updateStream(streaming);
+      }
+      return;
+    }
     
     if(st==='streaming'){
       $('typingEl').classList.add('active');
