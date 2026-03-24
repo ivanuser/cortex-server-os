@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-24 02:26 UTC" lang="en">
+<html data-build="2026-03-24 02:40 UTC" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1367,7 +1367,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v1.0.1</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v1.0.2</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1384,7 +1384,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="" style="width:32px;height:32px;border-radius:8px">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v1.0.1</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v1.0.2</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -2715,7 +2715,7 @@ function sendTermCmd() {
     type: 'req', method: 'chat.send', id: termMsgId,
     params: {
       sessionKey: sessionKey || 'agent:main:webchat',
-      message: 'Run this command and show me the output: `' + cmd + '`',
+      message: 'Execute this command and respond ONLY with the raw terminal output, nothing else. No explanation, no commentary, just the exact output:\n```\n' + cmd + '\n```',
       idempotencyKey: idk
     }
   }));
