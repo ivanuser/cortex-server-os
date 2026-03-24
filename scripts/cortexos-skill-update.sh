@@ -160,9 +160,7 @@ cmd_install() {
     if [ -z "$skill_name" ]; then
         echo "Usage: cortexos-skill install <skill-name>"
         echo ""
-        echo "Available from extended repo:"
-        echo "  nginx, apache, postgres, mysql, redis"
-        echo "  nextcloud, discourse, kubernetes"
+        echo "Run 'cortexos-skill available' to see installable skills"
         exit 1
     fi
     
@@ -171,40 +169,78 @@ cmd_install() {
     
     echo -e "${BLUE}Installing skill: ${skill_name}${NC}"
     
-    # Try to find the skill in the extended repo
-    for prefix in "server" "apps" "infra" "security" "cloud" "runtime"; do
-        local url="$EXT_BASE/$prefix/$skill_name/SKILL.md"
-        if curl -sfL "$url" -o "$TEMP_DIR/SKILL.md" 2>/dev/null; then
-            mkdir -p "$SKILLS_DIR/$skill_name"
-            cp "$TEMP_DIR/SKILL.md" "$SKILLS_DIR/$skill_name/SKILL.md"
-            echo -e "${GREEN}✅ Installed $skill_name from $prefix/${NC}"
-            
-            # Update local manifest with the installed skill version
-            if curl -sfL "$EXT_MANIFEST_URL" -o "$TEMP_DIR/ext-manifest.json" 2>/dev/null; then
-                python3 -c "
-import json, os
+    # Download manifest to find the exact path for this skill
+    if ! curl -sfL "$EXT_MANIFEST_URL" -o "$TEMP_DIR/ext-manifest.json" 2>/dev/null; then
+        echo "Failed to fetch skill manifest. Are you online?"
+        exit 1
+    fi
+    
+    # Look up the skill path from the manifest
+    local skill_path=$(python3 -c "
+import json
+m = json.load(open('$TEMP_DIR/ext-manifest.json'))
+for key in m.get('skills', {}):
+    if key.endswith('/$skill_name') or key == '$skill_name' or key.split('/')[-1] == '$skill_name':
+        print(key)
+        break
+" 2>/dev/null)
+    
+    if [ -z "$skill_path" ]; then
+        echo -e "${YELLOW}Skill '$skill_name' not found in manifest. Trying directory search...${NC}"
+        # Fallback: try each directory
+        for prefix in "server" "apps" "infra" "security" "cloud" "runtime"; do
+            local url="$EXT_BASE/$prefix/$skill_name/SKILL.md"
+            if curl -sfL "$url" -o "$TEMP_DIR/SKILL.md" 2>/dev/null; then
+                skill_path="$prefix/$skill_name"
+                break
+            fi
+        done
+    fi
+    
+    if [ -z "$skill_path" ]; then
+        echo -e "${RED}Skill '$skill_name' not found in the extended repo.${NC}"
+        echo "Run 'cortexos-skill available' to see installable skills"
+        exit 1
+    fi
+    
+    # Download the SKILL.md
+    local url="$EXT_BASE/$skill_path/SKILL.md"
+    if curl -sfL "$url" -o "$TEMP_DIR/SKILL.md" 2>/dev/null; then
+        mkdir -p "$SKILLS_DIR/$skill_name"
+        cp "$TEMP_DIR/SKILL.md" "$SKILLS_DIR/$skill_name/SKILL.md"
+        echo -e "${GREEN}✅ Installed $skill_name (from $skill_path)${NC}"
+        
+        # Update local manifest
+        python3 -c "
+import json
 try:
     ext = json.load(open('$TEMP_DIR/ext-manifest.json'))
     local_path = '$SKILLS_DIR/manifest.json'
     try:
-        local = json.load(open(local_path))
+        local_m = json.load(open(local_path))
     except:
-        local = {'version': '0.0.0', 'skills': {}}
-    # Update the installed skill's version from remote
+        local_m = {'version': '0.0.0', 'skills': {}}
     for key, info in ext.get('skills', {}).items():
-        if key.endswith('/$skill_name') or key == '$skill_name':
-            local['skills']['$skill_name'] = info
+        if key.split('/')[-1] == '$skill_name':
+            local_m['skills']['$skill_name'] = info
             break
-    json.dump(local, open(local_path, 'w'), indent=2)
+    json.dump(local_m, open(local_path, 'w'), indent=2)
 except: pass
 " 2>/dev/null
-            fi
-            
-            # Regenerate skills.json for dashboard
-            /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
-            
-            return 0
+        
+        # Regenerate skills.json for dashboard
+        /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
+        
+        # Ensure symlink exists
+        if [ ! -L /root/.openclaw/skills ]; then
+            ln -sfn "$SKILLS_DIR" /root/.openclaw/skills 2>/dev/null || true
         fi
+        
+        return 0
+    else
+        echo -e "${RED}Failed to download $skill_name from $url${NC}"
+        exit 1
+    fi
     done
     
     echo "Skill '$skill_name' not found in the extended repo."
