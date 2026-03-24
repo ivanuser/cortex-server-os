@@ -1,4 +1,4 @@
-# CortexOS Server
+# CortexOS Server v1.0.0
 
 **AI-powered server management in one install.**
 
@@ -25,6 +25,7 @@ The AI is the primary interface; the dashboard visualizes what the AI already kn
 ## Features
 
 - **Web Dashboard** — Real-time UI with chat, system stats, quick commands (port 18789)
+- **Real-Time Tool Event Streaming** — See what AI is doing as it works (tool calls, exec commands, completions live)
 - **12 Core Skills** — Docker, systemd, security, networking, storage, monitoring, and more
 - **35+ Extended Skills** — Databases, web servers, CI/CD, cloud CLIs, runtimes, Kubernetes
 - **Terminal Panel** — Run commands through the AI with full history
@@ -140,7 +141,7 @@ For servers with no internet:
 bash scripts/build-offline-bundle.sh
 
 # Transfer and install (on air-gapped machine)
-tar xzf cortexos-server-offline-v0.1.0.tar.gz
+tar xzf cortexos-server-offline-v1.0.0.tar.gz
 cd cortexos-server-offline && sudo bash install.sh --offline
 ```
 
