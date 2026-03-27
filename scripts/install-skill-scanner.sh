@@ -14,10 +14,20 @@ if ! command -v pip3 &>/dev/null && ! python3 -m pip --version &>/dev/null 2>&1;
     apt-get install -y python3-pip 2>&1 | grep -E "install|already|error" | tee -a $LOG
 fi
 
-# Install skill-scanner
+# Install skill-scanner — try multiple methods for Ubuntu 22/24 compatibility
 echo "Installing cisco-ai-skill-scanner..." | tee -a $LOG
-pip3 install cisco-ai-skill-scanner -q 2>&1 | tail -5 | tee -a $LOG || \
-python3 -m pip install cisco-ai-skill-scanner -q --break-system-packages 2>&1 | tail -5 | tee -a $LOG
+if python3 -m pip install cisco-ai-skill-scanner -q --break-system-packages 2>&1 | tail -5 | tee -a $LOG; then
+    echo "Installed via pip --break-system-packages" | tee -a $LOG
+elif python3 -m pip install cisco-ai-skill-scanner -q 2>&1 | tail -5 | tee -a $LOG; then
+    echo "Installed via pip" | tee -a $LOG
+elif pipx install cisco-ai-skill-scanner 2>&1 | tail -5 | tee -a $LOG; then
+    echo "Installed via pipx" | tee -a $LOG
+else
+    # Last resort: install pipx then use it
+    apt-get install -y pipx 2>&1 | grep -E "install|already" | tee -a $LOG
+    pipx install cisco-ai-skill-scanner 2>&1 | tail -5 | tee -a $LOG
+    export PATH="$PATH:$HOME/.local/bin"
+fi
 
 # Find skill-scanner binary
 SCANNER=""
