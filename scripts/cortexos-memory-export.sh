@@ -3,6 +3,7 @@
 # Reads all agent memory files and exports to JSON for management server
 # Output: /var/lib/cortexos/dashboard/memory.json
 
+set +e  # Don't exit on errors — be resilient
 DASHBOARD_DIR="/var/lib/cortexos/dashboard"
 mkdir -p "$DASHBOARD_DIR"
 
@@ -16,6 +17,8 @@ OUTPUT = "/var/lib/cortexos/dashboard/memory.json"
 WORKSPACE = None
 candidates = [
     os.path.expanduser("~/.openclaw/workspace"),
+    "/root/.openclaw/workspace",       # running as root
+    "/home/ihoner/.openclaw/workspace", # running as ihoner
     os.path.expanduser("~"),          # workspace might be home dir itself
     "/home/ihoner",                    # common user on CortexOS agents
     "/root",                           # if running as root
@@ -79,7 +82,7 @@ if os.path.isfile(memory_md):
 # ── Daily memory logs ──────────────────────────────────────
 memory_dir = os.path.join(WORKSPACE, "memory")
 if os.path.isdir(memory_dir):
-    for f in sorted(glob.glob(os.path.join(memory_dir, "*.md")), reverse=True)[:60]:
+    for f in sorted(glob.glob(os.path.join(memory_dir, "*.md")), reverse=True)[:90]:
         basename = os.path.basename(f)
         # Parse date from filename
         date_match = re.match(r'(\d{4}-\d{2}-\d{2})\.md', basename)
