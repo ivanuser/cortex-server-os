@@ -29,6 +29,15 @@ cp /var/lib/cortexos/version.json /var/lib/cortexos/dashboard/version.json 2>/de
 # Regenerate sysinfo
 /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
 
+# Run memory export
+/usr/local/bin/cortexos-memory-export 2>/dev/null || true
+
+# Set up memory export cron (every 30 min) if not already scheduled
+if ! crontab -l 2>/dev/null | grep -q cortexos-memory-export; then
+    (crontab -l 2>/dev/null; echo "*/30 * * * * /usr/local/bin/cortexos-memory-export 2>/dev/null") | crontab -
+    echo "  ✅ Memory export cron scheduled (every 30 min)"
+fi
+
 # Restart gateway
 systemctl restart cortex-server 2>/dev/null || true
 
