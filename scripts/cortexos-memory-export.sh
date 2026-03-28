@@ -10,8 +10,40 @@ python3 << 'PYEOF'
 import json, os, glob, time, re
 from datetime import datetime, timezone
 
-WORKSPACE = os.path.expanduser("~/.openclaw/workspace")
 OUTPUT = "/var/lib/cortexos/dashboard/memory.json"
+
+# Find the OpenClaw workspace — try multiple locations
+WORKSPACE = None
+candidates = [
+    os.path.expanduser("~/.openclaw/workspace"),
+    os.path.expanduser("~"),          # workspace might be home dir itself
+    "/home/ihoner",                    # common user on CortexOS agents
+    "/root",                           # if running as root
+]
+# Also check openclaw config for workspace path
+for cfg_path in [os.path.expanduser("~/.openclaw/openclaw.json"), "/root/.openclaw/openclaw.json"]:
+    if os.path.isfile(cfg_path):
+        try:
+            with open(cfg_path) as f:
+                cfg = json.load(f)
+            ws = cfg.get("workspace") or cfg.get("agent", {}).get("workspace")
+            if ws and os.path.isdir(ws):
+                candidates.insert(0, ws)
+        except:
+            pass
+
+for candidate in candidates:
+    if candidate and os.path.isdir(candidate):
+        # Check if it looks like an OpenClaw workspace (has MEMORY.md or SOUL.md or AGENTS.md)
+        if any(os.path.isfile(os.path.join(candidate, f)) for f in ["MEMORY.md", "SOUL.md", "AGENTS.md", "USER.md"]):
+            WORKSPACE = candidate
+            break
+
+if not WORKSPACE:
+    # Fallback: use home dir
+    WORKSPACE = os.path.expanduser("~")
+
+print(f"Using workspace: {WORKSPACE}")
 
 entries = []
 
