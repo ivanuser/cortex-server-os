@@ -34,7 +34,11 @@ cp /var/lib/cortexos/version.json /var/lib/cortexos/dashboard/version.json 2>/de
 
 # Set up memory export cron (every 30 min) if not already scheduled
 if ! crontab -l 2>/dev/null | grep -q cortexos-memory-export; then
-    (crontab -l 2>/dev/null; echo "*/30 * * * * /usr/local/bin/cortexos-memory-export 2>/dev/null") | crontab -
+    TMPCRON=$(mktemp)
+    crontab -l 2>/dev/null > "$TMPCRON" || true
+    echo "*/30 * * * * /usr/local/bin/cortexos-memory-export 2>/dev/null" >> "$TMPCRON"
+    crontab "$TMPCRON"
+    rm -f "$TMPCRON"
     echo "  ✅ Memory export cron scheduled (every 30 min)"
 fi
 
