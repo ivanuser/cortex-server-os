@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "components": {
     "installer": "1.0.0",
     "sysinfo": "1.0.0",
@@ -7,7 +7,8 @@
     "skill-manager": "1.1.0",
     "notify": "1.0.0",
     "dashboard": "1.0.0",
-    "memory-export": "1.0.0"
+    "memory-export": "1.0.0",
+    "defenseclaw": "1.0.0"
   },
   "updated": "2026-03-28"
 }
