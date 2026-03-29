@@ -160,9 +160,9 @@ echo ""
 echo "📝 Creating systemd service..."
 
 if [ "$BINARY_INSTALLED" = true ]; then
-    EXEC_START="$BINARY_TARGET serve"
+    EXEC_START="$BINARY_TARGET"
 else
-    EXEC_START="$CLI_PATH serve"
+    EXEC_START="$CLI_PATH"
 fi
 
 cat > "$SERVICE_FILE" << EOF

@@ -87,17 +87,14 @@ EOF
     fi
 fi
 
-# ─── Step 4: Update service to use policy ────────────────
+# ─── Step 4: Fix service ExecStart (no --policy flag, run foreground) ────────
 echo ""
-echo "⚙️  Updating systemd service with policy flag..."
+echo "⚙️  Ensuring systemd service is correct..."
 
 if [ -f "$SERVICE_FILE" ]; then
-    # Update ExecStart to include policy flag (replace existing or add new)
-    if grep -q "ExecStart=" "$SERVICE_FILE"; then
-        # Remove any existing --policy flag first, then add the new one
-        sed -i "s|ExecStart=.*|ExecStart=$BINARY serve --policy $POLICY_FILE|" "$SERVICE_FILE"
-        echo "✅ Service updated: ExecStart=$BINARY serve --policy $POLICY_FILE"
-    fi
+    # Fix ExecStart — remove any stale "serve --policy ..." and use bare binary (foreground for systemd)
+    sed -i "s|ExecStart=.*|ExecStart=$BINARY|" "$SERVICE_FILE"
+    echo "✅ Service ExecStart set to: $BINARY"
 else
     echo "⚠️  Service file not found at $SERVICE_FILE — creating it..."
     cat > "$SERVICE_FILE" << EOF
@@ -107,7 +104,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$BINARY serve --policy $POLICY_FILE
+ExecStart=$BINARY
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -129,7 +126,7 @@ systemctl daemon-reload
 if systemctl restart cortexos-defenseclaw 2>/dev/null; then
     sleep 2
     if systemctl is-active cortexos-defenseclaw >/dev/null 2>&1; then
-        echo "✅ DefenseClaw restarted with policy: $POLICY_NAME"
+        echo "✅ DefenseClaw service running"
         SVC_STATUS="running"
     else
         echo "⚠️  Service may not have started — check: journalctl -u cortexos-defenseclaw -n 20"
@@ -138,6 +135,22 @@ if systemctl restart cortexos-defenseclaw 2>/dev/null; then
 else
     echo "⚠️  Restart failed — check: journalctl -u cortexos-defenseclaw -n 20"
     SVC_STATUS="restart-failed"
+fi
+
+# ─── Step 5b: Load policy into running daemon ─────────────
+echo ""
+echo "📋 Loading policy into DefenseClaw daemon..."
+sleep 1
+# Try policy reload subcommand
+if $BINARY policy reload --file "$POLICY_FILE" 2>/dev/null; then
+    echo "✅ Policy loaded via: policy reload"
+elif $BINARY policy load "$POLICY_FILE" 2>/dev/null; then
+    echo "✅ Policy loaded via: policy load"
+elif $BINARY policy apply "$POLICY_NAME" 2>/dev/null; then
+    echo "✅ Policy loaded via: policy apply"
+else
+    echo "⚠️  Could not load policy via CLI — policy file is in place at $POLICY_FILE"
+    echo "    DefenseClaw will pick it up on next restart via config"
 fi
 
 # ─── Step 6: Update status JSON ──────────────────────────
