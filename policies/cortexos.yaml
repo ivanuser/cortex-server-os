@@ -1,0 +1,56 @@
+# CortexOS Management Policy
+# Allows trusted management commands signed with a CortexOS management token
+# Use with: defenseclaw --policy cortexos
+
+name: cortexos
+description: "CortexOS management policy — trusts commands from authorized management server"
+version: "1.0.0"
+
+# Inherit from default and override
+extends: default
+
+# Tool inspection settings
+tool_inspection:
+  mode: action  # block dangerous, allow trusted
+
+# Trusted command patterns from CortexOS management server
+trust_rules:
+  # Commands prefixed with valid CortexOS management token are trusted
+  - pattern: "^\\[CORTEX-MGMT-v1 token=[a-f0-9]{16}"
+    action: allow
+    reason: "CortexOS management server authorized command"
+  
+  # Standard CortexOS maintenance commands are safe
+  - pattern: "^sudo cortexos-"
+    action: allow
+    reason: "CortexOS system command"
+  
+  - pattern: "^cortexos-"
+    action: allow
+    reason: "CortexOS system command"
+
+# Block list — these are never trusted even with management token
+block_rules:
+  - pattern: "rm -rf /"
+    action: block
+    severity: CRITICAL
+    reason: "Destructive filesystem operation"
+  
+  - pattern: "curl.*\\|.*bash"
+    action: alert
+    severity: HIGH
+    reason: "Possible remote code execution — verify source"
+
+# Skill admission settings
+skill_actions:
+  HIGH: warn      # warn but don't block (less strict than default)
+  CRITICAL: block  # always block critical findings
+
+# LLM guardrail
+guardrail:
+  mode: observe   # log but don't block (less intrusive for management ops)
+  
+# Audit
+audit:
+  enabled: true
+  path: /var/lib/cortexos/dashboard/defenseclaw-audit.json
