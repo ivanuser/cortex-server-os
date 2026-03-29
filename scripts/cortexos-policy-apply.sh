@@ -87,6 +87,14 @@ EOF
     fi
 fi
 
+# ─── Step 3b: Ensure audit store directory exists ────────────────────────────
+echo ""
+echo "📁 Ensuring DefenseClaw data directories exist..."
+mkdir -p /var/lib/cortexos/.defenseclaw
+mkdir -p /var/lib/cortexos/dashboard
+chmod 700 /var/lib/cortexos/.defenseclaw
+echo "✅ Data directories ready"
+
 # ─── Step 4: Fix service ExecStart (no --policy flag, run foreground) ────────
 echo ""
 echo "⚙️  Ensuring systemd service is correct..."

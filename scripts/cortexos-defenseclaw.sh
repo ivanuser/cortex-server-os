@@ -13,6 +13,8 @@ SERVICE_FILE="/etc/systemd/system/cortexos-defenseclaw.service"
 TODAY=$(date +%Y-%m-%d)
 
 mkdir -p /var/lib/cortexos/dashboard
+mkdir -p /var/lib/cortexos/.defenseclaw
+chmod 700 /var/lib/cortexos/.defenseclaw
 
 # Redirect all output to log
 exec > >(tee -a "$LOGFILE") 2>&1
