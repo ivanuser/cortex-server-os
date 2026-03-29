@@ -1,0 +1,49 @@
+# CortexOS Strict Policy
+# Maximum security posture — for high-risk or internet-facing agents
+name: strict
+description: "Maximum security policy — blocks HIGH and CRITICAL, guardrail enforces, no exceptions"
+version: "1.0.0"
+
+tool_inspection:
+  mode: block  # block suspicious, not just alert
+
+trust_rules: []  # no automatic trust for any command patterns
+
+block_rules:
+  - pattern: "rm -rf"
+    action: block
+    severity: CRITICAL
+    reason: "Destructive filesystem operation"
+  - pattern: "curl.*\\|"
+    action: block
+    severity: CRITICAL
+    reason: "Piped curl — remote code execution risk"
+  - pattern: "wget.*\\|"
+    action: block
+    severity: CRITICAL
+    reason: "Piped wget — remote code execution risk"
+  - pattern: "chmod.*777"
+    action: block
+    severity: HIGH
+    reason: "World-writable permissions"
+  - pattern: "> /etc/"
+    action: block
+    severity: HIGH
+    reason: "Writing to /etc — system config modification"
+  - pattern: "dd if="
+    action: alert
+    severity: HIGH
+    reason: "Disk write operation — verify intent"
+
+skill_actions:
+  LOW: alert
+  MEDIUM: alert
+  HIGH: block
+  CRITICAL: block
+
+guardrail:
+  mode: enforce  # actively block policy violations
+
+audit:
+  enabled: true
+  path: /var/lib/cortexos/dashboard/defenseclaw-audit.json

@@ -1,0 +1,41 @@
+# CortexOS Default Policy
+# Standard balanced security posture for CortexOS agents
+name: default
+description: "Standard security policy — alerts on HIGH, blocks CRITICAL, guardrail observes"
+version: "1.0.0"
+
+tool_inspection:
+  mode: action
+
+trust_rules:
+  - pattern: "^sudo cortexos-"
+    action: allow
+    reason: "CortexOS system command"
+  - pattern: "^cortexos-"
+    action: allow
+    reason: "CortexOS system command"
+
+block_rules:
+  - pattern: "rm -rf /"
+    action: block
+    severity: CRITICAL
+    reason: "Destructive filesystem operation"
+  - pattern: "curl.*\\|.*bash"
+    action: alert
+    severity: HIGH
+    reason: "Possible remote code execution — verify source"
+  - pattern: "wget.*\\|.*sh"
+    action: alert
+    severity: HIGH
+    reason: "Possible remote code execution — verify source"
+
+skill_actions:
+  HIGH: alert
+  CRITICAL: block
+
+guardrail:
+  mode: observe
+
+audit:
+  enabled: true
+  path: /var/lib/cortexos/dashboard/defenseclaw-audit.json
