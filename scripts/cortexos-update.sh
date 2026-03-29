@@ -52,6 +52,22 @@ else
     /usr/local/bin/cortexos-defenseclaw 2>&1 | tail -5 || echo "  ⚠️ DefenseClaw install failed (will retry on next update)"
 fi
 
+# Ensure mgmt-token directory exists
+mkdir -p /var/lib/cortexos 2>/dev/null || true
+
+# If management token config doesn't exist, create a placeholder
+if [ ! -f /var/lib/cortexos/mgmt-token.conf ]; then
+    cat > /var/lib/cortexos/mgmt-token.conf << 'EOF'
+# CortexOS Management Trust Token
+# This file is auto-populated when the management server pushes a trust token.
+# DO NOT edit manually — use the management dashboard to manage tokens.
+MGMT_TOKEN=
+MGMT_SERVER=
+MGMT_AUTHORIZED=false
+EOF
+    echo "  ✅ mgmt-token.conf placeholder created"
+fi
+
 # Restart gateway
 systemctl restart cortex-server 2>/dev/null || true
 
