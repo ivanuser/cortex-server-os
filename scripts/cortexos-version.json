@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "components": {
     "installer": "1.0.0",
     "sysinfo": "1.0.0",
@@ -9,7 +9,8 @@
     "dashboard": "1.0.0",
     "memory-export": "1.0.0",
     "defenseclaw": "1.0.0",
-    "mgmt-trust-token": "1.0.0"
+    "mgmt-trust-token": "1.0.0",
+    "policy-apply": "1.0.0"
   },
   "updated": "2026-03-29"
 }
