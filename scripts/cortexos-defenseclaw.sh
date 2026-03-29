@@ -55,7 +55,7 @@ esac
 echo ""
 echo "📥 Downloading DefenseClaw gateway binary..."
 # Try our own built release first, then fall back to upstream
-OUR_RELEASE_URL="https://github.com/ivanuser/cortex-server-os/releases/latest/download/defenseclaw-gateway-linux-${DL_ARCH}"
+OUR_RELEASE_URL="https://github.com/ivanuser/defenseclaw/releases/latest/download/defenseclaw-gateway-linux-${DL_ARCH}"
 UPSTREAM_URL="https://github.com/cisco-ai-defense/defenseclaw/releases/latest/download/defenseclaw-gateway-linux-${DL_ARCH}"
 
 RELEASE_URL="$OUR_RELEASE_URL"
@@ -85,7 +85,7 @@ mkdir -p "$VENV_DIR"
 if python3 -m venv "$VENV_DIR" 2>/dev/null; then
     "$VENV_DIR/bin/pip" install --upgrade pip -q 2>/dev/null || true
     # Try our own built wheel first
-    OUR_WHEEL_URL="https://github.com/ivanuser/cortex-server-os/releases/latest/download/defenseclaw.whl"
+    OUR_WHEEL_URL="https://github.com/ivanuser/defenseclaw/releases/latest/download/defenseclaw.whl"
     INSTALLED_PKG=""
     if curl -sfL --connect-timeout 5 --max-time 60 "$OUR_WHEEL_URL" -o /tmp/defenseclaw.whl 2>/dev/null; then
         if "$VENV_DIR/bin/pip" install /tmp/defenseclaw.whl -q 2>/dev/null; then
