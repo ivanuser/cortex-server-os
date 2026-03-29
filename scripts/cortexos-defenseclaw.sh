@@ -72,26 +72,34 @@ echo "🐍 Installing DefenseClaw Python CLI..."
 CLI_INSTALLED=false
 CLI_PATH="defenseclaw"
 
-# Try system-wide first
-if python3 -m pip install defenseclaw --break-system-packages 2>/dev/null; then
-    echo "  ✅ Python CLI installed system-wide"
-    CLI_INSTALLED=true
-    CLI_PATH="defenseclaw"
-else
-    echo "  ⚠️  System-wide install failed, trying venv..."
-    # Create a venv
-    mkdir -p "$VENV_DIR"
-    if python3 -m venv "$VENV_DIR" 2>/dev/null; then
-        if "$VENV_DIR/bin/pip" install defenseclaw 2>/dev/null; then
-            echo "  ✅ Python CLI installed in venv: $VENV_DIR"
+# Try venv first (most reliable on Ubuntu 22/24)
+mkdir -p "$VENV_DIR"
+if python3 -m venv "$VENV_DIR" 2>/dev/null; then
+    "$VENV_DIR/bin/pip" install --upgrade pip -q 2>/dev/null || true
+    # Try multiple possible package names
+    INSTALLED_PKG=""
+    for PKG in "cisco-ai-defenseclaw" "defenseclaw" "cisco_ai_defenseclaw"; do
+        if "$VENV_DIR/bin/pip" install "$PKG" -q 2>/dev/null; then
+            INSTALLED_PKG="$PKG"
+            echo "  ✅ Python CLI installed via venv ($PKG)"
             CLI_INSTALLED=true
             CLI_PATH="$VENV_DIR/bin/defenseclaw"
-        else
-            echo "  ⚠️  Venv pip install failed"
+            break
         fi
-    else
-        echo "  ⚠️  Could not create venv"
+    done
+    if [ -z "$INSTALLED_PKG" ]; then
+        echo "  ⚠️  Venv pip install failed for all package names"
     fi
+else
+    echo "  ⚠️  Could not create venv, trying system-wide..."
+    for PKG in "cisco-ai-defenseclaw" "defenseclaw"; do
+        if python3 -m pip install "$PKG" --break-system-packages -q 2>/dev/null; then
+            echo "  ✅ Python CLI installed system-wide ($PKG)"
+            CLI_INSTALLED=true
+            CLI_PATH="defenseclaw"
+            break
+        fi
+    done
 fi
 
 # If neither binary nor CLI installed, fail
