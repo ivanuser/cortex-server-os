@@ -54,7 +54,15 @@ esac
 # ─── Step 2: Download pre-built binary ───────────────────
 echo ""
 echo "📥 Downloading DefenseClaw gateway binary..."
-RELEASE_URL="https://github.com/cisco-ai-defense/defenseclaw/releases/latest/download/defenseclaw-gateway-linux-${DL_ARCH}"
+# Try our own built release first, then fall back to upstream
+OUR_RELEASE_URL="https://github.com/ivanuser/cortex-server-os/releases/latest/download/defenseclaw-gateway-linux-${DL_ARCH}"
+UPSTREAM_URL="https://github.com/cisco-ai-defense/defenseclaw/releases/latest/download/defenseclaw-gateway-linux-${DL_ARCH}"
+
+RELEASE_URL="$OUR_RELEASE_URL"
+if ! curl -sfL --connect-timeout 5 --max-time 10 -I "$OUR_RELEASE_URL" 2>/dev/null | grep -q "200"; then
+    echo "  ⚠️  Our build not available, trying upstream..."
+    RELEASE_URL="$UPSTREAM_URL"
+fi
 
 if curl -sfL --connect-timeout 15 --max-time 120 "$RELEASE_URL" -o /tmp/defenseclaw-gateway 2>/dev/null; then
     chmod +x /tmp/defenseclaw-gateway
@@ -76,17 +84,30 @@ CLI_PATH="defenseclaw"
 mkdir -p "$VENV_DIR"
 if python3 -m venv "$VENV_DIR" 2>/dev/null; then
     "$VENV_DIR/bin/pip" install --upgrade pip -q 2>/dev/null || true
-    # Try multiple possible package names
+    # Try our own built wheel first
+    OUR_WHEEL_URL="https://github.com/ivanuser/cortex-server-os/releases/latest/download/defenseclaw.whl"
     INSTALLED_PKG=""
-    for PKG in "cisco-ai-defenseclaw" "defenseclaw" "cisco_ai_defenseclaw"; do
-        if "$VENV_DIR/bin/pip" install "$PKG" -q 2>/dev/null; then
-            INSTALLED_PKG="$PKG"
-            echo "  ✅ Python CLI installed via venv ($PKG)"
+    if curl -sfL --connect-timeout 5 --max-time 60 "$OUR_WHEEL_URL" -o /tmp/defenseclaw.whl 2>/dev/null; then
+        if "$VENV_DIR/bin/pip" install /tmp/defenseclaw.whl -q 2>/dev/null; then
+            echo "  ✅ Python CLI installed from our build (wheel)"
             CLI_INSTALLED=true
             CLI_PATH="$VENV_DIR/bin/defenseclaw"
-            break
+            INSTALLED_PKG="local-wheel"
         fi
-    done
+        rm -f /tmp/defenseclaw.whl
+    fi
+    # Fall back to PyPI package names
+    if [ -z "$INSTALLED_PKG" ]; then
+        for PKG in "cisco-ai-defenseclaw" "defenseclaw" "cisco_ai_defenseclaw"; do
+            if "$VENV_DIR/bin/pip" install "$PKG" -q 2>/dev/null; then
+                INSTALLED_PKG="$PKG"
+                echo "  ✅ Python CLI installed via venv ($PKG)"
+                CLI_INSTALLED=true
+                CLI_PATH="$VENV_DIR/bin/defenseclaw"
+                break
+            fi
+        done
+    fi
     if [ -z "$INSTALLED_PKG" ]; then
         echo "  ⚠️  Venv pip install failed for all package names"
     fi

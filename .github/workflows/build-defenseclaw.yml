@@ -1,0 +1,127 @@
+name: Build DefenseClaw
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday 6am — check for new upstream releases
+
+jobs:
+  build:
+    name: Build DefenseClaw ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: linux-amd64
+            GOOS: linux
+            GOARCH: amd64
+          - target: linux-arm64
+            GOOS: linux
+            GOARCH: arm64
+
+    steps:
+      - name: Checkout cortex-server-os
+        uses: actions/checkout@v4
+
+      - name: Checkout DefenseClaw source
+        uses: actions/checkout@v4
+        with:
+          repository: cisco-ai-defense/defenseclaw
+          path: defenseclaw-src
+
+      - name: Set up Go 1.25
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build DefenseClaw gateway binary
+        working-directory: defenseclaw-src
+        env:
+          GOOS: ${{ matrix.GOOS }}
+          GOARCH: ${{ matrix.GOARCH }}
+          CGO_ENABLED: 0
+        run: |
+          if [ -f Makefile ]; then
+            make gateway GOOS=$GOOS GOARCH=$GOARCH 2>/dev/null || \
+            go build -o defenseclaw-gateway-${{ matrix.target }} ./cmd/gateway/... 2>/dev/null || \
+            go build -o defenseclaw-gateway-${{ matrix.target }} ./gateway/... 2>/dev/null || \
+            go build -o defenseclaw-gateway-${{ matrix.target }} ./... 2>/dev/null
+          else
+            go build -o defenseclaw-gateway-${{ matrix.target }} ./...
+          fi
+          ls -la defenseclaw-gateway-* 2>/dev/null || echo "Binary not found"
+
+      - name: Build Python wheel
+        if: matrix.target == 'linux-amd64'
+        working-directory: defenseclaw-src
+        run: |
+          pip install build wheel -q
+          python -m build --wheel 2>/dev/null || pip wheel . -w dist/ 2>/dev/null
+          ls dist/*.whl 2>/dev/null || echo "No wheel built"
+
+      - name: Copy artifacts to release dir
+        run: |
+          mkdir -p releases
+          # Gateway binary
+          BINARY=$(find defenseclaw-src -name "defenseclaw-gateway-${{ matrix.target }}" 2>/dev/null | head -1)
+          if [ -n "$BINARY" ]; then
+            cp "$BINARY" releases/
+            chmod +x releases/defenseclaw-gateway-${{ matrix.target }}
+            echo "✅ Binary: defenseclaw-gateway-${{ matrix.target }}"
+          else
+            echo "⚠️ Binary not found"
+          fi
+          # Python wheel (amd64 only)
+          WHEEL=$(find defenseclaw-src/dist -name "*.whl" 2>/dev/null | head -1)
+          if [ -n "$WHEEL" ]; then
+            cp "$WHEEL" releases/defenseclaw.whl
+            echo "✅ Wheel: $(basename $WHEEL)"
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: defenseclaw-${{ matrix.target }}
+          path: releases/
+          if-no-files-found: warn
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Get DefenseClaw version
+        id: version
+        run: |
+          VERSION=$(curl -s https://api.github.com/repos/cisco-ai-defense/defenseclaw/releases/latest | jq -r '.tag_name // "v0.0.0"' 2>/dev/null || echo "v0.0.0")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "DefenseClaw version: $VERSION"
+
+      - name: Create or update release with binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: defenseclaw-${{ steps.version.outputs.version }}
+          name: "DefenseClaw ${{ steps.version.outputs.version }} (CortexOS Build)"
+          body: |
+            Pre-built DefenseClaw binaries for CortexOS agents.
+            Source: https://github.com/cisco-ai-defense/defenseclaw ${{ steps.version.outputs.version }}
+            Built by CortexOS CI for easy agent deployment.
+          files: release-artifacts/**/*
+          make_latest: false
