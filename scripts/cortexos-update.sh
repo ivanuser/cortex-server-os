@@ -43,6 +43,15 @@ if ! crontab -l 2>/dev/null | grep -q cortexos-memory-export; then
     echo "  ✅ Memory export cron scheduled (every 30 min)"
 fi
 
+# Install DefenseClaw if not already installed
+if [ ! -f /var/lib/cortexos/dashboard/defenseclaw-status.json ] || \
+   python3 -c "import json; d=json.load(open('/var/lib/cortexos/dashboard/defenseclaw-status.json')); exit(0 if d.get('installed') else 1)" 2>/dev/null; then
+    echo "  ⏭️ DefenseClaw already installed"
+else
+    echo "  🛡️ Installing DefenseClaw..."
+    /usr/local/bin/cortexos-defenseclaw 2>&1 | tail -5 || echo "  ⚠️ DefenseClaw install failed (will retry on next update)"
+fi
+
 # Restart gateway
 systemctl restart cortex-server 2>/dev/null || true
 
