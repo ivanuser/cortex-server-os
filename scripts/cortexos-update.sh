@@ -8,12 +8,13 @@ REPO_BASE="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main"
 echo "🔄 CortexOS Update starting..."
 
 # Update scripts
-for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh; do
+for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh cortexos-defenseclaw-export.sh; do
     target="/usr/local/bin/${script%.sh}"
     [ "$script" = "cortexos-skill-update.sh" ] && target="/usr/local/bin/cortexos-skill"
     [ "$script" = "cortexos-memory-export.sh" ] && target="/usr/local/bin/cortexos-memory-export"
     [ "$script" = "cortexos-defenseclaw.sh" ] && target="/usr/local/bin/cortexos-defenseclaw"
     [ "$script" = "cortexos-policy-apply.sh" ] && target="/usr/local/bin/cortexos-policy-apply"
+    [ "$script" = "cortexos-defenseclaw-export.sh" ] && target="/usr/local/bin/cortexos-defenseclaw-export"
     curl -sfL "$REPO_BASE/scripts/$script" -o "$target" 2>/dev/null && chmod +x "$target" && echo "  ✅ $target" || echo "  ⚠️ $target (failed)"
 done
 
@@ -42,6 +43,21 @@ if ! crontab -l 2>/dev/null | grep -q cortexos-memory-export; then
     crontab "$TMPCRON"
     rm -f "$TMPCRON"
     echo "  ✅ Memory export cron scheduled (every 30 min)"
+fi
+
+# Set up defenseclaw export cron (every 5 min) if not already scheduled
+if ! crontab -l 2>/dev/null | grep -q cortexos-defenseclaw-export; then
+    TMPCRON=$(mktemp)
+    crontab -l 2>/dev/null > "$TMPCRON" || true
+    echo "*/5 * * * * /usr/local/bin/cortexos-defenseclaw-export 2>/dev/null" >> "$TMPCRON"
+    crontab "$TMPCRON"
+    rm -f "$TMPCRON"
+    echo "  ✅ DefenseClaw export cron scheduled (every 5 min)"
+fi
+
+# Run defenseclaw export now if installed
+if [ -f /usr/local/bin/cortexos-defenseclaw-export ]; then
+    /usr/local/bin/cortexos-defenseclaw-export 2>/dev/null || true
 fi
 
 # Install DefenseClaw if not already installed
