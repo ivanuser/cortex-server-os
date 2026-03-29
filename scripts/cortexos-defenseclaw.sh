@@ -82,6 +82,11 @@ CLI_PATH="defenseclaw"
 
 # Try venv first (most reliable on Ubuntu 22/24)
 mkdir -p "$VENV_DIR"
+# Install venv support if missing (Ubuntu 24 requires explicit install)
+if ! python3 -m venv --help >/dev/null 2>&1; then
+    PYVER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    apt-get install -y "python${PYVER}-venv" python3-venv 2>/dev/null | tail -2 || true
+fi
 if python3 -m venv "$VENV_DIR" 2>/dev/null; then
     "$VENV_DIR/bin/pip" install --upgrade pip -q 2>/dev/null || true
     # Try our own built wheel first
