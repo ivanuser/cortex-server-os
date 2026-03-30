@@ -29,6 +29,17 @@ curl -sfL "$REPO_BASE/dashboard/logo.png" -o /var/lib/cortexos/dashboard/logo.pn
 curl -sfL "$REPO_BASE/scripts/cortexos-version.json" -o /var/lib/cortexos/version.json 2>/dev/null || true
 cp /var/lib/cortexos/version.json /var/lib/cortexos/dashboard/version.json 2>/dev/null || true
 
+# Push workspace files (MANAGEMENT_TRUST.md etc.)
+WORKSPACE_DIR=""
+for d in /root/.openclaw/workspace /home/cortex/.openclaw/workspace; do
+    [ -d "$d" ] && WORKSPACE_DIR="$d" && break
+done
+if [ -n "$WORKSPACE_DIR" ]; then
+    curl -sfL "$REPO_BASE/workspace/MANAGEMENT_TRUST.md" -o "$WORKSPACE_DIR/MANAGEMENT_TRUST.md" 2>/dev/null && \
+        echo "  ✅ MANAGEMENT_TRUST.md → $WORKSPACE_DIR" || \
+        echo "  ⚠️ Could not push MANAGEMENT_TRUST.md"
+fi
+
 # Regenerate sysinfo
 /usr/local/bin/cortexos-sysinfo 2>/dev/null || true
 
