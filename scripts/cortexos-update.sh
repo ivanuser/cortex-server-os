@@ -134,7 +134,18 @@ result = re.sub(
 if result != content:
     content = result
     patched = True
-    print('  patched via ALLOWED_FILE_NAMES.add()')
+    print('  patched ALLOWED_FILE_NAMES')
+
+# Also patch BOOTSTRAP_FILE_NAMES array so agents.files.list returns the file
+result2 = re.sub(
+    r'(const BOOTSTRAP_FILE_NAMES\s*=\s*\[[^\]]+)\]',
+    r'\1,\n\t"MANAGEMENT_TRUST.md"\n]',
+    content, count=1
+)
+if result2 != content:
+    content = result2
+    patched = True
+    print('  patched BOOTSTRAP_FILE_NAMES')
 
 # Strategy 2: insert into BOOTSTRAP_FILE_NAMES array before POST_ONBOARDING marker
 if not patched:
