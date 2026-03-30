@@ -114,7 +114,7 @@ fi
 
 # Patch openclaw gateway-cli — apply CortexOS customizations on every update
 # Our gateway is a patched version of openclaw; these patches are always maintained
-GW_JS=$(find /root /home -maxdepth 8 -name "gateway-cli-*.js" -path "*/openclaw/dist/*" 2>/dev/null | head -1)
+GW_JS=$(find /root /home /usr/local/lib /usr/lib -maxdepth 8 -name "gateway-cli-*.js" -path "*/openclaw/dist/*" 2>/dev/null | head -1)
 if [ -n "$GW_JS" ]; then
     python3 << PYEOF
 with open('$GW_JS', 'r') as f:
