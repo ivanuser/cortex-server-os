@@ -177,6 +177,19 @@ policy:
   path: /etc/defenseclaw/policies/${POLICY_NAME}.yaml
 EOF
         echo "✅ DefenseClaw config written with gateway token"
+
+        # Also patch openclaw.json to allow DefenseClaw's device connection
+        # DefenseClaw uses device auth — gateway needs dangerouslyDisableDeviceAuth
+        python3 -c "
+import json
+with open('$OC_CONFIG') as f: d=json.load(f)
+gw = d.setdefault('gateway', {})
+cui = gw.setdefault('controlUi', {})
+cui['dangerouslyDisableDeviceAuth'] = True
+cui['allowInsecureAuth'] = True
+with open('$OC_CONFIG', 'w') as f: json.dump(d, f, indent=2)
+print('patched openclaw.json')
+" 2>/dev/null && echo "✅ openclaw.json patched (dangerouslyDisableDeviceAuth)" || echo "⚠️  Could not patch openclaw.json"
     else
         echo "⚠️  Could not extract gateway token from $OC_CONFIG"
     fi
