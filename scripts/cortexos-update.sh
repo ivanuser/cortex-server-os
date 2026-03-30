@@ -30,14 +30,25 @@ curl -sfL "$REPO_BASE/scripts/cortexos-version.json" -o /var/lib/cortexos/versio
 cp /var/lib/cortexos/version.json /var/lib/cortexos/dashboard/version.json 2>/dev/null || true
 
 # Push workspace files (MANAGEMENT_TRUST.md etc.)
+# Find the actual openclaw workspace — could be root, ihoner, or any user
 WORKSPACE_DIR=""
-for d in /root/.openclaw/workspace /home/cortex/.openclaw/workspace; do
-    [ -d "$d" ] && WORKSPACE_DIR="$d" && break
-done
+# First try: find any existing AGENTS.md in an openclaw workspace
+FOUND=$(find /root /home -maxdepth 4 -name "AGENTS.md" -path "*openclaw/workspace*" 2>/dev/null | head -1)
+if [ -n "$FOUND" ]; then
+    WORKSPACE_DIR=$(dirname "$FOUND")
+fi
+# Fallback: common paths
+if [ -z "$WORKSPACE_DIR" ]; then
+    for d in /root/.openclaw/workspace /home/ihoner/.openclaw/workspace /home/cortex/.openclaw/workspace; do
+        [ -d "$d" ] && WORKSPACE_DIR="$d" && break
+    done
+fi
 if [ -n "$WORKSPACE_DIR" ]; then
     curl -sfL "$REPO_BASE/workspace/MANAGEMENT_TRUST.md" -o "$WORKSPACE_DIR/MANAGEMENT_TRUST.md" 2>/dev/null && \
         echo "  ✅ MANAGEMENT_TRUST.md → $WORKSPACE_DIR" || \
         echo "  ⚠️ Could not push MANAGEMENT_TRUST.md"
+else
+    echo "  ⚠️ Could not find openclaw workspace directory"
 fi
 
 # Regenerate sysinfo
