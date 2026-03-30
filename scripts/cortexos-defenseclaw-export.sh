@@ -77,4 +77,20 @@ print(json.dumps(existing))
     fi
 fi
 
+# ─── Fetch activity log ───────────────────────────────────
+ACTIVITY=$(curl -sf --connect-timeout 3 --max-time 5 "$DC_API/audit/events" 2>/dev/null || echo "")
+if [ -n "$ACTIVITY" ] && echo "$ACTIVITY" | python3 -c "import sys,json; json.load(sys.stdin)" 2>/dev/null; then
+    echo "$ACTIVITY" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+events = data if isinstance(data, list) else data.get('events', [])
+print(json.dumps({'events': events, 'count': len(events), 'exported': '$TODAY'}))
+" > "$DASHBOARD/defenseclaw-activity.json"
+    ACTIVITY_COUNT=$(python3 -c "import json; d=json.load(open('$DASHBOARD/defenseclaw-activity.json')); print(d.get('count',0))" 2>/dev/null || echo "?")
+    echo "✅ Activity exported: $ACTIVITY_COUNT events → $DASHBOARD/defenseclaw-activity.json"
+else
+    # Write empty if API unreachable
+    echo '{"events":[],"count":0,"exported":"'"$TODAY"'"}' > "$DASHBOARD/defenseclaw-activity.json"
+fi
+
 echo "✅ DefenseClaw export complete"

@@ -145,7 +145,46 @@ else
     SVC_STATUS="restart-failed"
 fi
 
-# ─── Step 5b: Load policy into running daemon ─────────────
+# ─── Step 5b: Configure DefenseClaw gateway connection ───────────────────────
+echo ""
+echo "🔗 Configuring DefenseClaw → openclaw gateway connection..."
+DC_CONFIG="/var/lib/cortexos/.defenseclaw/config.yaml"
+# Find openclaw config to get gateway auth token
+OC_CONFIG=""
+for f in /root/.openclaw/openclaw.json /home/ihoner/.openclaw/openclaw.json; do
+    [ -f "$f" ] && OC_CONFIG="$f" && break
+done
+if [ -n "$OC_CONFIG" ]; then
+    GW_TOKEN=$(python3 -c "
+import json
+with open('$OC_CONFIG') as f: d=json.load(f)
+print(d.get('gateway',{}).get('auth',{}).get('token',''))
+" 2>/dev/null)
+    if [ -n "$GW_TOKEN" ]; then
+        cat > "$DC_CONFIG" << EOF
+gateway:
+  host: 127.0.0.1
+  port: 18789
+  token: ${GW_TOKEN}
+  tls_skip_verify: true
+  auto_approve_safe: true
+
+audit:
+  enabled: true
+  path: /var/lib/cortexos/dashboard/defenseclaw-audit.json
+
+policy:
+  path: /etc/defenseclaw/policies/${POLICY_NAME}.yaml
+EOF
+        echo "✅ DefenseClaw config written with gateway token"
+    else
+        echo "⚠️  Could not extract gateway token from $OC_CONFIG"
+    fi
+else
+    echo "⚠️  openclaw.json not found — DefenseClaw may not connect to gateway"
+fi
+
+# ─── Step 5c: Load policy into running daemon ─────────────
 echo ""
 echo "📋 Loading policy into DefenseClaw daemon..."
 sleep 1
