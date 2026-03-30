@@ -112,9 +112,10 @@ if [ -f /usr/local/bin/cortexos-defenseclaw-export ]; then
     /usr/local/bin/cortexos-defenseclaw-export 2>/dev/null || true
 fi
 
-# Patch openclaw gateway-cli to allow MANAGEMENT_TRUST.md in agents.files API
+# Patch openclaw gateway-cli — apply CortexOS customizations on every update
+# Our gateway is a patched version of openclaw; these patches are always maintained
 GW_JS=$(find /root /home -maxdepth 8 -name "gateway-cli-*.js" -path "*/openclaw/dist/*" 2>/dev/null | head -1)
-if [ -n "$GW_JS" ] && ! grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null; then
+if [ -n "$GW_JS" ]; then
     python3 << PYEOF
 with open('$GW_JS', 'r') as f:
     content = f.read()
@@ -162,12 +163,10 @@ else:
         print('  context: ' + repr(content[idx-150:idx]))
 PYEOF
     grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null && \
-        echo "  ✅ openclaw patched for MANAGEMENT_TRUST.md" || \
-        echo "  ⚠️ openclaw patch did not apply"
-elif [ -n "$GW_JS" ]; then
-    echo "  ⏭️ openclaw already patched for MANAGEMENT_TRUST.md"
+        echo "  ✅ openclaw gateway patched" || \
+        echo "  ⚠️ openclaw gateway patch did not apply"
 else
-    echo "  ⚠️ gateway-cli JS not found"
+    echo "  ⚠️ gateway-cli JS not found — openclaw may not be installed"
 fi
 
 # Install DefenseClaw if not already installed
