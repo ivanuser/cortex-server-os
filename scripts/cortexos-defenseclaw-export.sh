@@ -53,10 +53,11 @@ if api_status.get('healthy'):
 elif 'status' in api_status:
     existing['status'] = api_status.get('status', existing.get('status','unknown'))
 existing['api_reachable'] = True
+existing['gateway_connected'] = api_status.get('gateway_connected', api_status.get('connected', False))
 existing['last_export'] = '$TODAY'
 print(json.dumps(existing))
 " > "${STATUS_FILE}.tmp" 2>/dev/null && mv "${STATUS_FILE}.tmp" "$STATUS_FILE" || true
-        echo "✅ Status updated from live API (service running)"
+        echo "✅ Status updated from live API"
     fi
 else
     # API not reachable — update status to reflect this
@@ -77,20 +78,35 @@ print(json.dumps(existing))
     fi
 fi
 
-# ─── Fetch activity log ───────────────────────────────────
-ACTIVITY=$(curl -sf --connect-timeout 3 --max-time 5 "$DC_API/audit/events" 2>/dev/null || echo "")
-if [ -n "$ACTIVITY" ] && echo "$ACTIVITY" | python3 -c "import sys,json; json.load(sys.stdin)" 2>/dev/null; then
-    echo "$ACTIVITY" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-events = data if isinstance(data, list) else data.get('events', [])
-print(json.dumps({'events': events, 'count': len(events), 'exported': '$TODAY'}))
-" > "$DASHBOARD/defenseclaw-activity.json"
-    ACTIVITY_COUNT=$(python3 -c "import json; d=json.load(open('$DASHBOARD/defenseclaw-activity.json')); print(d.get('count',0))" 2>/dev/null || echo "?")
-    echo "✅ Activity exported: $ACTIVITY_COUNT events → $DASHBOARD/defenseclaw-activity.json"
-else
-    # Write empty if API unreachable
-    echo '{"events":[],"count":0,"exported":"'"$TODAY"'"}' > "$DASHBOARD/defenseclaw-activity.json"
-fi
+# ─── Fetch activity log (blocked + allowed events) ────────
+BLOCKED=$(curl -sf --connect-timeout 3 --max-time 5 "$DC_API/enforce/blocked" 2>/dev/null || echo "[]")
+ALLOWED=$(curl -sf --connect-timeout 3 --max-time 5 "$DC_API/enforce/allowed" 2>/dev/null || echo "[]")
+
+python3 << PYEOF
+import json, os
+today = '$TODAY'
+dashboard = '$DASHBOARD'
+
+try:
+    blocked = json.loads('''$BLOCKED''') if '$BLOCKED' != '[]' else []
+    blocked = blocked if isinstance(blocked, list) else blocked.get('items', blocked.get('events', []))
+except: blocked = []
+
+try:
+    allowed = json.loads('''$ALLOWED''') if '$ALLOWED' != '[]' else []
+    allowed = allowed if isinstance(allowed, list) else allowed.get('items', allowed.get('events', []))
+except: allowed = []
+
+# Tag each event with action
+for e in blocked: e['action'] = 'BLOCK'
+for e in allowed: e['action'] = 'ALLOW'
+
+events = sorted(blocked + allowed, key=lambda x: x.get('timestamp',''), reverse=True)[:100]
+result = {'events': events, 'count': len(events), 'blocked': len(blocked), 'allowed': len(allowed), 'exported': today}
+with open(os.path.join(dashboard, 'defenseclaw-activity.json'), 'w') as f:
+    json.dump(result, f)
+print(f'  exported {len(events)} events ({len(blocked)} blocked, {len(allowed)} allowed)')
+PYEOF
+echo "✅ Activity export complete"
 
 echo "✅ DefenseClaw export complete"
