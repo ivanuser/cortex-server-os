@@ -118,30 +118,52 @@ if [ -n "$GW_JS" ] && ! grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null; then
     python3 << PYEOF
 with open('$GW_JS', 'r') as f:
     content = f.read()
-# Exact pattern from openclaw dist: DEFAULT_BOOTSTRAP_FILENAME\n];\n
-# Only patch inside the BOOTSTRAP_FILE_NAMES array (before POST_ONBOARDING)
-idx = content.find('BOOTSTRAP_FILE_NAMES_POST_ONBOARDING')
-if idx < 0:
-    print('  BOOTSTRAP_FILE_NAMES_POST_ONBOARDING marker not found')
+
+patched = False
+
+# Strategy 1: inject after ALLOWED_FILE_NAMES Set is constructed
+# Pattern: new Set([...BOOTSTRAP_FILE_NAMES, ...MEMORY_FILE_NAMES])
+# Inject: .add("MANAGEMENT_TRUST.md")
+import re
+result = re.sub(
+    r'(const ALLOWED_FILE_NAMES\s*=\s*new Set\([^)]+\))',
+    r'\1; ALLOWED_FILE_NAMES.add("MANAGEMENT_TRUST.md")',
+    content, count=1
+)
+if result != content:
+    content = result
+    patched = True
+    print('  patched via ALLOWED_FILE_NAMES.add()')
+
+# Strategy 2: insert into BOOTSTRAP_FILE_NAMES array before POST_ONBOARDING marker
+if not patched:
+    idx = content.find('BOOTSTRAP_FILE_NAMES_POST_ONBOARDING')
+    if idx > 0:
+        before = content[:idx]
+        after = content[idx:]
+        for old, new in [
+            ('DEFAULT_BOOTSTRAP_FILENAME\n];\n', 'DEFAULT_BOOTSTRAP_FILENAME,\n\t"MANAGEMENT_TRUST.md"\n];\n'),
+            ('DEFAULT_BOOTSTRAP_FILENAME\n];\r\n', 'DEFAULT_BOOTSTRAP_FILENAME,\n\t"MANAGEMENT_TRUST.md"\n];\r\n'),
+            ('DEFAULT_BOOTSTRAP_FILENAME];', 'DEFAULT_BOOTSTRAP_FILENAME,"MANAGEMENT_TRUST.md"];'),
+        ]:
+            if old in before:
+                content = before.replace(old, new, 1) + after
+                patched = True
+                print('  patched via array insert')
+                break
+
+if patched:
+    with open('$GW_JS', 'w') as f:
+        f.write(content)
 else:
-    old = 'DEFAULT_BOOTSTRAP_FILENAME\n];\n'
-    new = 'DEFAULT_BOOTSTRAP_FILENAME,\n\t"MANAGEMENT_TRUST.md"\n];\n'
-    before = content[:idx]
-    after = content[idx:]
-    if old in before:
-        patched = before.replace(old, new, 1) + after
-        with open('$GW_JS', 'w') as f:
-            f.write(patched)
-        print('  patched OK')
-    else:
-        print('  pattern not found — check file format')
-        # Debug: show what the end of the array looks like
-        arr_start = before.rfind('BOOTSTRAP_FILE_NAMES = [')
-        print('  array tail: ' + repr(before[arr_start+50:arr_start+200]))
+    print('  all strategies failed — file format unexpected')
+    idx = content.find('BOOTSTRAP_FILE_NAMES_POST_ONBOARDING')
+    if idx > 0:
+        print('  context: ' + repr(content[idx-150:idx]))
 PYEOF
     grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null && \
         echo "  ✅ openclaw patched for MANAGEMENT_TRUST.md" || \
-        echo "  ⚠️ openclaw patch did not apply — manual patch may be needed"
+        echo "  ⚠️ openclaw patch did not apply"
 elif [ -n "$GW_JS" ]; then
     echo "  ⏭️ openclaw already patched for MANAGEMENT_TRUST.md"
 else
