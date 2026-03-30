@@ -112,6 +112,37 @@ if [ -f /usr/local/bin/cortexos-defenseclaw-export ]; then
     /usr/local/bin/cortexos-defenseclaw-export 2>/dev/null || true
 fi
 
+# Patch openclaw gateway-cli to allow MANAGEMENT_TRUST.md in agents.files API
+GW_JS=$(find /root /home -maxdepth 8 -name "gateway-cli-*.js" -path "*/openclaw/dist/*" 2>/dev/null | head -1)
+if [ -n "$GW_JS" ] && ! grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null; then
+    # Add MANAGEMENT_TRUST.md to BOOTSTRAP_FILE_NAMES array
+    sed -i 's/DEFAULT_BOOTSTRAP_FILENAME\n\];/DEFAULT_BOOTSTRAP_FILENAME,\n\t"MANAGEMENT_TRUST.md"\n\];/' "$GW_JS" 2>/dev/null || \
+    python3 -c "
+import re, sys
+with open('$GW_JS', 'r') as f: content = f.read()
+# Find the BOOTSTRAP_FILE_NAMES array and add MANAGEMENT_TRUST.md before closing bracket
+patched = re.sub(
+    r'(const BOOTSTRAP_FILE_NAMES = \[.*?DEFAULT_BOOTSTRAP_FILENAME\n\])',
+    r'\1'.replace('DEFAULT_BOOTSTRAP_FILENAME\n]', 'DEFAULT_BOOTSTRAP_FILENAME,\n\t\"MANAGEMENT_TRUST.md\"\n]'),
+    content, flags=re.DOTALL
+)
+if 'MANAGEMENT_TRUST' in patched:
+    with open('$GW_JS', 'w') as f: f.write(patched)
+    print('patched')
+else:
+    # Try direct string replacement
+    old = 'DEFAULT_BOOTSTRAP_FILENAME\n];'
+    new = 'DEFAULT_BOOTSTRAP_FILENAME,\n\t\"MANAGEMENT_TRUST.md\"\n];'
+    if old in content:
+        with open('$GW_JS', 'w') as f: f.write(content.replace(old, new, 1))
+        print('patched via direct replace')
+    else:
+        print('pattern not found - skipping patch')
+" 2>/dev/null && echo "  ✅ openclaw patched for MANAGEMENT_TRUST.md" || echo "  ⚠️ openclaw patch skipped"
+elif [ -n "$GW_JS" ]; then
+    echo "  ⏭️ openclaw already patched for MANAGEMENT_TRUST.md"
+fi
+
 # Install DefenseClaw if not already installed
 if [ ! -f /var/lib/cortexos/dashboard/defenseclaw-status.json ] || \
    python3 -c "import json; d=json.load(open('/var/lib/cortexos/dashboard/defenseclaw-status.json')); exit(0 if d.get('installed') else 1)" 2>/dev/null; then
