@@ -127,7 +127,7 @@ patched = False
 # Inject: .add("MANAGEMENT_TRUST.md")
 import re
 result = re.sub(
-    r'(const ALLOWED_FILE_NAMES\s*=\s*new Set\([^)]+\))',
+    r'(const ALLOWED_FILE_NAMES\s*=\s*new Set\([^;]+\))',
     r'\1; ALLOWED_FILE_NAMES.add("MANAGEMENT_TRUST.md")',
     content, count=1
 )
