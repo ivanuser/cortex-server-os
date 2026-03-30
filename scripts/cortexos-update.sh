@@ -115,32 +115,37 @@ fi
 # Patch openclaw gateway-cli to allow MANAGEMENT_TRUST.md in agents.files API
 GW_JS=$(find /root /home -maxdepth 8 -name "gateway-cli-*.js" -path "*/openclaw/dist/*" 2>/dev/null | head -1)
 if [ -n "$GW_JS" ] && ! grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null; then
-    # Add MANAGEMENT_TRUST.md to BOOTSTRAP_FILE_NAMES array
-    sed -i 's/DEFAULT_BOOTSTRAP_FILENAME\n\];/DEFAULT_BOOTSTRAP_FILENAME,\n\t"MANAGEMENT_TRUST.md"\n\];/' "$GW_JS" 2>/dev/null || \
-    python3 -c "
-import re, sys
-with open('$GW_JS', 'r') as f: content = f.read()
-# Find the BOOTSTRAP_FILE_NAMES array and add MANAGEMENT_TRUST.md before closing bracket
-patched = re.sub(
-    r'(const BOOTSTRAP_FILE_NAMES = \[.*?DEFAULT_BOOTSTRAP_FILENAME\n\])',
-    r'\1'.replace('DEFAULT_BOOTSTRAP_FILENAME\n]', 'DEFAULT_BOOTSTRAP_FILENAME,\n\t\"MANAGEMENT_TRUST.md\"\n]'),
-    content, flags=re.DOTALL
-)
-if 'MANAGEMENT_TRUST' in patched:
-    with open('$GW_JS', 'w') as f: f.write(patched)
-    print('patched')
+    python3 << PYEOF
+with open('$GW_JS', 'r') as f:
+    content = f.read()
+# Exact pattern from openclaw dist: DEFAULT_BOOTSTRAP_FILENAME\n];\n
+# Only patch inside the BOOTSTRAP_FILE_NAMES array (before POST_ONBOARDING)
+idx = content.find('BOOTSTRAP_FILE_NAMES_POST_ONBOARDING')
+if idx < 0:
+    print('  BOOTSTRAP_FILE_NAMES_POST_ONBOARDING marker not found')
 else:
-    # Try direct string replacement
-    old = 'DEFAULT_BOOTSTRAP_FILENAME\n];'
-    new = 'DEFAULT_BOOTSTRAP_FILENAME,\n\t\"MANAGEMENT_TRUST.md\"\n];'
-    if old in content:
-        with open('$GW_JS', 'w') as f: f.write(content.replace(old, new, 1))
-        print('patched via direct replace')
+    old = 'DEFAULT_BOOTSTRAP_FILENAME\n];\n'
+    new = 'DEFAULT_BOOTSTRAP_FILENAME,\n\t"MANAGEMENT_TRUST.md"\n];\n'
+    before = content[:idx]
+    after = content[idx:]
+    if old in before:
+        patched = before.replace(old, new, 1) + after
+        with open('$GW_JS', 'w') as f:
+            f.write(patched)
+        print('  patched OK')
     else:
-        print('pattern not found - skipping patch')
-" 2>/dev/null && echo "  ✅ openclaw patched for MANAGEMENT_TRUST.md" || echo "  ⚠️ openclaw patch skipped"
+        print('  pattern not found — check file format')
+        # Debug: show what the end of the array looks like
+        arr_start = before.rfind('BOOTSTRAP_FILE_NAMES = [')
+        print('  array tail: ' + repr(before[arr_start+50:arr_start+200]))
+PYEOF
+    grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null && \
+        echo "  ✅ openclaw patched for MANAGEMENT_TRUST.md" || \
+        echo "  ⚠️ openclaw patch did not apply — manual patch may be needed"
 elif [ -n "$GW_JS" ]; then
     echo "  ⏭️ openclaw already patched for MANAGEMENT_TRUST.md"
+else
+    echo "  ⚠️ gateway-cli JS not found"
 fi
 
 # Install DefenseClaw if not already installed
