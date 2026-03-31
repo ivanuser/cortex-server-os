@@ -148,6 +148,15 @@ if result2 != content:
     patched = True
     print('  patched BOOTSTRAP_FILE_NAMES')
 
+# Patch skipPairing to allow gateway-client with valid token auth to skip device pairing
+# DefenseClaw uses gateway-client + token — should not require device pairing
+old_skip = 'const skipPairing = shouldSkipControlUiPairing('
+new_skip = 'const skipPairing = (connectParams?.client?.id === "gateway-client" && authOk) || shouldSkipControlUiPairing('
+if old_skip in content and new_skip not in content:
+    content = content.replace(old_skip, new_skip, 1)
+    patched = True
+    print('  patched skipPairing for gateway-client')
+
 # Strategy 2: insert into BOOTSTRAP_FILE_NAMES array before POST_ONBOARDING marker
 if not patched:
     idx = content.find('BOOTSTRAP_FILE_NAMES_POST_ONBOARDING')
