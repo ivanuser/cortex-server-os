@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-build="2026-03-24 02:58 UTC" lang="en">
+<html data-build="2.0.0" lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1969,6 +1969,19 @@
       </div>
     </div>
 
+    <!-- System Updates -->
+    <div class="panel-section">
+      <div class="panel-title">System Updates</div>
+      <div class="panel-row"><span class="panel-label">Current Version</span><span class="panel-val" id="currentSystemVersion">—</span></div>
+      <div class="panel-row"><span class="panel-label">Latest Available</span><span class="panel-val" id="latestSystemVersion">—</span></div>
+      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem">
+        <button class="btn-settings-save" onclick="checkForUpdates()">🔍 Check Updates</button>
+        <button class="btn-settings-save" onclick="updateSystem()" id="updateBtn" disabled>⬆️ Update Now</button>
+        <span class="settings-saved" id="updateStatus">—</span>
+      </div>
+      <div class="settings-hint" style="margin-top:0.5rem">Updates CortexOS to the latest version from GitHub</div>
+    </div>
+
     <!-- Clear History -->
     <div class="panel-section">
       <div class="panel-title">Chat History</div>
@@ -1979,7 +1992,7 @@
     <!-- Version Info -->
     <div class="panel-section" style="border-bottom:none">
       <div class="panel-title">Version Info</div>
-      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v1.1.1</span></div>
+      <div class="panel-row"><span class="panel-label">Dashboard</span><span class="panel-val">v2.0.0</span></div>
       <div class="panel-row"><span class="panel-label">Gateway</span><span class="panel-val" id="settingsGatewayVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Protocol</span><span class="panel-val" id="settingsProtocolVer">—</span></div>
       <div class="panel-row"><span class="panel-label">Client</span><span class="panel-val">webchat-ui</span></div>
@@ -1996,7 +2009,7 @@
     <div class="topbar-brand">
       <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">☰</button>
       <img src="/logo.png" alt="CortexOS" style="width:32px;height:32px;border-radius:8px" onerror="this.style.display='none'">
-      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v1.1.1</span></div>
+      <div class="topbar-title"><span>Cortex</span>OS Server <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400;margin-left:0.35rem">v2.0.0</span></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('chat')" id="tabChat">
           <span class="nav-tab-icon">💬</span><span class="nav-tab-label">Chat</span>
@@ -2012,7 +2025,10 @@
           <span class="nav-tab-icon">📁</span><span class="nav-tab-label">Files</span>
         </button>
         <button class="nav-tab" onclick="switchTab('compliance')" id="tabCompliance">
-          <span class="nav-tab-icon">🛡️</span><span class="nav-tab-label">Compliance</span>
+          <span class="nav-tab-icon">📋</span><span class="nav-tab-label">Compliance</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('defenseclaw')" id="tabDefenseClaw">
+          <span class="nav-tab-icon">🛡️</span><span class="nav-tab-label">DefenseClaw</span>
         </button>
       </div>
     </div>
@@ -2035,6 +2051,7 @@
         <h2>🧩 <span>Skills</span> Management</h2>
         <div class="skills-header-actions">
           <button class="btn-skills" onclick="checkSkillUpdates()">🔄 Check for Updates</button>
+          <button class="btn-skills" onclick="scanAllSkills()">🛡️ Fleet Scan</button>
           <button class="btn-skills primary" onclick="refreshSkillsPage()">↻ Refresh</button>
         </div>
       </div>
@@ -2137,7 +2154,7 @@
     <!-- Compliance Page -->
     <div class="compliance-page" id="compliancePage">
       <div class="compliance-header">
-        <h2>🛡️ <span>Compliance</span> Dashboard</h2>
+        <h2>📋 <span>Compliance</span> Dashboard</h2>
         <div class="compliance-header-actions">
           <select class="compliance-framework-select" id="complianceFramework" onchange="loadCompliance()">
             <option value="nist-800-53">NIST 800-53</option>
@@ -2180,9 +2197,68 @@
         </div>
         <div id="findingsBody">
           <div class="compliance-empty">
-            <div class="compliance-empty-icon">🛡️</div>
+            <div class="compliance-empty-icon">📋</div>
             <div>No compliance data yet</div>
             <div style="font-size:0.75rem;margin-top:0.25rem;color:var(--text-muted)">Run a scan to check your server's compliance posture</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DefenseClaw Page -->
+    <div class="skills-page" id="defenseclawPage" style="display:none">
+      <div class="skills-header">
+        <h2>🛡️ <span>DefenseClaw</span> — Security Governance</h2>
+        <div class="skills-header-actions">
+          <button class="btn-skills" onclick="runDefenseClawScan()">🔍 Run Scan</button>
+          <button class="btn-skills primary" onclick="loadDefenseClaw()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Status Card -->
+      <div class="compliance-score-ring" style="margin-bottom:1.5rem">
+        <div style="flex:1">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">🛡️ DefenseClaw Status</h3>
+          <div class="score-detail-row"><span>Installed</span><span class="score-detail-val" id="dcInstalled" style="color:var(--green)">✅ Yes</span></div>
+          <div class="score-detail-row"><span>Version</span><span class="score-detail-val" id="dcVersion">—</span></div>
+          <div class="score-detail-row"><span>Service Status</span><span class="score-detail-val" id="dcServiceStatus" style="color:var(--green)">⚡ Running</span></div>
+          <div class="score-detail-row"><span>Gateway Connected</span><span class="score-detail-val" id="dcGatewayConnected" style="color:var(--green)">🔗 Connected</span></div>
+          <div class="score-detail-row"><span>Active Policy</span><span class="score-detail-val" id="dcActivePolicy">cortexos</span></div>
+          <div class="score-detail-row"><span>Policy Applied</span><span class="score-detail-val" id="dcPolicyApplied">—</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-left:2rem">
+          <button class="btn-skills" onclick="applyDefenseClawPolicy('cortexos')">Apply CortexOS Policy</button>
+          <button class="btn-skills" onclick="applyDefenseClawPolicy('strict')">Apply Strict Policy</button>
+          <button class="btn-skills" onclick="applyDefenseClawPolicy('default')">Apply Default Policy</button>
+        </div>
+      </div>
+
+      <!-- Alerts Section -->
+      <div class="compliance-findings" style="margin-bottom:1.5rem">
+        <div class="findings-header">
+          <h3>🚨 Security Alerts</h3>
+          <div style="font-size:0.7rem;color:var(--text-muted)" id="dcAlertsCount">0 alerts</div>
+        </div>
+        <div id="dcAlertsBody">
+          <div style="padding:1.5rem;text-align:center;color:var(--text-muted)">
+            <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.5">🛡️</div>
+            <div>No security alerts</div>
+            <div style="font-size:0.75rem;margin-top:0.25rem">All clear! DefenseClaw is monitoring your system.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="compliance-findings">
+        <div class="findings-header">
+          <h3>📊 Activity Log</h3>
+          <div style="font-size:0.7rem;color:var(--text-muted)" id="dcActivityCount">0 events</div>
+        </div>
+        <div id="dcActivityBody">
+          <div style="padding:1.5rem;text-align:center;color:var(--text-muted)">
+            <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.5">📊</div>
+            <div>No recent activity</div>
+            <div style="font-size:0.75rem;margin-top:0.25rem">Activity will appear here when DefenseClaw is active.</div>
           </div>
         </div>
       </div>
@@ -3040,46 +3116,7 @@ document.addEventListener('drop',e=>{
   if(e.dataTransfer?.files?.length)handleFiles(e.dataTransfer.files);
 });
 
-// ==================== TAB SWITCHING ====================
-function switchTab(tab) {
-  currentTab=tab;
-  const views=['chatView','skillsPage','terminalPage','filesPage','compliancePage'];
-  const tabs=['tabChat','tabSkills','tabTerminal','tabFiles','tabCompliance'];
-  const viewMap={chat:'chatView',skills:'skillsPage',terminal:'terminalPage',files:'filesPage',compliance:'compliancePage'};
-  const tabMap={chat:'tabChat',skills:'tabSkills',terminal:'tabTerminal',files:'tabFiles',compliance:'tabCompliance'};
-  
-  // Hide all
-  views.forEach(v=>{const el=$(v);if(el){el.style.display='none';el.classList.remove('active')}});
-  tabs.forEach(t=>{const el=$(t);if(el)el.classList.remove('active')});
-  
-  // Also hide sidebar when not on chat
-  const sidebar=$('sidebarMain');
-  if(tab==='chat'){
-    sidebar.style.display='';
-    unreadCount=0;
-    updateUnreadBadge();
-  }else{
-    sidebar.style.display='none';
-  }
-  
-  // Show selected
-  const viewId=viewMap[tab];
-  const tabId=tabMap[tab];
-  if(viewId){
-    const el=$(viewId);
-    if(tab==='chat'){el.style.display='flex'}
-    else if(tab==='files'){el.style.display='flex'}
-    else{el.style.display='block'}
-    el.classList.add('active');
-  }
-  if(tabId)$(tabId).classList.add('active');
-  
-  // Tab-specific init
-  if(tab==='skills')renderSkillsPage();
-  if(tab==='terminal')setTimeout(()=>$('termInput').focus(),100);
-  if(tab==='files')loadFilesList();
-  if(tab==='compliance')loadCompliance();
-}
+// ==================== TAB SWITCHING (REMOVED - REPLACED ABOVE) ====================
 
 // ==================== Health Polling ====================
 function startHealthPoll(){
@@ -3239,6 +3276,11 @@ function renderSkillCard(skill, status) {
   const versionDisplay = skill.installedVersion && skill.latestVersion && status === 'update'
     ? 'v'+skill.installedVersion+' → v'+skill.latestVersion
     : 'v'+(skill.version||'0.1.0');
+  
+  // Add scan button for installed skills
+  const scanButton = status === 'installed' 
+    ? '<button class="skill-card-btn" onclick="event.stopPropagation();scanSkill(\''+skill.name+'\')" style="background:var(--accent-glow);color:var(--accent-light);border:1px solid var(--accent);margin-top:0.25rem">🛡️ Scan</button>'
+    : '';
 
   return '<div class="skill-card'+extraClass+'" onclick="openSkillModal(\''+skill.name+'\')" style="cursor:pointer" title="Click for details" data-name="'+skill.name+'" data-status="'+status+'">'+
     '<div class="skill-card-head">'+
@@ -3249,6 +3291,7 @@ function renderSkillCard(skill, status) {
     '<div class="skill-card-desc">'+(skill.description||skill.name)+'</div>'+
     '<div class="skill-card-footer">'+
       '<button class="skill-card-btn '+btnClass+'" '+btnAction+'>'+btnText+'</button>'+
+      scanButton+
     '</div>'+
   '</div>';
 }
@@ -3826,9 +3869,235 @@ handle = function(d) {
   origHandle(d);
 };
 
+// ==================== TAB SWITCHING (UPDATE) ====================
+function switchTab(tab) {
+  currentTab=tab;
+  const views=['chatView','skillsPage','terminalPage','filesPage','compliancePage','defenseclawPage'];
+  const tabs=['tabChat','tabSkills','tabTerminal','tabFiles','tabCompliance','tabDefenseClaw'];
+  const viewMap={chat:'chatView',skills:'skillsPage',terminal:'terminalPage',files:'filesPage',compliance:'compliancePage',defenseclaw:'defenseclawPage'};
+  const tabMap={chat:'tabChat',skills:'tabSkills',terminal:'tabTerminal',files:'tabFiles',compliance:'tabCompliance',defenseclaw:'tabDefenseClaw'};
+  
+  // Hide all
+  views.forEach(v=>{const el=$(v);if(el){el.style.display='none';el.classList.remove('active')}});
+  tabs.forEach(t=>{const el=$(t);if(el)el.classList.remove('active')});
+  
+  // Also hide sidebar when not on chat
+  const sidebar=$('sidebarMain');
+  if(tab==='chat'){
+    sidebar.style.display='';
+    unreadCount=0;
+    updateUnreadBadge();
+  }else{
+    sidebar.style.display='none';
+  }
+  
+  // Show selected
+  const viewId=viewMap[tab];
+  const tabId=tabMap[tab];
+  if(viewId){
+    const el=$(viewId);
+    if(tab==='chat'){el.style.display='flex'}
+    else if(tab==='files'){el.style.display='flex'}
+    else{el.style.display='block'}
+    el.classList.add('active');
+  }
+  if(tabId)$(tabId).classList.add('active');
+  
+  // Tab-specific init
+  if(tab==='skills')renderSkillsPage();
+  if(tab==='terminal')setTimeout(()=>$('termInput').focus(),100);
+  if(tab==='files')loadFilesList();
+  if(tab==='compliance')loadCompliance();
+  if(tab==='defenseclaw')loadDefenseClaw();
+}
+
+// ==================== DEFENSECLAW FUNCTIONALITY ====================
+function loadDefenseClaw(){
+  fetch('/defenseclaw-status.json?t='+Date.now())
+    .then(r=>r.json())
+    .then(data=>renderDefenseClawStatus(data))
+    .catch(()=>renderDefenseClawStatus({}));
+  
+  fetch('/defenseclaw-alerts.json?t='+Date.now())
+    .then(r=>r.json())
+    .then(data=>renderDefenseClawAlerts(data))
+    .catch(()=>renderDefenseClawAlerts({}));
+  
+  fetch('/defenseclaw-activity.json?t='+Date.now())
+    .then(r=>r.json())
+    .then(data=>renderDefenseClawActivity(data))
+    .catch(()=>renderDefenseClawActivity({}));
+}
+
+function renderDefenseClawStatus(data){
+  $('dcInstalled').innerHTML=data.installed?'<span style="color:var(--green)">✅ Yes</span>':'<span style="color:var(--red)">❌ No</span>';
+  $('dcVersion').textContent=data.version||'—';
+  $('dcServiceStatus').innerHTML=data.status==='running'?'<span style="color:var(--green)">⚡ Running</span>':'<span style="color:var(--yellow)">⚠ '+escHtml(data.status||'—')+'</span>';
+  $('dcGatewayConnected').innerHTML=data.gatewayConnected?'<span style="color:var(--green)">🔗 Connected</span>':'<span style="color:var(--red)">❌ Disconnected</span>';
+  $('dcActivePolicy').textContent=data.activePolicy||'—';
+  $('dcPolicyApplied').textContent=data.policyAppliedDate?new Date(data.policyAppliedDate).toLocaleString():'—';
+}
+
+function renderDefenseClawAlerts(data){
+  const alerts=data.alerts||[];
+  $('dcAlertsCount').textContent=alerts.length+' alerts';
+  if(alerts.length===0){
+    $('dcAlertsBody').innerHTML=`
+      <div style="padding:1.5rem;text-align:center;color:var(--text-muted)">
+        <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.5">🛡️</div>
+        <div>No security alerts</div>
+        <div style="font-size:0.75rem;margin-top:0.25rem">All clear! DefenseClaw is monitoring your system.</div>
+      </div>`;
+  }else{
+    $('dcAlertsBody').innerHTML=alerts.map(alert=>{
+      const severity=alert.severity||'INFO';
+      const color=severity==='CRITICAL'?'var(--red)':severity==='HIGH'?'var(--red)':severity==='MEDIUM'?'var(--yellow)':'var(--text-dim)';
+      return `
+        <div class="finding-row">
+          <div class="finding-row-top">
+            <span class="finding-title">${escHtml(alert.title||alert.message||'Security Alert')}</span>
+            <div class="finding-badges">
+              <span class="finding-badge" style="background:rgba(${severity==='CRITICAL'||severity==='HIGH'?'255,107,107':'254,202,87'},0.1);color:${color}">${severity}</span>
+            </div>
+          </div>
+          <div class="finding-details open" style="color:var(--text-dim);font-size:0.75rem">
+            ${escHtml(alert.description||alert.details||'No additional details')}
+            ${alert.timestamp?'<br><strong>Time:</strong> '+new Date(alert.timestamp).toLocaleString():''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+function renderDefenseClawActivity(data){
+  const events=data.events||[];
+  $('dcActivityCount').textContent=events.length+' events';
+  if(events.length===0){
+    $('dcActivityBody').innerHTML=`
+      <div style="padding:1.5rem;text-align:center;color:var(--text-muted)">
+        <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.5">📊</div>
+        <div>No recent activity</div>
+        <div style="font-size:0.75rem;margin-top:0.25rem">Activity will appear here when DefenseClaw is active.</div>
+      </div>`;
+  }else{
+    $('dcActivityBody').innerHTML=events.map(event=>{
+      return `
+        <div class="finding-row">
+          <div class="finding-row-top">
+            <span class="finding-title">${escHtml(event.event||event.type||'Activity')}</span>
+            <div style="font-size:0.65rem;color:var(--text-muted)">${event.timestamp?new Date(event.timestamp).toLocaleString():'—'}</div>
+          </div>
+          <div class="finding-details open" style="color:var(--text-dim);font-size:0.75rem">
+            ${escHtml(event.description||event.message||'No details available')}
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+function runDefenseClawScan(){
+  switchTab('chat');
+  setTimeout(()=>{
+    qcmd('Run defenseclaw-gateway scan and show me the results');
+  },100);
+}
+
+function applyDefenseClawPolicy(policy){
+  if(!policy)return;
+  switchTab('chat');
+  setTimeout(()=>{
+    qcmd('Apply DefenseClaw policy '+policy+' using sudo cortexos-policy-apply '+policy);
+  },100);
+}
+
+// ==================== SKILLS SCANNING ====================
+function scanSkill(skillName){
+  if(!skillName)return;
+  switchTab('chat');
+  setTimeout(()=>{
+    qcmd('Run defenseclaw-gateway scan skill '+skillName+' and show me the detailed security analysis');
+  },100);
+}
+
+function scanAllSkills(){
+  switchTab('chat');
+  setTimeout(()=>{
+    qcmd('Run defenseclaw-gateway scan all-skills and give me a security overview of all installed skills');
+  },100);
+}
+
+// ==================== SYSTEM UPDATES ====================
+function checkForUpdates(){
+  const statusEl=$('updateStatus');
+  const updateBtn=$('updateBtn');
+  statusEl.textContent='Checking...';
+  statusEl.style.color='var(--accent-light)';
+  
+  // Fetch current version from /version.json
+  fetch('/version.json?t='+Date.now())
+    .then(r=>r.json())
+    .then(versionData=>{
+      const currentVer=versionData.version||versionData.cortexos_version||'unknown';
+      $('currentSystemVersion').textContent='v'+currentVer;
+      
+      // Fetch latest from GitHub
+      return fetch('https://api.github.com/repos/ivanuser/cortex-server-os/releases/latest')
+        .then(r=>r.json())
+        .then(release=>{
+          const latestVer=release.tag_name?.replace(/^v/,'')||'unknown';
+          $('latestSystemVersion').textContent='v'+latestVer;
+          
+          if(currentVer!=='unknown'&&latestVer!=='unknown'&&compareVersions(currentVer,latestVer)<0){
+            updateBtn.disabled=false;
+            statusEl.textContent='Update available!';
+            statusEl.style.color='var(--yellow)';
+          }else{
+            updateBtn.disabled=true;
+            statusEl.textContent='Up to date';
+            statusEl.style.color='var(--green)';
+          }
+        });
+    })
+    .catch(e=>{
+      statusEl.textContent='Check failed';
+      statusEl.style.color='var(--red)';
+      console.error('Update check failed:', e);
+    });
+}
+
+function updateSystem(){
+  if(!confirm('Update CortexOS to the latest version? This will run `sudo cortexos-update` and may require a restart.'))return;
+  switchTab('chat');
+  setTimeout(()=>{
+    qcmd('Run sudo cortexos-update to update the system to the latest version');
+  },100);
+}
+
+// ==================== COMPLIANCE TAB UPDATES ====================
+function loadCompliance(){
+  fetch('/compliance.json?t='+Date.now())
+    .then(r=>r.json())
+    .then(data=>renderCompliance(data))
+    .catch(()=>renderComplianceEmpty());
+}
+
+// Override original switchTab function
+const origSwitchTab=window.switchTab||function(){};
+
 // ==================== INIT ====================
 setTimeout(renderSkillsPage, 500);
 if(saved)setTimeout(doConnect,400);
+
+// Load current version on startup
+setTimeout(()=>{
+  fetch('/version.json?t='+Date.now())
+    .then(r=>r.json())
+    .then(data=>{
+      const ver=data.version||data.cortexos_version||'unknown';
+      $('currentSystemVersion').textContent='v'+ver;
+    })
+    .catch(()=>$('currentSystemVersion').textContent='unknown');
+},1000);
 </script>
 </body>
 </html>
