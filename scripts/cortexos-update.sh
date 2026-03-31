@@ -8,7 +8,7 @@ REPO_BASE="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main"
 echo "🔄 CortexOS Update starting..."
 
 # Update scripts
-for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh cortexos-defenseclaw-export.sh cortexos-defenseclaw-pair.sh; do
+for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh cortexos-defenseclaw-export.sh cortexos-defenseclaw-pair.sh cortexos-token-sync.sh cortexos-token-verify.sh; do
     target="/usr/local/bin/${script%.sh}"
     [ "$script" = "cortexos-skill-update.sh" ] && target="/usr/local/bin/cortexos-skill"
     [ "$script" = "cortexos-memory-export.sh" ] && target="/usr/local/bin/cortexos-memory-export"
@@ -16,6 +16,8 @@ for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-upd
     [ "$script" = "cortexos-policy-apply.sh" ] && target="/usr/local/bin/cortexos-policy-apply"
     [ "$script" = "cortexos-defenseclaw-export.sh" ] && target="/usr/local/bin/cortexos-defenseclaw-export"
     [ "$script" = "cortexos-defenseclaw-pair.sh" ] && target="/usr/local/bin/cortexos-defenseclaw-pair"
+    [ "$script" = "cortexos-token-sync.sh" ] && target="/usr/local/bin/cortexos-token-sync"
+    [ "$script" = "cortexos-token-verify.sh" ] && target="/usr/local/bin/cortexos-token-verify"
     curl -sfL "$REPO_BASE/scripts/$script" -o "$target" 2>/dev/null && chmod +x "$target" && echo "  ✅ $target" || echo "  ⚠️ $target (failed)"
 done
 
@@ -202,6 +204,11 @@ if [ ! -f /var/lib/cortexos/dashboard/defenseclaw-status.json ] || \
 else
     echo "  🛡️ Installing DefenseClaw..."
     /usr/local/bin/cortexos-defenseclaw 2>&1 | tail -5 || echo "  ⚠️ DefenseClaw install failed (will retry on next update)"
+fi
+
+# Sync management trust token from server
+if [ -f /usr/local/bin/cortexos-token-sync ]; then
+    /usr/local/bin/cortexos-token-sync 2>/dev/null || echo "  ⚠️ Token sync failed (management server unreachable?)"
 fi
 
 # Ensure mgmt-token directory exists
