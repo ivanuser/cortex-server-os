@@ -29,37 +29,49 @@ echo "✅ Paired devices: $PAIRED_JSON"
 echo ""
 
 python3 << PYEOF
-import json, hashlib, base64, time, sys
+import json, hashlib, base64, time, sys, re, subprocess
 
-try:
-    import cryptography.hazmat.primitives.serialization as ser
-    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-    with open('$DC_KEY', 'rb') as f:
-        priv = ser.load_pem_private_key(f.read(), password=None)
-    pub_raw = priv.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
-except ImportError:
-    # Fallback: parse raw Ed25519 key manually
-    import re, base64 as b64mod
-    with open('$DC_KEY') as f: pem = f.read()
-    raw_b64 = re.sub(r'-----[^-]+-----|\n', '', pem).strip()
-    raw = b64mod.b64decode(raw_b64)
-    # Ed25519 PKCS8: 48 bytes total, last 32 are private key
-    # We need device ID from journal logs as fallback
-    import subprocess
-    result = subprocess.run(['journalctl','-u','cortexos-defenseclaw','-n','100','--no-pager'],
+# Get device ID directly from DefenseClaw logs — most reliable method
+result = subprocess.run(['journalctl','-u','cortexos-defenseclaw','-n','200','--no-pager'],
+                       capture_output=True, text=True)
+m = re.search(r'device=([0-9a-f]{64})', result.stdout)
+if not m:
+    # Try starting defenseclaw briefly to get device ID
+    subprocess.run(['systemctl','start','cortexos-defenseclaw'], capture_output=True)
+    import time as t; t.sleep(3)
+    result = subprocess.run(['journalctl','-u','cortexos-defenseclaw','-n','50','--no-pager'],
                            capture_output=True, text=True)
-    import re as re2
-    m = re2.search(r'device=([0-9a-f]{64})', result.stdout)
-    if not m:
-        print('ERROR: Cannot extract device ID — install python3-cryptography: apt install python3-cryptography')
-        sys.exit(1)
-    device_id = m.group(1)
+    m = re.search(r'device=([0-9a-f]{64})', result.stdout)
+
+if not m:
+    print('ERROR: Could not find device ID in logs')
+    sys.exit(1)
+
+device_id = m.group(1)
+print(f'Device ID from logs: {device_id[:16]}...')
+
+# Try to get public key via openssl
+import subprocess as sp
+try:
+    # Convert PEM to DER and extract public key bytes using openssl
+    r = sp.run(['openssl','pkey','-in','$DC_KEY','-pubout','-outform','DER'],
+               capture_output=True)
+    if r.returncode == 0:
+        # DER public key for Ed25519: 12-byte header + 32-byte key
+        pub_der = r.stdout
+        pub_raw = pub_der[-32:]
+        pub_b64url = base64.urlsafe_b64encode(pub_raw).rstrip(b'=').decode()
+        # Verify device ID matches
+        computed_id = hashlib.sha256(pub_raw).hexdigest()
+        if computed_id == device_id:
+            print(f'Public key verified via openssl')
+        else:
+            print(f'Warning: computed device ID mismatch, using log device ID')
+            pub_b64url = None
+    else:
+        pub_b64url = None
+except Exception as e:
     pub_b64url = None
-    print(f'Using device ID from logs: {device_id[:16]}...')
-else:
-    pub_b64url = base64.urlsafe_b64encode(pub_raw).rstrip(b'=').decode()
-    device_id = hashlib.sha256(pub_raw).hexdigest()
-    print(f'Device ID: {device_id[:16]}...')
 
 with open('$PAIRED_JSON') as f:
     paired = json.load(f)
