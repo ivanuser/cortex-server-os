@@ -53,7 +53,8 @@ if api_status.get('healthy'):
 elif 'status' in api_status:
     existing['status'] = api_status.get('status', existing.get('status','unknown'))
 existing['api_reachable'] = True
-existing['gateway_connected'] = api_status.get('gateway_connected', api_status.get('connected', False))
+gw_health = api_status.get('health', {}).get('gateway', {})
+existing['gateway_connected'] = gw_health.get('state') == 'running'
 existing['last_export'] = '$TODAY'
 print(json.dumps(existing))
 " > "${STATUS_FILE}.tmp" 2>/dev/null && mv "${STATUS_FILE}.tmp" "$STATUS_FILE" || true
