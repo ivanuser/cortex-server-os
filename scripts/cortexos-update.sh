@@ -8,13 +8,14 @@ REPO_BASE="https://raw.githubusercontent.com/ivanuser/cortex-server-os/main"
 echo "🔄 CortexOS Update starting..."
 
 # Update scripts
-for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh cortexos-defenseclaw-export.sh; do
+for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh cortexos-defenseclaw-export.sh cortexos-defenseclaw-pair.sh; do
     target="/usr/local/bin/${script%.sh}"
     [ "$script" = "cortexos-skill-update.sh" ] && target="/usr/local/bin/cortexos-skill"
     [ "$script" = "cortexos-memory-export.sh" ] && target="/usr/local/bin/cortexos-memory-export"
     [ "$script" = "cortexos-defenseclaw.sh" ] && target="/usr/local/bin/cortexos-defenseclaw"
     [ "$script" = "cortexos-policy-apply.sh" ] && target="/usr/local/bin/cortexos-policy-apply"
     [ "$script" = "cortexos-defenseclaw-export.sh" ] && target="/usr/local/bin/cortexos-defenseclaw-export"
+    [ "$script" = "cortexos-defenseclaw-pair.sh" ] && target="/usr/local/bin/cortexos-defenseclaw-pair"
     curl -sfL "$REPO_BASE/scripts/$script" -o "$target" 2>/dev/null && chmod +x "$target" && echo "  ✅ $target" || echo "  ⚠️ $target (failed)"
 done
 
