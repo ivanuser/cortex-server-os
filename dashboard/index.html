@@ -1976,7 +1976,7 @@
       <div class="panel-row"><span class="panel-label">Latest Available</span><span class="panel-val" id="latestSystemVersion">—</span></div>
       <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem">
         <button class="btn-settings-save" onclick="checkForUpdates()">🔍 Check Updates</button>
-        <button class="btn-settings-save" onclick="updateSystem()" id="updateBtn" disabled>⬆️ Update Now</button>
+        <button class="btn-settings-save" onclick="updateSystem()" id="updateBtn">⬆️ Update Now</button>
         <span class="settings-saved" id="updateStatus">—</span>
       </div>
       <div class="settings-hint" style="margin-top:0.5rem">Updates CortexOS to the latest version from GitHub</div>
@@ -4040,11 +4040,11 @@ function checkForUpdates(){
       const currentVer=versionData.version||versionData.cortexos_version||'unknown';
       $('currentSystemVersion').textContent='v'+currentVer;
       
-      // Fetch latest from GitHub
-      return fetch('https://api.github.com/repos/ivanuser/cortex-server-os/releases/latest')
+      // Fetch latest from GitHub version.json
+      return fetch('https://raw.githubusercontent.com/ivanuser/cortex-server-os/main/scripts/cortexos-version.json?t='+Date.now())
         .then(r=>r.json())
         .then(release=>{
-          const latestVer=release.tag_name?.replace(/^v/,'')||'unknown';
+          const latestVer=release.version||'unknown';
           $('latestSystemVersion').textContent='v'+latestVer;
           
           if(currentVer!=='unknown'&&latestVer!=='unknown'&&compareVersions(currentVer,latestVer)<0){
