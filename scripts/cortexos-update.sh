@@ -143,26 +143,30 @@ patched = False
 # Pattern: new Set([...BOOTSTRAP_FILE_NAMES, ...MEMORY_FILE_NAMES])
 # Inject: .add("MANAGEMENT_TRUST.md")
 import re
-result = re.sub(
-    r'(const ALLOWED_FILE_NAMES\s*=\s*new Set\([^;]+\))',
-    r'\1; ALLOWED_FILE_NAMES.add("MANAGEMENT_TRUST.md")',
-    content, count=1
-)
-if result != content:
-    content = result
-    patched = True
-    print('  patched ALLOWED_FILE_NAMES')
+# Only patch if not already patched
+if 'MANAGEMENT_TRUST' not in content:
+    result = re.sub(
+        r'(const ALLOWED_FILE_NAMES\s*=\s*new Set\([^;]+\))',
+        r'\1; ALLOWED_FILE_NAMES.add("MANAGEMENT_TRUST.md")',
+        content, count=1
+    )
+    if result != content:
+        content = result
+        patched = True
+        print('  patched ALLOWED_FILE_NAMES')
 
-# Also patch BOOTSTRAP_FILE_NAMES array so agents.files.list returns the file
-result2 = re.sub(
-    r'(const BOOTSTRAP_FILE_NAMES\s*=\s*\[[^\]]+)\]',
-    r'\1,\n\t"MANAGEMENT_TRUST.md"\n]',
-    content, count=1
-)
-if result2 != content:
-    content = result2
+    result2 = re.sub(
+        r'(const BOOTSTRAP_FILE_NAMES\s*=\s*\[[^\]]+)\]',
+        r'\1,\n\t"MANAGEMENT_TRUST.md"\n]',
+        content, count=1
+    )
+    if result2 != content:
+        content = result2
+        patched = True
+        print('  patched BOOTSTRAP_FILE_NAMES')
+else:
     patched = True
-    print('  patched BOOTSTRAP_FILE_NAMES')
+    print('  already patched for MANAGEMENT_TRUST.md')
 
 # Patch skipPairing to allow gateway-client with valid token auth to skip device pairing
 # DefenseClaw uses gateway-client + token — should not require device pairing
