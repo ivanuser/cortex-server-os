@@ -110,6 +110,44 @@ print(f'  exported {len(events)} events ({len(blocked)} blocked, {len(allowed)} 
 PYEOF
 echo "✅ Activity export complete"
 
+# ─── Extract tool inspection events from journal ──────────
+python3 << INSPECTEOF
+import json, subprocess, re, os
+from datetime import datetime
+
+result = subprocess.run(
+    ['journalctl', '-u', 'cortexos-defenseclaw', '--since', '24 hours ago', '--no-pager'],
+    capture_output=True, text=True
+)
+
+events = []
+for line in result.stdout.split('\n'):
+    if '[inspect] <<<' in line:
+        m = re.search(r'tool="([^"]+)".*action=(\w+).*severity=(\w+).*mode=(\w+).*elapsed=([^\s]+)', line)
+        if m:
+            # Extract timestamp from journal line
+            ts_match = re.match(r'(\w+ \d+ \d+:\d+:\d+)', line)
+            ts = ts_match.group(1) if ts_match else ''
+            events.append({
+                'timestamp': ts,
+                'tool': m.group(1),
+                'action': m.group(2).upper(),
+                'severity': m.group(3),
+                'mode': m.group(4),
+                'elapsed': m.group(5),
+                'type': 'tool_inspection'
+            })
+
+activity = {
+    'events': events[-100:],
+    'count': len(events),
+    'exported': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+}
+with open('$DASHBOARD/defenseclaw-activity.json', 'w') as f:
+    json.dump(activity, f)
+print(f'  Tool inspections exported: {len(events)} events')
+INSPECTEOF
+
 # ─── Fetch skills inventory ────────────────────────────────
 SKILLS=$(curl -sf --connect-timeout 3 --max-time 5 "$DC_API/skills" 2>/dev/null || echo "")
 if [ -n "$SKILLS" ] && echo "$SKILLS" | python3 -c "import sys,json; json.load(sys.stdin)" 2>/dev/null; then
