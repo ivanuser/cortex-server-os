@@ -156,4 +156,14 @@ if [ -n "$SKILLS" ] && echo "$SKILLS" | python3 -c "import sys,json; json.load(s
     echo "✅ Skills inventory: $SKILL_COUNT skills"
 fi
 
-echo "✅ DefenseClaw export complete"
+# ─── Get DefenseClaw binary version ───────────────────────
+DC_VER=$($BINARY --version 2>/dev/null | grep -oP 'version\s+\K[^\s]+' || echo "unknown")
+if [ -f "$STATUS_FILE" ]; then
+    python3 -c "
+import json
+with open('$STATUS_FILE') as f: d=json.load(f)
+d['dc_version'] = '$DC_VER'
+with open('$STATUS_FILE', 'w') as f: json.dump(d, f)
+" 2>/dev/null
+fi
+echo "✅ DefenseClaw export complete (DC $DC_VER)"
