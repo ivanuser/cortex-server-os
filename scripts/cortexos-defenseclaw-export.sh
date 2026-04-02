@@ -157,7 +157,7 @@ if [ -n "$SKILLS" ] && echo "$SKILLS" | python3 -c "import sys,json; json.load(s
 fi
 
 # ─── Get DefenseClaw binary version ───────────────────────
-DC_VER=$($BINARY --version 2>/dev/null | grep -oP 'version\s+\K[^\s]+' || echo "unknown")
+DC_VER=$(defenseclaw-gateway --version 2>/dev/null | grep -oP 'version\s+\K[^\s]+' || echo "unknown")
 if [ -f "$STATUS_FILE" ]; then
     python3 -c "
 import json
