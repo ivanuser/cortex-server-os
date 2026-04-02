@@ -110,4 +110,12 @@ print(f'  exported {len(events)} events ({len(blocked)} blocked, {len(allowed)} 
 PYEOF
 echo "✅ Activity export complete"
 
+# ─── Fetch skills inventory ────────────────────────────────
+SKILLS=$(curl -sf --connect-timeout 3 --max-time 5 "$DC_API/skills" 2>/dev/null || echo "")
+if [ -n "$SKILLS" ] && echo "$SKILLS" | python3 -c "import sys,json; json.load(sys.stdin)" 2>/dev/null; then
+    echo "$SKILLS" > "$DASHBOARD/defenseclaw-skills.json"
+    SKILL_COUNT=$(python3 -c "import json; d=json.load(open('$DASHBOARD/defenseclaw-skills.json')); print(len(d.get('skills',[])))" 2>/dev/null || echo "?")
+    echo "✅ Skills inventory: $SKILL_COUNT skills"
+fi
+
 echo "✅ DefenseClaw export complete"

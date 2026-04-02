@@ -19,7 +19,7 @@ else
 fi
 
 # Update scripts
-for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh cortexos-defenseclaw-export.sh cortexos-defenseclaw-pair.sh cortexos-token-sync.sh cortexos-token-verify.sh; do
+for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-update.sh cortexos-notify.sh cortexos-update.sh cortexos-memory-export.sh cortexos-defenseclaw.sh cortexos-policy-apply.sh cortexos-defenseclaw-export.sh cortexos-defenseclaw-pair.sh cortexos-token-sync.sh cortexos-token-verify.sh cortexos-usage-export.sh; do
     target="/usr/local/bin/${script%.sh}"
     [ "$script" = "cortexos-skill-update.sh" ] && target="/usr/local/bin/cortexos-skill"
     [ "$script" = "cortexos-memory-export.sh" ] && target="/usr/local/bin/cortexos-memory-export"
@@ -29,6 +29,7 @@ for script in cortexos-sysinfo.sh cortexos-compliance-scan.sh cortexos-skill-upd
     [ "$script" = "cortexos-defenseclaw-pair.sh" ] && target="/usr/local/bin/cortexos-defenseclaw-pair"
     [ "$script" = "cortexos-token-sync.sh" ] && target="/usr/local/bin/cortexos-token-sync"
     [ "$script" = "cortexos-token-verify.sh" ] && target="/usr/local/bin/cortexos-token-verify"
+    [ "$script" = "cortexos-usage-export.sh" ] && target="/usr/local/bin/cortexos-usage-export"
     curl -sfL "$REPO_BASE/scripts/$script" -o "$target" 2>/dev/null && chmod +x "$target" && echo "  ✅ $target" || echo "  ⚠️ $target (failed)"
 done
 
