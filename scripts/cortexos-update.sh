@@ -207,12 +207,60 @@ else:
     idx = content.find('BOOTSTRAP_FILE_NAMES_POST_ONBOARDING')
     if idx > 0:
         print('  context: ' + repr(content[idx-150:idx]))
+
+# Patch sessions.subscribe for DefenseClaw sidecar
+if 'sessions.subscribe' not in content:
+    old_sg = '"sessions.get":'
+    new_sg = '"sessions.subscribe": ({ params, respond }) => { const sid = typeof params?.sessionId === "string" ? params.sessionId.trim() : ""; if (!sid) { respond(false, void 0, { code: "INVALID_REQUEST", message: "sessionId required" }); return; } respond(true, { subscribed: true, sessionId: sid }, void 0); }, "sessions.messages.subscribe": ({ params, respond }) => { const sid = typeof params?.sessionId === "string" ? params.sessionId.trim() : ""; if (!sid) { respond(false, void 0, { code: "INVALID_REQUEST", message: "sessionId required" }); return; } respond(true, { subscribed: true, sessionId: sid }, void 0); }, "sessions.get":'
+    if old_sg in content:
+        content = content.replace(old_sg, new_sg, 1)
+        patched = True
+        print('  patched sessions.subscribe for DefenseClaw')
+else:
+    print('  sessions.subscribe already present')
+
+if patched:
+    with open('$GW_JS', 'w') as f:
+        f.write(content)
+else:
+    print('  no patches needed')
 PYEOF
     grep -q "MANAGEMENT_TRUST" "$GW_JS" 2>/dev/null && \
         echo "  ✅ openclaw gateway patched" || \
         echo "  ⚠️ openclaw gateway patch did not apply"
 else
     echo "  ⚠️ gateway-cli JS not found — openclaw may not be installed"
+fi
+
+# Deploy DefenseClaw OpenClaw plugin (tool call interception)
+if [ -n "$WORKSPACE_DIR" ]; then
+    OC_DIR=$(dirname "$WORKSPACE_DIR")
+    PLUGIN_DIR="$OC_DIR/extensions/defenseclaw"
+    if [ ! -f "$PLUGIN_DIR/dist/index.js" ]; then
+        echo "  🛡️ Installing DefenseClaw plugin..."
+        mkdir -p "$PLUGIN_DIR/dist"
+        curl -sfL "$REPO_BASE/plugins/defenseclaw/openclaw.plugin.json" -o "$PLUGIN_DIR/openclaw.plugin.json" 2>/dev/null
+        curl -sfL "$REPO_BASE/plugins/defenseclaw/package.json" -o "$PLUGIN_DIR/package.json" 2>/dev/null
+        for f in index.js client.js sidecar-config.js types.js; do
+            curl -sfL "$REPO_BASE/plugins/defenseclaw/dist/$f" -o "$PLUGIN_DIR/dist/$f" 2>/dev/null
+        done
+        # Add to openclaw plugins.allow if not already there
+        OC_CONFIG="$OC_DIR/openclaw.json"
+        if [ -f "$OC_CONFIG" ] && ! grep -q '"defenseclaw"' "$OC_CONFIG" 2>/dev/null; then
+            python3 -c "
+import json
+with open('$OC_CONFIG') as f: d=json.load(f)
+d.setdefault('plugins', {}).setdefault('allow', [])
+if 'defenseclaw' not in d['plugins']['allow']:
+    d['plugins']['allow'].append('defenseclaw')
+    with open('$OC_CONFIG', 'w') as f: json.dump(d, f, indent=2)
+    print('  Added defenseclaw to plugins.allow')
+" 2>/dev/null
+        fi
+        echo "  ✅ DefenseClaw plugin installed"
+    else
+        echo "  ⏭️ DefenseClaw plugin already installed"
+    fi
 fi
 
 # Install DefenseClaw if not already installed
