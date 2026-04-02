@@ -125,9 +125,16 @@ for line in result.stdout.split('\n'):
     if '[inspect] <<<' in line:
         m = re.search(r'tool="([^"]+)".*action=(\w+).*severity=(\w+).*mode=(\w+).*elapsed=([^\s]+)', line)
         if m:
-            # Extract timestamp from journal line
+            # Extract timestamp from journal line and convert to ISO
             ts_match = re.match(r'(\w+ \d+ \d+:\d+:\d+)', line)
-            ts = ts_match.group(1) if ts_match else ''
+            ts = ''
+            if ts_match:
+                from datetime import datetime
+                try:
+                    dt = datetime.strptime(ts_match.group(1) + ' 2026', '%b %d %H:%M:%S %Y')
+                    ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                except:
+                    ts = ts_match.group(1)
             events.append({
                 'timestamp': ts,
                 'tool': m.group(1),
