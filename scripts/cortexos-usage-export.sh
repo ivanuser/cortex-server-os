@@ -35,19 +35,33 @@ model = cfg.get('agents', {}).get('defaults', {}).get('model', {}).get('primary'
 
 # Count session files for activity estimate
 oc_dir = os.path.dirname(config_path)
-session_files = glob.glob(os.path.join(oc_dir, 'completions', '**', '*.jsonl'), recursive=True)
+# Sessions are in agents/main/sessions/*.jsonl
+session_files = glob.glob(os.path.join(oc_dir, 'agents', '**', 'sessions', '*.jsonl'), recursive=True)
+if not session_files:
+    session_files = glob.glob(os.path.join(oc_dir, 'completions', '**', '*.jsonl'), recursive=True)
 total_sessions = len(session_files)
 
-# Count total messages across all session files
+# Count messages and tool calls across session files
 total_messages = 0
 total_tool_calls = 0
-for sf in session_files[-10:]:  # Only check recent 10 for performance
+tokens_in = 0
+tokens_out = 0
+for sf in session_files:
     try:
         with open(sf) as f:
             for line in f:
                 total_messages += 1
-                if '"tool_use"' in line or '"tool_call"' in line:
+                if '"tool_use"' in line or '"tool_call"' in line or '"tool_calls"' in line:
                     total_tool_calls += 1
+                # Try to extract token counts from usage metadata
+                if '"usage"' in line:
+                    try:
+                        entry = json.loads(line)
+                        u = entry.get('usage', {})
+                        tokens_in += u.get('input_tokens', u.get('prompt_tokens', 0))
+                        tokens_out += u.get('output_tokens', u.get('completion_tokens', 0))
+                    except:
+                        pass
     except:
         pass
 
@@ -72,10 +86,17 @@ except:
 usage = {
     'model': model,
     'total_sessions': total_sessions,
-    'messages_sampled': total_messages,
-    'tool_calls_sampled': total_tool_calls,
+    'messages': total_messages,
+    'total_messages': total_messages,
+    'tool_calls': total_tool_calls,
+    'tokens_in': tokens_in,
+    'input_tokens': tokens_in,
+    'tokens_out': tokens_out,
+    'output_tokens': tokens_out,
     'audit_events': audit_events,
     'uptime_seconds': int(uptime),
+    'sessions': total_sessions,
+    'active_sessions': total_sessions,
     'exported': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
     'source': 'local'
 }
