@@ -1,7 +1,6 @@
 #!/bin/bash
 # CortexOS Usage Export
-# Fetches usage stats from the local openclaw gateway and writes to dashboard dir
-# Uses the gateway's WebSocket RPC to call usage.status
+# Collects basic usage stats and writes to dashboard dir
 
 set -euo pipefail
 
@@ -10,7 +9,7 @@ USAGE_FILE="$DASHBOARD/usage.json"
 
 mkdir -p "$DASHBOARD"
 
-# Find openclaw config to get gateway token
+# Find openclaw config
 OC_CONFIG=""
 for f in /root/.openclaw/openclaw.json /home/ihoner/.openclaw/openclaw.json; do
     [ -f "$f" ] && OC_CONFIG="$f" && break
@@ -18,95 +17,70 @@ done
 
 if [ -z "$OC_CONFIG" ]; then
     echo '{"error":"no config"}' > "$USAGE_FILE"
-    exit 1
+    exit 0
 fi
 
-GW_TOKEN=$(python3 -c "
-import json
-with open('$OC_CONFIG') as f: d=json.load(f)
-print(d.get('gateway',{}).get('auth',{}).get('token',''))
-" 2>/dev/null)
-
-GW_PORT=$(python3 -c "
-import json
-with open('$OC_CONFIG') as f: d=json.load(f)
-print(d.get('gateway',{}).get('port', 18789))
-" 2>/dev/null)
-
-# Use Python websocket to call usage.status RPC
+# Extract model and basic info from config
 python3 << PYEOF
-import json, time, sys
+import json, os, time, glob
 
+config_path = '$OC_CONFIG'
+dashboard = '$DASHBOARD'
+usage_file = '$USAGE_FILE'
+
+with open(config_path) as f:
+    cfg = json.load(f)
+
+model = cfg.get('agents', {}).get('defaults', {}).get('model', {}).get('primary', 'unknown')
+
+# Count session files for activity estimate
+oc_dir = os.path.dirname(config_path)
+session_files = glob.glob(os.path.join(oc_dir, 'completions', '**', '*.jsonl'), recursive=True)
+total_sessions = len(session_files)
+
+# Count total messages across all session files
+total_messages = 0
+total_tool_calls = 0
+for sf in session_files[-10:]:  # Only check recent 10 for performance
+    try:
+        with open(sf) as f:
+            for line in f:
+                total_messages += 1
+                if '"tool_use"' in line or '"tool_call"' in line:
+                    total_tool_calls += 1
+    except:
+        pass
+
+# Get system uptime
 try:
-    import websocket
-except ImportError:
-    # Try without websocket library — use the gateway CLI instead
-    import subprocess
-    result = subprocess.run(
-        ['openclaw-cortex', 'gateway', 'call', 'usage.status', '--json', '--token', '$GW_TOKEN'],
-        capture_output=True, text=True, timeout=10
-    )
-    if result.returncode == 0:
-        with open('$USAGE_FILE', 'w') as f:
-            f.write(result.stdout)
-        print('Usage exported via CLI')
-    else:
-        # Fallback: just write basic stats from /proc
-        import os
-        stats = {
-            'exported': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-            'uptime_seconds': float(open('/proc/uptime').read().split()[0]),
-            'load_avg': os.getloadavg(),
-            'source': 'fallback'
-        }
-        with open('$USAGE_FILE', 'w') as f:
-            json.dump(stats, f)
-        print('Usage exported (fallback)')
-    sys.exit(0)
+    uptime = float(open('/proc/uptime').read().split()[0])
+except:
+    uptime = 0
 
-# WebSocket approach
-ws = websocket.WebSocket()
-ws.settimeout(10)
-ws.connect(f'ws://127.0.0.1:$GW_PORT')
+# Get audit DB stats if available
+audit_events = 0
+try:
+    audit_db = os.path.join(oc_dir, 'audit.db')
+    if os.path.exists(audit_db):
+        import sqlite3
+        conn = sqlite3.connect(audit_db)
+        audit_events = conn.execute('SELECT COUNT(*) FROM events').fetchone()[0]
+        conn.close()
+except:
+    pass
 
-# Wait for challenge
-msg = json.loads(ws.recv())
-if msg.get('type') == 'event' and msg.get('event') == 'connect.challenge':
-    nonce = msg['payload']['nonce']
+usage = {
+    'model': model,
+    'total_sessions': total_sessions,
+    'messages_sampled': total_messages,
+    'tool_calls_sampled': total_tool_calls,
+    'audit_events': audit_events,
+    'uptime_seconds': int(uptime),
+    'exported': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+    'source': 'local'
+}
 
-# Send connect
-ws.send(json.dumps({
-    'type': 'req', 'id': 'c1', 'method': 'connect',
-    'params': {
-        'minProtocol': 3, 'maxProtocol': 3,
-        'client': {'id': 'webchat-ui', 'version': '1.0.0', 'platform': 'linux', 'mode': 'webchat'},
-        'scopes': ['operator.admin'],
-        'auth': {'token': '$GW_TOKEN'}
-    }
-}))
-
-# Read connect response
-msg = json.loads(ws.recv())
-
-# Request usage.status
-ws.send(json.dumps({
-    'type': 'req', 'id': 'u1', 'method': 'usage.status',
-    'params': {}
-}))
-
-# Read response
-for _ in range(10):
-    msg = json.loads(ws.recv())
-    if msg.get('type') == 'res' and msg.get('id') == 'u1':
-        if msg.get('ok'):
-            data = msg.get('payload', {})
-            data['exported'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-            with open('$USAGE_FILE', 'w') as f:
-                json.dump(data, f)
-            print('Usage exported via WebSocket')
-        else:
-            print(f'Usage RPC failed: {msg.get("error",{})}')
-        break
-
-ws.close()
+with open(usage_file, 'w') as f:
+    json.dump(usage, f)
+print(f'Usage exported: {total_sessions} sessions, {total_messages} messages sampled')
 PYEOF
